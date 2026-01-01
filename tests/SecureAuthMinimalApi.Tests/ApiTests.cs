@@ -1328,6 +1328,41 @@ CREATE TABLE IF NOT EXISTS users (
     }
 
     [Fact]
+    public async Task Login_remember_respects_configured_days_for_maxage()
+    {
+        LogTestStart();
+        var extra = new Dictionary<string, string?>
+        {
+            ["RememberMe:Days"] = "3"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: extra);
+        try
+        {
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo", RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var setCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+            var lower = setCookie.ToLowerInvariant();
+            Assert.Contains("max-age", lower);
+
+            // estrai max-age e verifica circa 3 giorni (tolleranza qualche secondo)
+            var parts = lower.Split(';', StringSplitOptions.TrimEntries);
+            var maxAgePart = parts.First(p => p.StartsWith("max-age"));
+            var maxAgeSec = int.Parse(maxAgePart.Split('=')[1]);
+            var expected = 3 * 24 * 60 * 60;
+            Assert.InRange(maxAgeSec, expected - 5, expected + 5);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
     public async Task Totp_secret_is_encrypted_at_rest()
     {
         LogTestStart();
