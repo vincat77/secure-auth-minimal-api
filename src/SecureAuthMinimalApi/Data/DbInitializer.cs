@@ -70,6 +70,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   revoked_at_utc TEXT NULL,
   user_agent TEXT NULL,
   client_ip TEXT NULL,
+  device_id TEXT NULL,
+  device_label TEXT NULL,
   rotation_parent_id TEXT NULL,
   rotation_reason TEXT NULL
 );";
@@ -84,15 +86,19 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
         EnsureColumn(conn, "users", "email_confirm_token");
         EnsureColumn(conn, "users", "email_confirm_expires_utc");
         EnsureColumn(conn, "user_sessions", "last_seen_utc");
+        EnsureColumn(conn, "refresh_tokens", "device_id");
+        EnsureColumn(conn, "refresh_tokens", "device_label");
         conn.Execute("UPDATE user_sessions SET last_seen_utc = created_at_utc WHERE last_seen_utc IS NULL;");
         const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
         conn.Execute(idxEmail);
         const string idxRefreshToken = "CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);";
         const string idxRefreshUser = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);";
         const string idxRefreshSession = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_session ON refresh_tokens(session_id);";
+        const string idxRefreshDevice = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_device ON refresh_tokens(device_id);";
         conn.Execute(idxRefreshToken);
         conn.Execute(idxRefreshUser);
         conn.Execute(idxRefreshSession);
+        conn.Execute(idxRefreshDevice);
 
         const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
         var exists = conn.ExecuteScalar<long>(seedCheck);

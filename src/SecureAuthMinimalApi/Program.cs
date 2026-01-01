@@ -361,11 +361,39 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         logger.LogWarning("RememberMe:SameSite=None in ambiente non Development: sconsigliato");
     var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
     var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
+    var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
+    var deviceSameSiteString = app.Configuration["Device:SameSite"] ?? "Strict";
+    var deviceSameSite = SameSiteMode.Strict;
+    if (deviceSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+        deviceSameSite = SameSiteMode.Lax;
+    else if (deviceSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+        deviceSameSite = SameSiteMode.None;
+    else if (!deviceSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
+        logger.LogWarning("Device:SameSite non valido ({SameSite}), fallback a Strict", deviceSameSiteString);
+    if (!isDevelopment && deviceSameSite == SameSiteMode.None)
+        logger.LogWarning("Device:SameSite=None in ambiente non Development: sconsigliato");
+    var deviceRequireSecureConfig = app.Configuration.GetValue<bool?>("Device:RequireSecure");
+    var deviceRequireSecure = isDevelopment
+        ? (deviceRequireSecureConfig ?? (app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? false))
+        : true;
+    var devicePersistDays = app.Configuration.GetValue<int?>("Device:PersistDays") ?? rememberConfigDays;
     var rememberIssued = false;
+    var deviceIssued = false;
+    string? deviceId = null;
     string? refreshExpiresUtc = null;
 
     if (req?.RememberMe == true)
     {
+        if (!ctx.Request.Cookies.TryGetValue(deviceCookieName, out var existingDeviceId) || string.IsNullOrWhiteSpace(existingDeviceId))
+        {
+            deviceId = Base64Url(RandomBytes(32));
+            deviceIssued = true;
+        }
+        else
+        {
+            deviceId = existingDeviceId;
+        }
+
         var refreshToken = Base64Url(RandomBytes(32));
         var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
         var rt = new RefreshToken
@@ -379,6 +407,8 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
             RevokedAtUtc = null,
             UserAgent = ctx.Request.Headers["User-Agent"].ToString(),
             ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+            DeviceId = deviceId,
+            DeviceLabel = null,
             RotationParentId = null,
             RotationReason = null
         };
@@ -395,12 +425,23 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
                 Secure = requireSecure,
                 SameSite = rememberSameSite,
                 Path = rememberPath,
-            MaxAge = refreshExpires - DateTime.UtcNow
-        });
+                MaxAge = refreshExpires - DateTime.UtcNow
+            });
+        ctx.Response.Cookies.Append(
+            deviceCookieName,
+            deviceId!,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = deviceRequireSecure,
+                SameSite = deviceSameSite,
+                Path = "/",
+                MaxAge = TimeSpan.FromDays(devicePersistDays)
+            });
         rememberIssued = true;
     }
 
-    return Results.Ok(new { ok = true, csrfToken, rememberIssued, refreshExpiresAtUtc = refreshExpiresUtc });
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc });
 });
 
 app.MapGet("/me", (HttpContext ctx) =>
@@ -442,15 +483,15 @@ app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions) =>
     {
         var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
         await refreshRepo.RevokeByTokenAsync(refreshToken, "logout", ctx.RequestAborted);
-        ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
-        {
-            Expires = DateTimeOffset.UnixEpoch,
-            HttpOnly = true,
-            Secure = requireSecure,
-            SameSite = SameSiteMode.Strict,
-            Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
-        });
-        logger.LogInformation("Logout: refresh token revocato");
+    ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
+    {
+        Expires = DateTimeOffset.UnixEpoch,
+        HttpOnly = true,
+        Secure = requireSecure,
+        SameSite = SameSiteMode.Strict,
+        Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
+    });
+    logger.LogInformation("Logout: refresh token revocato");
     }
 
     return Results.Ok(new { ok = true });
@@ -572,6 +613,30 @@ app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, R
         SameSite = SameSiteMode.Strict,
         Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
     });
+    var clearDevice = app.Configuration.GetValue<bool?>("Device:ClearOnLogoutAll") ?? false;
+    if (clearDevice)
+    {
+        var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
+        var deviceSameSiteString = app.Configuration["Device:SameSite"] ?? "Strict";
+        var deviceSameSite = SameSiteMode.Strict;
+        if (deviceSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+            deviceSameSite = SameSiteMode.Lax;
+        else if (deviceSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+            deviceSameSite = SameSiteMode.None;
+        var deviceRequireSecureConfig = app.Configuration.GetValue<bool?>("Device:RequireSecure");
+        var deviceRequireSecure = app.Environment.IsDevelopment()
+            ? (deviceRequireSecureConfig ?? (app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? false))
+            : true;
+
+        ctx.Response.Cookies.Append(deviceCookieName, "", new CookieOptions
+        {
+            Expires = DateTimeOffset.UnixEpoch,
+            HttpOnly = true,
+            Secure = deviceRequireSecure,
+            SameSite = deviceSameSite,
+            Path = "/"
+        });
+    }
 
     return Results.Ok(new { ok = true });
 });
@@ -582,12 +647,25 @@ app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, R
 app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users) =>
 {
     var cookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
+    var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
     if (!ctx.Request.Cookies.TryGetValue(cookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
         return Results.Unauthorized();
 
     var stored = await refreshRepo.GetByTokenAsync(refreshToken, ctx.RequestAborted);
     if (stored is null || !string.IsNullOrWhiteSpace(stored.RevokedAtUtc))
         return Results.Unauthorized();
+
+    if (!ctx.Request.Cookies.TryGetValue(deviceCookieName, out var cookieDeviceId) || string.IsNullOrWhiteSpace(cookieDeviceId))
+    {
+        logger.LogWarning("Refresh negato: device cookie assente");
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(cookieDeviceId, stored.DeviceId, StringComparison.Ordinal))
+    {
+        logger.LogWarning("Refresh negato: device mismatch stored={Stored} cookie={Cookie}", stored.DeviceId, cookieDeviceId);
+        return Results.Unauthorized();
+    }
 
     if (!DateTime.TryParse(stored.ExpiresAtUtc, out var expRt) || expRt.ToUniversalTime() <= DateTime.UtcNow)
         return Results.Unauthorized();
@@ -628,6 +706,17 @@ app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshToke
         rememberSameSite = SameSiteMode.Lax;
     var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
     var requireSecure = app.Environment.IsDevelopment() ? app.Configuration.GetValue<bool>("Cookie:RequireSecure") : true;
+    var deviceSameSiteString = app.Configuration["Device:SameSite"] ?? "Strict";
+    var deviceSameSite = SameSiteMode.Strict;
+    if (deviceSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+        deviceSameSite = SameSiteMode.Lax;
+    else if (deviceSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+        deviceSameSite = SameSiteMode.None;
+    var deviceRequireSecureConfig = app.Configuration.GetValue<bool?>("Device:RequireSecure");
+    var deviceRequireSecure = app.Environment.IsDevelopment()
+        ? (deviceRequireSecureConfig ?? (app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? false))
+        : true;
+    var devicePersistDays = app.Configuration.GetValue<int?>("Device:PersistDays") ?? rememberConfigDays;
 
     var newRefreshToken = Base64Url(RandomBytes(32));
     var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
@@ -642,6 +731,8 @@ app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshToke
         RevokedAtUtc = null,
         UserAgent = ua,
         ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+        DeviceId = stored.DeviceId,
+        DeviceLabel = stored.DeviceLabel,
         RotationParentId = stored.Id,
         RotationReason = "rotated"
     };
@@ -673,7 +764,22 @@ app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshToke
             MaxAge = refreshExpires - DateTime.UtcNow
         });
 
-    return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, refreshExpiresAtUtc = refreshExpires.ToString("O") });
+    if (!string.IsNullOrWhiteSpace(newRt.DeviceId))
+    {
+        ctx.Response.Cookies.Append(
+            deviceCookieName,
+            newRt.DeviceId,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = deviceRequireSecure,
+                SameSite = deviceSameSite,
+                Path = "/",
+                MaxAge = TimeSpan.FromDays(devicePersistDays)
+            });
+    }
+
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, deviceIssued = false, deviceId = newRt.DeviceId, refreshExpiresAtUtc = refreshExpires.ToString("O") });
 });
 
 /// <summary>
