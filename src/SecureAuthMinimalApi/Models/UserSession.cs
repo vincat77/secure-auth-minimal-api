@@ -13,4 +13,5 @@ public sealed class UserSession
     public string? RevokedAtUtc { get; init; }                // ISO 8601 o null
     public required string UserDataJson { get; init; }        // dati solo server-side (mai nel JWT)
     public required string CsrfToken { get; init; }           // token CSRF sincronizzato, solo DB
+    public required string LastSeenUtc { get; init; }         // ultimo accesso, per idle timeout
 }

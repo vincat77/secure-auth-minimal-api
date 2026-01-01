@@ -13,15 +13,17 @@ public sealed class CookieJwtAuthMiddleware : IMiddleware
 {
     private readonly IServiceProvider _provider;
     private readonly SessionRepository _sessions;
+    private readonly IConfiguration _config;
     private readonly JwtSecurityTokenHandler _handler = new() { MapInboundClaims = false };
     private TokenValidationParameters? _tvp;
     private JwtTokenService? _jwt;
     private readonly ILogger<CookieJwtAuthMiddleware> _logger;
 
-    public CookieJwtAuthMiddleware(IServiceProvider provider, SessionRepository sessions, ILogger<CookieJwtAuthMiddleware> logger)
+    public CookieJwtAuthMiddleware(IServiceProvider provider, SessionRepository sessions, IConfiguration config, ILogger<CookieJwtAuthMiddleware> logger)
     {
         _provider = provider;
         _sessions = sessions;
+        _config = config;
         _logger = logger;
     }
 
@@ -71,9 +73,43 @@ public sealed class CookieJwtAuthMiddleware : IMiddleware
                                 var expiresUtc = DateTime.Parse(session.ExpiresAtUtc).ToUniversalTime();
                                 if (expiresUtc > DateTime.UtcNow)
                                 {
-                                    context.Items["session"] = session;
-                                    context.User = principal;
-                                    _logger.LogInformation("Auth OK sessione attiva sessionId={SessionId} userId={UserId} exp={Exp} jwtExp={JwtExp} iss={Iss} aud={Aud} {Method} {Path}", session.SessionId, session.UserId, session.ExpiresAtUtc, exp.ToString("O"), iss, aud, context.Request.Method, context.Request.Path);
+                                    var idleMinutes = _config.GetValue<int?>("Session:IdleMinutes") ?? 0;
+                                    var now = DateTime.UtcNow;
+                                    var headers = context.Response.Headers;
+                                    headers["X-Session-Expires-At"] = session.ExpiresAtUtc;
+
+                                    if (idleMinutes > 0)
+                                    {
+                                        var lastSeen = DateTime.Parse(session.LastSeenUtc).ToUniversalTime();
+                                        var idleSpan = now - lastSeen;
+                                        var idleTimeout = TimeSpan.FromMinutes(idleMinutes);
+                                        var remaining = idleTimeout - idleSpan;
+                                        headers["X-Session-Idle-Remaining"] = remaining > TimeSpan.Zero ? remaining.ToString("c") : "00:00:00";
+
+                                        if (idleSpan > idleTimeout)
+                                        {
+                                            // revoca per idle
+                                            await _sessions.RevokeAsync(session.SessionId, now.ToString("O"), context.RequestAborted);
+                                            _logger.LogWarning("Auth KO sessione scaduta per inattivitÃ  sessionId={SessionId} userId={UserId} lastSeen={LastSeen} idleMax={Idle}", session.SessionId, session.UserId, session.LastSeenUtc, idleTimeout);
+                                        }
+                                        else
+                                        {
+                                            // aggiorna last_seen se differenza >1 min per ridurre scritture
+                                            if (idleSpan.TotalMinutes >= 1)
+                                            {
+                                                await _sessions.UpdateLastSeenAsync(session.SessionId, now.ToString("O"), context.RequestAborted);
+                                            }
+                                            context.Items["session"] = session;
+                                            context.User = principal;
+                                            _logger.LogInformation("Auth OK sessione attiva sessionId={SessionId} userId={UserId} exp={Exp} idleRemaining={IdleRemaining} jwtExp={JwtExp} iss={Iss} aud={Aud} {Method} {Path}", session.SessionId, session.UserId, session.ExpiresAtUtc, remaining.ToString("c"), exp.ToString("O"), iss, aud, context.Request.Method, context.Request.Path);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        context.Items["session"] = session;
+                                        context.User = principal;
+                                        _logger.LogInformation("Auth OK sessione attiva sessionId={SessionId} userId={UserId} exp={Exp} jwtExp={JwtExp} iss={Iss} aud={Aud} {Method} {Path}", session.SessionId, session.UserId, session.ExpiresAtUtc, exp.ToString("O"), iss, aud, context.Request.Method, context.Request.Path);
+                                    }
                                 }
                                 else
                                 {
