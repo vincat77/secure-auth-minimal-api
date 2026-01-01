@@ -575,7 +575,7 @@ static string? NormalizeEmail(string? email)
     return email.Trim().ToLowerInvariant();
 }
 
-public sealed record LoginRequest(string? Username, string? Password, string? TotpCode);
+public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool RememberMe);
 public sealed record RegisterRequest(string? Username, string? Email, string? Password);
 public sealed record ConfirmEmailRequest(string? Token);
 
