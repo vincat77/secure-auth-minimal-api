@@ -421,6 +421,21 @@ app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions) =>
         Path = "/"
     });
 
+    if (ctx.Request.Cookies.TryGetValue(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", out var refreshToken) && !string.IsNullOrWhiteSpace(refreshToken))
+    {
+        var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
+        await refreshRepo.RevokeByTokenAsync(refreshToken, "logout", ctx.RequestAborted);
+        ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
+        {
+            Expires = DateTimeOffset.UnixEpoch,
+            HttpOnly = true,
+            Secure = requireSecure,
+            SameSite = SameSiteMode.Strict,
+            Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
+        });
+        logger.LogInformation("Logout: refresh token revocato");
+    }
+
     return Results.Ok(new { ok = true });
 
     // TODO PROD: refresh token
@@ -509,6 +524,38 @@ app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
 
     await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
     logger.LogInformation("Email confermata userId={UserId}", user.Id);
+    return Results.Ok(new { ok = true });
+});
+
+/// <summary>
+/// Logout da tutti i dispositivi: revoca tutti i refresh token dell'utente corrente e la sessione attuale.
+/// </summary>
+app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo) =>
+{
+    var session = ctx.GetRequiredSession();
+
+    await refreshRepo.RevokeAllForUserAsync(session.UserId, "logout-all", ctx.RequestAborted);
+    await sessions.RevokeAsync(session.SessionId, DateTime.UtcNow.ToString("O"), ctx.RequestAborted);
+    logger.LogInformation("Logout-all eseguito userId={UserId} sessionId={SessionId}", session.UserId, session.SessionId);
+
+    var requireSecure = app.Environment.IsDevelopment() ? app.Configuration.GetValue<bool>("Cookie:RequireSecure") : true;
+    ctx.Response.Cookies.Append("access_token", "", new CookieOptions
+    {
+        Expires = DateTimeOffset.UnixEpoch,
+        HttpOnly = true,
+        Secure = requireSecure,
+        SameSite = SameSiteMode.Strict,
+        Path = "/"
+    });
+    ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
+    {
+        Expires = DateTimeOffset.UnixEpoch,
+        HttpOnly = true,
+        Secure = requireSecure,
+        SameSite = SameSiteMode.Strict,
+        Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
+    });
+
     return Results.Ok(new { ok = true });
 });
 

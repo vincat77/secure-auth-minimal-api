@@ -74,6 +74,22 @@ WHERE id = @id;";
         }, cancellationToken: ct));
     }
 
+    public async Task RevokeByTokenAsync(string tokenValue, string reason, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE refresh_tokens
+SET revoked_at_utc = @revokedAt, rotation_reason = @reason
+WHERE token = @token;";
+
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new
+        {
+            token = tokenValue,
+            revokedAt = DateTime.UtcNow.ToString("O"),
+            reason
+        }, cancellationToken: ct));
+    }
+
     public async Task RotateAsync(string oldId, RefreshToken newToken, string reason, CancellationToken ct)
     {
         using var db = Open();

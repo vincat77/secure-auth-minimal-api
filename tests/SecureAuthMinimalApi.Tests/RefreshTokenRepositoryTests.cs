@@ -123,4 +123,18 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
         Assert.NotNull(loaded);
         Assert.False(string.IsNullOrWhiteSpace(loaded!.RevokedAtUtc));
     }
+
+    [Fact]
+    public async Task Revoke_by_token_sets_revoked()
+    {
+        var token = NewToken("userD");
+        await _repo.CreateAsync(token, CancellationToken.None);
+
+        await _repo.RevokeByTokenAsync(token.Token, "logout", CancellationToken.None);
+
+        var loaded = await _repo.GetByTokenAsync(token.Token, CancellationToken.None);
+        Assert.NotNull(loaded);
+        Assert.False(string.IsNullOrWhiteSpace(loaded!.RevokedAtUtc));
+        Assert.Equal("logout", loaded.RotationReason);
+    }
 }
