@@ -565,6 +565,105 @@ app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, R
 });
 
 /// <summary>
+/// Refresh: ruota il refresh token, verifica binding UA e scadenza, emette nuovo access+refresh.
+/// </summary>
+app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users) =>
+{
+    var cookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
+    if (!ctx.Request.Cookies.TryGetValue(cookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+        return Results.Unauthorized();
+
+    var stored = await refreshRepo.GetByTokenAsync(refreshToken, ctx.RequestAborted);
+    if (stored is null || !string.IsNullOrWhiteSpace(stored.RevokedAtUtc))
+        return Results.Unauthorized();
+
+    if (!DateTime.TryParse(stored.ExpiresAtUtc, out var expRt) || expRt.ToUniversalTime() <= DateTime.UtcNow)
+        return Results.Unauthorized();
+
+    var ua = ctx.Request.Headers["User-Agent"].ToString();
+    if (!string.Equals(ua, stored.UserAgent, StringComparison.Ordinal))
+        return Results.Unauthorized();
+
+    var user = await users.GetByIdAsync(stored.UserId, ctx.RequestAborted);
+    if (user is null)
+        return Results.Unauthorized();
+
+    // Crea nuova sessione
+    var sessionId = Guid.NewGuid().ToString("N");
+    var csrfToken = Base64Url(RandomBytes(32));
+    var (access, expiresUtc) = jwt.CreateAccessToken(sessionId);
+    var nowIso = DateTime.UtcNow.ToString("O");
+    var expIso = expiresUtc.ToString("O");
+
+    var session = new UserSession
+    {
+        SessionId = sessionId,
+        UserId = user.Id,
+        CreatedAtUtc = nowIso,
+        ExpiresAtUtc = expIso,
+        RevokedAtUtc = null,
+        UserDataJson = JsonSerializer.Serialize(new { username = user.Username }),
+        CsrfToken = csrfToken
+    };
+    await sessions.CreateAsync(session, ctx.RequestAborted);
+
+    // Ruota refresh
+    var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
+    var rememberSameSiteString = app.Configuration["RememberMe:SameSite"] ?? "Strict";
+    var rememberSameSite = SameSiteMode.Strict;
+    if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+        rememberSameSite = SameSiteMode.Lax;
+    var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
+    var requireSecure = app.Environment.IsDevelopment() ? app.Configuration.GetValue<bool>("Cookie:RequireSecure") : true;
+
+    var newRefreshToken = Base64Url(RandomBytes(32));
+    var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
+    var newRt = new RefreshToken
+    {
+        Id = Guid.NewGuid().ToString("N"),
+        UserId = user.Id,
+        SessionId = sessionId,
+        Token = newRefreshToken,
+        CreatedAtUtc = nowIso,
+        ExpiresAtUtc = refreshExpires.ToString("O"),
+        RevokedAtUtc = null,
+        UserAgent = ua,
+        ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+        RotationParentId = stored.Id,
+        RotationReason = "rotated"
+    };
+
+    await refreshRepo.RotateAsync(stored.Id, newRt, "rotated", ctx.RequestAborted);
+
+    // Set cookies
+    ctx.Response.Cookies.Append(
+        "access_token",
+        access,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = requireSecure,
+            SameSite = SameSiteMode.Strict,
+            Path = "/",
+            MaxAge = expiresUtc - DateTime.UtcNow
+        });
+
+    ctx.Response.Cookies.Append(
+        cookieName,
+        newRefreshToken,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = requireSecure,
+            SameSite = rememberSameSite,
+            Path = rememberPath,
+            MaxAge = refreshExpires - DateTime.UtcNow
+        });
+
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued = true });
+});
+
+/// <summary>
 /// Introspezione: restituisce stato sessione (attiva/revocata/scaduta) usando token da header Bearer o cookie.
 /// </summary>
 app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions) =>

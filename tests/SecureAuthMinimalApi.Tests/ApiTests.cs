@@ -1212,6 +1212,122 @@ CREATE TABLE IF NOT EXISTS users (
     }
 
     [Fact]
+    public async Task Refresh_with_valid_token_rotates_and_emits_new_cookies()
+    {
+        LogTestStart();
+        var username = $"refresh_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var refreshCookie = setCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var refreshResp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
+        var newSetCookies = refreshResp.Headers.GetValues("Set-Cookie").ToList();
+        var newRefreshCookie = newSetCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        Assert.NotEqual(refreshCookie, newRefreshCookie);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var revoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token = @t", new { t = refreshCookie.Split('=')[1] });
+        Assert.False(string.IsNullOrWhiteSpace(revoked));
+    }
+
+    [Fact]
+    public async Task Refresh_with_revoked_token_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"refresh_rev_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var csrf = (await login.Content.ReadFromJsonAsync<LoginResponse>())!.CsrfToken!;
+        var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var accessCookie = cookies.First(c => c.StartsWith("access_token")).Split(';', 2)[0];
+        var refreshCookie = cookies.First(c => c.StartsWith("refresh_token")).Split(';', 2)[0];
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", $"{accessCookie}; {refreshCookie}");
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var refreshResp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, refreshResp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_with_expired_token_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"refresh_exp_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+        {
+            await db.OpenAsync();
+            await db.ExecuteAsync("UPDATE refresh_tokens SET expires_at_utc = @exp WHERE token = @t", new { exp = DateTime.UtcNow.AddMinutes(-1).ToString("O"), t = refreshCookie.Split('=')[1] });
+        }
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var resp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_with_ua_mismatch_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"refresh_ua_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        // Login con UA specifico
+        using var loginReq = new HttpRequestMessage(HttpMethod.Post, "/login");
+        loginReq.Headers.TryAddWithoutValidation("User-Agent", "UA-1");
+        loginReq.Content = JsonContent.Create(new { Username = username, Password = password, Email = email, RememberMe = true });
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+        var login = await _client.SendAsync(loginReq);
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.TryAddWithoutValidation("User-Agent", "UA-2");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var resp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
     public async Task Totp_secret_is_encrypted_at_rest()
     {
         LogTestStart();
