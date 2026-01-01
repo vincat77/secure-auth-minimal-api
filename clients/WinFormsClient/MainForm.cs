@@ -16,9 +16,11 @@ public sealed class MainForm : Form
 {
     private readonly TextBox _urlBox = new() { Text = "https://localhost:52899", Dock = DockStyle.Fill };
     private readonly TextBox _userBox = new() { Text = "demo", Dock = DockStyle.Fill };
+    private readonly TextBox _emailBox = new() { Text = "demo@example.com", Dock = DockStyle.Fill };
     private readonly TextBox _passBox = new() { Text = "demo", UseSystemPasswordChar = true, Dock = DockStyle.Fill };
     private readonly TextBox _totpBox = new() { Text = "", Dock = DockStyle.Fill, PlaceholderText = "TOTP (se richiesto)" };
     private readonly Button _registerButton = new() { Text = "Registrati" };
+    private readonly Button _confirmEmailButton = new() { Text = "Conferma email" };
     private readonly Button _loginButton = new() { Text = "Login" };
     private readonly Button _setupMfaButton = new() { Text = "Attiva MFA" };
     private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA" };
@@ -34,6 +36,7 @@ public sealed class MainForm : Form
     private readonly ListBox _logBox = new() { Dock = DockStyle.Fill, Height = 120 };
     private readonly Label _busyLabel = new() { Text = "", AutoSize = true, ForeColor = System.Drawing.Color.DarkSlateGray };
     private readonly SessionCard _sessionCard = new();
+    private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
 
     private HttpClient _http = null!;
     private HttpClientHandler _handler = null!;
@@ -53,7 +56,7 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 10,
+            RowCount = 12,
             Padding = new Padding(10),
             AutoSize = true
         };
@@ -66,39 +69,46 @@ public sealed class MainForm : Form
         layout.Controls.Add(new Label { Text = "Username:", AutoSize = true }, 0, 1);
         layout.Controls.Add(_userBox, 1, 1);
 
-        layout.Controls.Add(new Label { Text = "Password:", AutoSize = true }, 0, 2);
-        layout.Controls.Add(_passBox, 1, 2);
+        layout.Controls.Add(new Label { Text = "Email:", AutoSize = true }, 0, 2);
+        layout.Controls.Add(_emailBox, 1, 2);
 
-        layout.Controls.Add(new Label { Text = "TOTP (opzionale):", AutoSize = true }, 0, 3);
-        layout.Controls.Add(_totpBox, 1, 3);
+        layout.Controls.Add(new Label { Text = "Password:", AutoSize = true }, 0, 3);
+        layout.Controls.Add(_passBox, 1, 3);
+
+        layout.Controls.Add(new Label { Text = "TOTP (opzionale):", AutoSize = true }, 0, 4);
+        layout.Controls.Add(_totpBox, 1, 4);
 
         var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _loginButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
-        layout.Controls.Add(buttonsPanel, 1, 4);
+        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
+        layout.Controls.Add(buttonsPanel, 1, 5);
 
         var statusPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown };
         statusPanel.Controls.AddRange(new Control[] { _badgeLabel, _stateLabel, _userLabel, _sessionLabel, _expLabel });
-        layout.Controls.Add(statusPanel, 0, 5);
+        layout.Controls.Add(statusPanel, 0, 6);
         layout.SetColumnSpan(statusPanel, 2);
 
-        layout.Controls.Add(_sessionCard, 0, 6);
+        layout.Controls.Add(_sessionCard, 0, 7);
         layout.SetColumnSpan(_sessionCard, 2);
 
-        layout.Controls.Add(_outputBox, 0, 7);
+        layout.Controls.Add(_outputBox, 0, 8);
         layout.SetColumnSpan(_outputBox, 2);
 
-        layout.Controls.Add(_busyLabel, 0, 8);
+        layout.Controls.Add(_busyLabel, 0, 9);
         layout.SetColumnSpan(_busyLabel, 2);
 
-        layout.Controls.Add(new Label { Text = "Log eventi:", AutoSize = true }, 0, 8);
-        layout.Controls.Add(_logBox, 0, 9);
+        layout.Controls.Add(new Label { Text = "Log eventi:", AutoSize = true }, 0, 9);
+        layout.Controls.Add(_logBox, 0, 10);
         layout.SetColumnSpan(_logBox, 2);
+
+        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 11);
+        layout.Controls.Add(_confirmTokenBox, 1, 11);
 
         // Aggiungi prima il layout (fill), poi il banner top per riservare spazio.
         Controls.Add(layout);
         Controls.Add(_banner);
 
         _registerButton.Click += async (_, _) => await RegisterAsync();
+        _confirmEmailButton.Click += async (_, _) => await ConfirmEmailAsync();
         _loginButton.Click += async (_, _) => await LoginAsync();
         _setupMfaButton.Click += async (_, _) => await SetupMfaAsync();
         _disableMfaButton.Click += async (_, _) => await DisableMfaAsync();
@@ -116,15 +126,16 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Registrazione in corso...");
         try
         {
-            var payload = new { username = _userBox.Text, password = _passBox.Text };
+            var payload = new { username = _userBox.Text, password = _passBox.Text, email = _emailBox.Text };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/register"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
             if (response.StatusCode == HttpStatusCode.Created)
             {
                 var reg = JsonSerializer.Deserialize<RegisterResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                Append($"Registrazione OK. userId={reg?.UserId}");
-                LogEvent("Info", $"Registrazione utente {reg?.UserId}");
+                _confirmTokenBox.Text = reg?.EmailConfirmToken ?? "";
+                Append($"Registrazione OK. userId={reg?.UserId} token={reg?.EmailConfirmToken}");
+                LogEvent("Info", $"Registrazione utente {reg?.UserId} token conferma impostato");
                 SetState("Non autenticato", null, null, null);
                 return;
             }
@@ -176,6 +187,43 @@ public sealed class MainForm : Form
         {
             Append($"Errore login: {ex.Message}");
             LogEvent("Errore", $"Login eccezione: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Conferma email usando il token (solo dev).
+    /// </summary>
+    private async Task ConfirmEmailAsync()
+    {
+        using var busy = BeginBusy("Conferma email in corso...");
+        try
+        {
+            var token = _confirmTokenBox.Text;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                Append("Token conferma email mancante.");
+                LogEvent("Errore", "Token conferma email mancante");
+                return;
+            }
+
+            var payload = new { token };
+            var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/confirm-email"), payload);
+            var body = await response.Content.ReadAsStringAsync();
+            Append($"POST /confirm-email -> {(int)response.StatusCode}\n{body}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                LogEvent("Info", "Email confermata");
+            }
+            else
+            {
+                LogEvent("Errore", $"Conferma email fallita status={(int)response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Append($"Errore conferma email: {ex.Message}");
+            LogEvent("Errore", $"Conferma email eccezione: {ex.Message}");
         }
     }
 
@@ -340,6 +388,7 @@ public sealed class MainForm : Form
     private void SetButtonsEnabled(bool enabled)
     {
         _registerButton.Enabled = enabled;
+        _confirmEmailButton.Enabled = enabled;
         _loginButton.Enabled = enabled;
         _meButton.Enabled = enabled;
         _logoutButton.Enabled = enabled;
@@ -364,7 +413,7 @@ public sealed class MainForm : Form
     }
 
     private sealed record LoginResponse(bool Ok, string? CsrfToken);
-    private sealed record RegisterResponse(bool Ok, string? UserId);
+    private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId, string ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
 
