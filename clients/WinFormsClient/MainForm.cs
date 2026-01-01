@@ -41,6 +41,7 @@ public sealed class MainForm : Form
     private readonly SessionCard _sessionCard = new();
     private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
     private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1000 };
+    private DateTime? _refreshExpiresUtc;
 
     private HttpClient _http = null!;
     private HttpClientHandler _handler = null!;
@@ -187,6 +188,10 @@ public sealed class MainForm : Form
             {
                 Append($"Login OK. csrfToken={_csrfToken}");
                 LogEvent("Info", "Login OK");
+                if (login?.RefreshExpiresAtUtc is not null && DateTime.TryParse(login.RefreshExpiresAtUtc, out var refreshExp))
+                {
+                    _refreshExpiresUtc = refreshExp.ToUniversalTime();
+                }
                 await RefreshSessionInfoAsync();
             }
         }
@@ -216,6 +221,10 @@ public sealed class MainForm : Form
             var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = login?.CsrfToken ?? _csrfToken;
             _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            if (login?.RefreshExpiresAtUtc is not null && DateTime.TryParse(login.RefreshExpiresAtUtc, out var refreshExp))
+            {
+                _refreshExpiresUtc = refreshExp.ToUniversalTime();
+            }
             LogEvent("Info", "Refresh OK");
             await RefreshSessionInfoAsync();
         }
@@ -449,7 +458,7 @@ public sealed class MainForm : Form
         }
     }
 
-    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
@@ -464,6 +473,7 @@ public sealed class MainForm : Form
             ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
         };
         _http = new HttpClient(_handler);
+        _refreshExpiresUtc = null;
         SetState("Non autenticato", null, null, null);
         _countdownTimer.Stop();
     }
@@ -499,7 +509,7 @@ public sealed class MainForm : Form
         _userLabel.Text = $"Utente: {(string.IsNullOrWhiteSpace(userId) ? "-" : userId)}";
         _sessionLabel.Text = $"SessionId: {(string.IsNullOrWhiteSpace(sessionId) ? "-" : sessionId)}";
         _expLabel.Text = $"Scadenza: {(string.IsNullOrWhiteSpace(expiresAtUtc) ? "-" : expiresAtUtc)}";
-        _sessionCard.UpdateInfo(userId, sessionId, expiresAtUtc, createdAtUtc);
+        _sessionCard.UpdateInfo(userId, sessionId, expiresAtUtc, createdAtUtc, _refreshExpiresUtc);
 
         switch (state.ToLowerInvariant())
         {

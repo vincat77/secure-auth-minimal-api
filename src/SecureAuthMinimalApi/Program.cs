@@ -352,6 +352,7 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
     var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
     var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
     var rememberIssued = false;
+    string? refreshExpiresUtc = null;
 
     if (req?.RememberMe == true)
     {
@@ -373,6 +374,7 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         };
         var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
         await refreshRepo.CreateAsync(rt, ctx.RequestAborted);
+        refreshExpiresUtc = refreshExpires.ToString("O");
 
         ctx.Response.Cookies.Append(
             rememberCookieName,
@@ -383,12 +385,12 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
                 Secure = requireSecure,
                 SameSite = rememberSameSite,
                 Path = rememberPath,
-                MaxAge = refreshExpires - DateTime.UtcNow
-            });
+            MaxAge = refreshExpires - DateTime.UtcNow
+        });
         rememberIssued = true;
     }
 
-    return Results.Ok(new { ok = true, csrfToken, rememberIssued });
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued, refreshExpiresAtUtc = refreshExpiresUtc });
 });
 
 app.MapGet("/me", (HttpContext ctx) =>
@@ -660,7 +662,7 @@ app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshToke
             MaxAge = refreshExpires - DateTime.UtcNow
         });
 
-    return Results.Ok(new { ok = true, csrfToken, rememberIssued = true });
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, refreshExpiresAtUtc = refreshExpires.ToString("O") });
 });
 
 /// <summary>
