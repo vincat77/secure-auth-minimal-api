@@ -239,6 +239,13 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         return Results.Unauthorized();
     }
 
+    if (!user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
+    {
+        logger.LogWarning("Login bloccato: email non confermata username={Username}", safeUsername);
+        await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);
+        return Results.Json(new { ok = false, error = "email_not_confirmed" }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
         if (!string.IsNullOrWhiteSpace(user.TotpSecret))
         {
             if (string.IsNullOrWhiteSpace(req?.TotpCode))

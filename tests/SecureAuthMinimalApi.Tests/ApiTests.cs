@@ -226,6 +226,12 @@ public class ApiTests : IAsyncLifetime
     private sealed record IntrospectResponse(bool Active, string? Reason, string? SessionId, string? UserId, string? ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
 
+    private async Task ConfirmEmailAsync(string token)
+    {
+        var resp = await _client.PostAsJsonAsync("/confirm-email", new { Token = token });
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+    }
+
     [Fact]
     public void Jwt_claims_are_minimal_and_validatable()
     {
@@ -320,6 +326,8 @@ public class ApiTests : IAsyncLifetime
         Assert.False(string.IsNullOrWhiteSpace(regPayload.EmailConfirmToken));
         Assert.False(string.IsNullOrWhiteSpace(regPayload.EmailConfirmExpiresUtc));
 
+        await ConfirmEmailAsync(regPayload.EmailConfirmToken!);
+
         var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
 
         using var meReq = new HttpRequestMessage(HttpMethod.Get, "/me");
@@ -370,6 +378,32 @@ public class ApiTests : IAsyncLifetime
         var row = await db.QuerySingleAsync<(string Token, string Expires)>("SELECT email_confirm_token, email_confirm_expires_utc FROM users WHERE username = @u", new { u = username });
         Assert.Equal(payload.EmailConfirmToken, row.Token);
         Assert.Equal(payload.EmailConfirmExpiresUtc, row.Expires);
+    }
+
+    [Fact]
+    public async Task Login_blocks_when_email_not_confirmed()
+    {
+        LogTestStart();
+        var username = $"need_confirm_{Guid.NewGuid():N}";
+        var email = $"{username}@example.com";
+        var password = "P@ssw0rd!Long";
+
+        var reg = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+        var payload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(payload);
+        var token = payload!.EmailConfirmToken!;
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Forbidden, login.StatusCode);
+        var doc = await login.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.NotNull(doc);
+        Assert.Equal("email_not_confirmed", doc!.RootElement.GetProperty("error").GetString());
+
+        await ConfirmEmailAsync(token);
+
+        var loginOk = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.OK, loginOk.StatusCode);
     }
 
     [Fact]
@@ -861,6 +895,9 @@ CREATE TABLE IF NOT EXISTS users (
 
         var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
         Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
 
         var fail = await _client.PostAsJsonAsync("/login", new { Username = username, Password = "wrong" });
         Assert.Equal(HttpStatusCode.Unauthorized, fail.StatusCode);
@@ -1082,6 +1119,9 @@ CREATE TABLE IF NOT EXISTS users (
 
         var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
         Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
 
         var fail = await _client.PostAsJsonAsync("/login", new { Username = username, Password = "wrong" });
         Assert.Equal(HttpStatusCode.Unauthorized, fail.StatusCode);
@@ -1515,6 +1555,21 @@ CREATE TABLE IF NOT EXISTS users (
     private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string username = "demo", string password = "demo")
     {
         var loginResponse = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        if (loginResponse.StatusCode == HttpStatusCode.Forbidden)
+        {
+            var doc = await loginResponse.Content.ReadFromJsonAsync<JsonDocument>();
+            var error = doc?.RootElement.GetProperty("error").GetString();
+            if (string.Equals(error, "email_not_confirmed", StringComparison.OrdinalIgnoreCase))
+            {
+                await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+                await db.OpenAsync();
+                var token = await db.ExecuteScalarAsync<string>("SELECT email_confirm_token FROM users WHERE username = @u", new { u = username });
+                Assert.False(string.IsNullOrWhiteSpace(token));
+                var confirm = await _client.PostAsJsonAsync("/confirm-email", new { Token = token });
+                Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+                loginResponse = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            }
+        }
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
         var loginPayload = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
         Assert.NotNull(loginPayload);
@@ -1551,6 +1606,10 @@ CREATE TABLE IF NOT EXISTS users (
 
             var register = await client.PostAsJsonAsync("/register", new { Username = mixed, Password = password, Email = email });
             Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+            var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+            Assert.NotNull(regPayload);
+            var confirm = await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+            Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
 
             await using (var dbCheck = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
             {
