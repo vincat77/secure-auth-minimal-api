@@ -218,7 +218,7 @@ public class ApiTests : IAsyncLifetime
     }
 
     private sealed record HealthResponse(bool Ok);
-    private sealed record LoginResponse(bool Ok, string? CsrfToken);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId);
     private sealed record LogoutResponse(bool Ok);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
@@ -1175,6 +1175,191 @@ CREATE TABLE IF NOT EXISTS users (
         var code = totp.ComputeTotp();
         var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, TotpCode = code });
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_with_remember_emits_refresh_cookie()
+    {
+        LogTestStart();
+        var username = $"remember_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var response = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload!.Ok);
+        Assert.True(payload.RememberIssued);
+
+        var setCookies = response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.ToList()
+            : new List<string>();
+        var refresh = setCookies.FirstOrDefault(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+        Assert.False(string.IsNullOrWhiteSpace(refresh));
+        var lower = refresh!.ToLowerInvariant();
+        Assert.Contains("httponly", lower);
+        // In ambiente di test Cookie:RequireSecure=false, quindi secure potrebbe mancare; verifichiamo comunque HttpOnly/SameSite/Path/Max-Age.
+        Assert.Contains("samesite=strict", lower);
+        Assert.Contains("path=/refresh", lower);
+        Assert.Contains("max-age", lower);
+    }
+
+    [Fact]
+    public async Task Refresh_with_valid_token_rotates_and_emits_new_cookies()
+    {
+        LogTestStart();
+        var username = $"refresh_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var refreshCookie = setCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var refreshResp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
+        var newSetCookies = refreshResp.Headers.GetValues("Set-Cookie").ToList();
+        var newRefreshCookie = newSetCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        Assert.NotEqual(refreshCookie, newRefreshCookie);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var revoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token = @t", new { t = refreshCookie.Split('=')[1] });
+        Assert.False(string.IsNullOrWhiteSpace(revoked));
+    }
+
+    [Fact]
+    public async Task Refresh_with_revoked_token_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"refresh_rev_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var csrf = (await login.Content.ReadFromJsonAsync<LoginResponse>())!.CsrfToken!;
+        var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var accessCookie = cookies.First(c => c.StartsWith("access_token")).Split(';', 2)[0];
+        var refreshCookie = cookies.First(c => c.StartsWith("refresh_token")).Split(';', 2)[0];
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", $"{accessCookie}; {refreshCookie}");
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var refreshResp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, refreshResp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_with_expired_token_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"refresh_exp_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+        {
+            await db.OpenAsync();
+            await db.ExecuteAsync("UPDATE refresh_tokens SET expires_at_utc = @exp WHERE token = @t", new { exp = DateTime.UtcNow.AddMinutes(-1).ToString("O"), t = refreshCookie.Split('=')[1] });
+        }
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var resp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_with_ua_mismatch_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"refresh_ua_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        // Login con UA specifico
+        using var loginReq = new HttpRequestMessage(HttpMethod.Post, "/login");
+        loginReq.Headers.TryAddWithoutValidation("User-Agent", "UA-1");
+        loginReq.Content = JsonContent.Create(new { Username = username, Password = password, Email = email, RememberMe = true });
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+        var login = await _client.SendAsync(loginReq);
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.TryAddWithoutValidation("User-Agent", "UA-2");
+        refreshReq.Headers.Add("Cookie", refreshCookie);
+        var resp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_remember_respects_configured_days_for_maxage()
+    {
+        LogTestStart();
+        var extra = new Dictionary<string, string?>
+        {
+            ["RememberMe:Days"] = "3"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: extra);
+        try
+        {
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo", RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var setCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+            var lower = setCookie.ToLowerInvariant();
+            Assert.Contains("max-age", lower);
+
+            // estrai max-age e verifica circa 3 giorni (tolleranza qualche secondo)
+            var parts = lower.Split(';', StringSplitOptions.TrimEntries);
+            var maxAgePart = parts.First(p => p.StartsWith("max-age"));
+            var maxAgeSec = int.Parse(maxAgePart.Split('=')[1]);
+            var expected = 3 * 24 * 60 * 60;
+            Assert.InRange(maxAgeSec, expected - 5, expected + 5);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
     }
 
     [Fact]

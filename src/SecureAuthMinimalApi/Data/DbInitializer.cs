@@ -57,6 +57,20 @@ CREATE TABLE IF NOT EXISTS login_audit (
   client_ip TEXT NULL,
   user_agent TEXT NULL,
   detail TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  session_id TEXT NULL,
+  token TEXT NOT NULL UNIQUE,
+  created_at_utc TEXT NOT NULL,
+  expires_at_utc TEXT NOT NULL,
+  revoked_at_utc TEXT NULL,
+  user_agent TEXT NULL,
+  client_ip TEXT NULL,
+  rotation_parent_id TEXT NULL,
+  rotation_reason TEXT NULL
 );";
         conn.Execute(ddl);
 
@@ -70,6 +84,12 @@ CREATE TABLE IF NOT EXISTS login_audit (
         EnsureColumn(conn, "users", "email_confirm_expires_utc");
         const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
         conn.Execute(idxEmail);
+        const string idxRefreshToken = "CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);";
+        const string idxRefreshUser = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);";
+        const string idxRefreshSession = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_session ON refresh_tokens(session_id);";
+        conn.Execute(idxRefreshToken);
+        conn.Execute(idxRefreshUser);
+        conn.Execute(idxRefreshSession);
 
         const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
         var exists = conn.ExecuteScalar<long>(seedCheck);
