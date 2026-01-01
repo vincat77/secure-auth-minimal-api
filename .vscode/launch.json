@@ -1,0 +1,20 @@
+{
+  // Configurazione per avviare l'API da VS Code.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch SecureAuthMinimalApi",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/SecureAuthMinimalApi/bin/Debug/net8.0/SecureAuthMinimalApi.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/SecureAuthMinimalApi",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ]
+}
