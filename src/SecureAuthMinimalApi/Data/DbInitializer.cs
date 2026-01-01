@@ -61,6 +61,11 @@ CREATE TABLE IF NOT EXISTS login_audit (
         {
             var demoHash = Services.PasswordHasher.Hash("demo");
             EnsureColumn(conn, "users", "totp_secret");
+            EnsureColumn(conn, "users", "email");
+            EnsureColumn(conn, "users", "email_normalized");
+            EnsureColumn(conn, "users", "email_confirmed", "INTEGER DEFAULT 0");
+            EnsureColumn(conn, "users", "email_confirm_token");
+            EnsureColumn(conn, "users", "email_confirm_expires_utc");
             const string seedInsert = @"
 INSERT INTO users (id, username, password_hash, created_at_utc)
 VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc);";
@@ -74,12 +79,12 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc);";
         }
     }
 
-    private static void EnsureColumn(SqliteConnection conn, string table, string column)
+    private static void EnsureColumn(SqliteConnection conn, string table, string column, string? typeOverride = null)
     {
         var pragma = conn.Query<string>($"PRAGMA table_info({table});");
         if (!pragma.Any(x => x.Contains(column, StringComparison.OrdinalIgnoreCase)))
         {
-            conn.Execute($"ALTER TABLE {table} ADD COLUMN {column} TEXT NULL;");
+            conn.Execute($"ALTER TABLE {table} ADD COLUMN {column} {typeOverride ?? "TEXT NULL"};");
         }
     }
 }
