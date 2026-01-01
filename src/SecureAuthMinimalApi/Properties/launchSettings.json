@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "SecureAuthMinimalApi": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:52899;http://localhost:52900"
+    }
+  }
+}
