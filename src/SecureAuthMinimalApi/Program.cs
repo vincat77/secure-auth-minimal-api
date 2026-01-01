@@ -341,9 +341,14 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         });
 
     var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
-    var rememberSameSite = (app.Configuration["RememberMe:SameSite"] ?? "Strict").Equals("Lax", StringComparison.OrdinalIgnoreCase)
-        ? SameSiteMode.Lax
-        : SameSiteMode.Strict;
+    var rememberSameSiteString = app.Configuration["RememberMe:SameSite"] ?? "Strict";
+    var rememberSameSite = SameSiteMode.Strict;
+    if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+        rememberSameSite = SameSiteMode.Lax;
+    else if (!rememberSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
+        logger.LogWarning("RememberMe:SameSite non valido ({SameSite}), fallback a Strict", rememberSameSiteString);
+    if (!isDevelopment && rememberSameSite == SameSiteMode.None)
+        logger.LogWarning("RememberMe:SameSite=None in ambiente non Development: sconsigliato");
     var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
     var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
     var rememberIssued = false;
