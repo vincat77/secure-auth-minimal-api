@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   expires_at_utc TEXT NOT NULL,
   revoked_at_utc TEXT NULL,
   user_data_json TEXT NOT NULL,
-  csrf_token TEXT NOT NULL
+  csrf_token TEXT NOT NULL,
+  last_seen_utc TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS login_throttle (
@@ -82,6 +83,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
         EnsureColumn(conn, "users", "email_confirmed", "INTEGER DEFAULT 0");
         EnsureColumn(conn, "users", "email_confirm_token");
         EnsureColumn(conn, "users", "email_confirm_expires_utc");
+        EnsureColumn(conn, "user_sessions", "last_seen_utc");
+        conn.Execute("UPDATE user_sessions SET last_seen_utc = created_at_utc WHERE last_seen_utc IS NULL;");
         const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
         conn.Execute(idxEmail);
         const string idxRefreshToken = "CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);";
