@@ -19,6 +19,7 @@ builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();
 builder.Services.AddSingleton<LoginAuditRepository>();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<TotpSecretProtector>();
+builder.Services.AddSingleton<RefreshTokenRepository>();
 
 builder.Services.AddTransient<CookieJwtAuthMiddleware>();
 builder.Services.AddTransient<CsrfMiddleware>();
@@ -339,7 +340,57 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
             MaxAge = expiresUtc - DateTime.UtcNow
         });
 
-    return Results.Ok(new { ok = true, csrfToken });
+    var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
+    var rememberSameSiteString = app.Configuration["RememberMe:SameSite"] ?? "Strict";
+    var rememberSameSite = SameSiteMode.Strict;
+    if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+        rememberSameSite = SameSiteMode.Lax;
+    else if (!rememberSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
+        logger.LogWarning("RememberMe:SameSite non valido ({SameSite}), fallback a Strict", rememberSameSiteString);
+    if (!isDevelopment && rememberSameSite == SameSiteMode.None)
+        logger.LogWarning("RememberMe:SameSite=None in ambiente non Development: sconsigliato");
+    var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
+    var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
+    var rememberIssued = false;
+    string? refreshExpiresUtc = null;
+
+    if (req?.RememberMe == true)
+    {
+        var refreshToken = Base64Url(RandomBytes(32));
+        var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
+        var rt = new RefreshToken
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            UserId = user.Id,
+            SessionId = sessionId,
+            Token = refreshToken,
+            CreatedAtUtc = nowIso,
+            ExpiresAtUtc = refreshExpires.ToString("O"),
+            RevokedAtUtc = null,
+            UserAgent = ctx.Request.Headers["User-Agent"].ToString(),
+            ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+            RotationParentId = null,
+            RotationReason = null
+        };
+        var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
+        await refreshRepo.CreateAsync(rt, ctx.RequestAborted);
+        refreshExpiresUtc = refreshExpires.ToString("O");
+
+        ctx.Response.Cookies.Append(
+            rememberCookieName,
+            refreshToken,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = requireSecure,
+                SameSite = rememberSameSite,
+                Path = rememberPath,
+            MaxAge = refreshExpires - DateTime.UtcNow
+        });
+        rememberIssued = true;
+    }
+
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued, refreshExpiresAtUtc = refreshExpiresUtc });
 });
 
 app.MapGet("/me", (HttpContext ctx) =>
@@ -376,6 +427,21 @@ app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions) =>
         SameSite = SameSiteMode.Strict,
         Path = "/"
     });
+
+    if (ctx.Request.Cookies.TryGetValue(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", out var refreshToken) && !string.IsNullOrWhiteSpace(refreshToken))
+    {
+        var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
+        await refreshRepo.RevokeByTokenAsync(refreshToken, "logout", ctx.RequestAborted);
+        ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
+        {
+            Expires = DateTimeOffset.UnixEpoch,
+            HttpOnly = true,
+            Secure = requireSecure,
+            SameSite = SameSiteMode.Strict,
+            Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
+        });
+        logger.LogInformation("Logout: refresh token revocato");
+    }
 
     return Results.Ok(new { ok = true });
 
@@ -466,6 +532,137 @@ app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
     await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
     logger.LogInformation("Email confermata userId={UserId}", user.Id);
     return Results.Ok(new { ok = true });
+});
+
+/// <summary>
+/// Logout da tutti i dispositivi: revoca tutti i refresh token dell'utente corrente e la sessione attuale.
+/// </summary>
+app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo) =>
+{
+    var session = ctx.GetRequiredSession();
+
+    await refreshRepo.RevokeAllForUserAsync(session.UserId, "logout-all", ctx.RequestAborted);
+    await sessions.RevokeAsync(session.SessionId, DateTime.UtcNow.ToString("O"), ctx.RequestAborted);
+    logger.LogInformation("Logout-all eseguito userId={UserId} sessionId={SessionId}", session.UserId, session.SessionId);
+
+    var requireSecure = app.Environment.IsDevelopment() ? app.Configuration.GetValue<bool>("Cookie:RequireSecure") : true;
+    ctx.Response.Cookies.Append("access_token", "", new CookieOptions
+    {
+        Expires = DateTimeOffset.UnixEpoch,
+        HttpOnly = true,
+        Secure = requireSecure,
+        SameSite = SameSiteMode.Strict,
+        Path = "/"
+    });
+    ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
+    {
+        Expires = DateTimeOffset.UnixEpoch,
+        HttpOnly = true,
+        Secure = requireSecure,
+        SameSite = SameSiteMode.Strict,
+        Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
+    });
+
+    return Results.Ok(new { ok = true });
+});
+
+/// <summary>
+/// Refresh: ruota il refresh token, verifica binding UA e scadenza, emette nuovo access+refresh.
+/// </summary>
+app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users) =>
+{
+    var cookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
+    if (!ctx.Request.Cookies.TryGetValue(cookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+        return Results.Unauthorized();
+
+    var stored = await refreshRepo.GetByTokenAsync(refreshToken, ctx.RequestAborted);
+    if (stored is null || !string.IsNullOrWhiteSpace(stored.RevokedAtUtc))
+        return Results.Unauthorized();
+
+    if (!DateTime.TryParse(stored.ExpiresAtUtc, out var expRt) || expRt.ToUniversalTime() <= DateTime.UtcNow)
+        return Results.Unauthorized();
+
+    var ua = ctx.Request.Headers["User-Agent"].ToString();
+    if (!string.Equals(ua, stored.UserAgent, StringComparison.Ordinal))
+        return Results.Unauthorized();
+
+    var user = await users.GetByIdAsync(stored.UserId, ctx.RequestAborted);
+    if (user is null)
+        return Results.Unauthorized();
+
+    // Crea nuova sessione
+    var sessionId = Guid.NewGuid().ToString("N");
+    var csrfToken = Base64Url(RandomBytes(32));
+    var (access, expiresUtc) = jwt.CreateAccessToken(sessionId);
+    var nowIso = DateTime.UtcNow.ToString("O");
+    var expIso = expiresUtc.ToString("O");
+
+    var session = new UserSession
+    {
+        SessionId = sessionId,
+        UserId = user.Id,
+        CreatedAtUtc = nowIso,
+        ExpiresAtUtc = expIso,
+        RevokedAtUtc = null,
+        UserDataJson = JsonSerializer.Serialize(new { username = user.Username }),
+        CsrfToken = csrfToken
+    };
+    await sessions.CreateAsync(session, ctx.RequestAborted);
+
+    // Ruota refresh
+    var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
+    var rememberSameSiteString = app.Configuration["RememberMe:SameSite"] ?? "Strict";
+    var rememberSameSite = SameSiteMode.Strict;
+    if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+        rememberSameSite = SameSiteMode.Lax;
+    var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
+    var requireSecure = app.Environment.IsDevelopment() ? app.Configuration.GetValue<bool>("Cookie:RequireSecure") : true;
+
+    var newRefreshToken = Base64Url(RandomBytes(32));
+    var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
+    var newRt = new RefreshToken
+    {
+        Id = Guid.NewGuid().ToString("N"),
+        UserId = user.Id,
+        SessionId = sessionId,
+        Token = newRefreshToken,
+        CreatedAtUtc = nowIso,
+        ExpiresAtUtc = refreshExpires.ToString("O"),
+        RevokedAtUtc = null,
+        UserAgent = ua,
+        ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+        RotationParentId = stored.Id,
+        RotationReason = "rotated"
+    };
+
+    await refreshRepo.RotateAsync(stored.Id, newRt, "rotated", ctx.RequestAborted);
+
+    // Set cookies
+    ctx.Response.Cookies.Append(
+        "access_token",
+        access,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = requireSecure,
+            SameSite = SameSiteMode.Strict,
+            Path = "/",
+            MaxAge = expiresUtc - DateTime.UtcNow
+        });
+
+    ctx.Response.Cookies.Append(
+        cookieName,
+        newRefreshToken,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = requireSecure,
+            SameSite = rememberSameSite,
+            Path = rememberPath,
+            MaxAge = refreshExpires - DateTime.UtcNow
+        });
+
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, refreshExpiresAtUtc = refreshExpires.ToString("O") });
 });
 
 /// <summary>
@@ -575,7 +772,7 @@ static string? NormalizeEmail(string? email)
     return email.Trim().ToLowerInvariant();
 }
 
-public sealed record LoginRequest(string? Username, string? Password, string? TotpCode);
+public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool RememberMe);
 public sealed record RegisterRequest(string? Username, string? Email, string? Password);
 public sealed record ConfirmEmailRequest(string? Token);
 

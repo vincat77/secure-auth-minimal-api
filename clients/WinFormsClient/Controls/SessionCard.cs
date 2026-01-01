@@ -10,6 +10,7 @@ public sealed class SessionCard : UserControl
     private readonly Label _session = new() { Text = "SessionId: -", AutoSize = true };
     private readonly Label _exp = new() { Text = "Scadenza: -", AutoSize = true };
     private readonly SessionCountdownControl _countdown = new();
+    private readonly RefreshCountdownControl _refreshCountdown = new();
 
     public SessionCard()
     {
@@ -26,11 +27,11 @@ public sealed class SessionCard : UserControl
             AutoSize = true,
             WrapContents = false
         };
-        layout.Controls.AddRange(new Control[] { _title, _user, _session, _exp, _countdown });
+        layout.Controls.AddRange(new Control[] { _title, _user, _session, _exp, _countdown, _refreshCountdown });
         Controls.Add(layout);
     }
 
-    public void UpdateInfo(string? userId, string? sessionId, string? expiresAtUtc, string? createdAtUtc = null)
+    public void UpdateInfo(string? userId, string? sessionId, string? expiresAtUtc, string? createdAtUtc = null, DateTime? refreshExpires = null)
     {
         _user.Text = $"Utente: {(string.IsNullOrWhiteSpace(userId) ? "-" : userId)}";
         _session.Text = $"SessionId: {(string.IsNullOrWhiteSpace(sessionId) ? "-" : sessionId)}";
@@ -42,10 +43,12 @@ public sealed class SessionCard : UserControl
         if (DateTime.TryParse(createdAtUtc, out var createdDt))
             created = createdDt.ToUniversalTime();
         _countdown.SetSession(created, exp);
+        _refreshCountdown.SetRefreshExpiry(refreshExpires);
     }
 
     public void TickCountdown()
     {
         _countdown.UpdateCountdown(TimeSpan.Zero);
+        _refreshCountdown.UpdateCountdown();
     }
 }
