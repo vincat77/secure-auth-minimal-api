@@ -24,7 +24,13 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  created_at_utc TEXT NOT NULL
+  created_at_utc TEXT NOT NULL,
+  totp_secret TEXT NULL,
+  email TEXT NULL,
+  email_normalized TEXT NULL,
+  email_confirmed INTEGER DEFAULT 0,
+  email_confirm_token TEXT NULL,
+  email_confirm_expires_utc TEXT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_sessions (
@@ -55,31 +61,49 @@ CREATE TABLE IF NOT EXISTS login_audit (
         conn.Execute(ddl);
 
         // Seed utente demo/demo se non esiste (solo per ambienti di esempio).
+        // Ensure new columns/indexes for existing DBs.
+        EnsureColumn(conn, "users", "totp_secret");
+        EnsureColumn(conn, "users", "email");
+        EnsureColumn(conn, "users", "email_normalized");
+        EnsureColumn(conn, "users", "email_confirmed", "INTEGER DEFAULT 0");
+        EnsureColumn(conn, "users", "email_confirm_token");
+        EnsureColumn(conn, "users", "email_confirm_expires_utc");
+        const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
+        conn.Execute(idxEmail);
+
         const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
         var exists = conn.ExecuteScalar<long>(seedCheck);
         if (exists == 0)
         {
             var demoHash = Services.PasswordHasher.Hash("demo");
-            EnsureColumn(conn, "users", "totp_secret");
             const string seedInsert = @"
-INSERT INTO users (id, username, password_hash, created_at_utc)
-VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc);";
+INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, email, email_normalized, email_confirmed)
+VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Email, @EmailNormalized, 1);";
             conn.Execute(seedInsert, new
             {
                 Id = "demo-user",
                 Username = "demo",
                 PasswordHash = demoHash,
-                CreatedAtUtc = DateTime.UtcNow.ToString("O")
+                CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+                Email = "demo@example.com",
+                EmailNormalized = "demo@example.com"
             });
         }
     }
 
-    private static void EnsureColumn(SqliteConnection conn, string table, string column)
+    private static void EnsureColumn(SqliteConnection conn, string table, string column, string? typeOverride = null)
     {
         var pragma = conn.Query<string>($"PRAGMA table_info({table});");
         if (!pragma.Any(x => x.Contains(column, StringComparison.OrdinalIgnoreCase)))
         {
-            conn.Execute($"ALTER TABLE {table} ADD COLUMN {column} TEXT NULL;");
+            try
+            {
+                conn.Execute($"ALTER TABLE {table} ADD COLUMN {column} {typeOverride ?? "TEXT NULL"};");
+            }
+            catch (SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            {
+                // già esiste, ignora per compatibilità
+            }
         }
     }
 }

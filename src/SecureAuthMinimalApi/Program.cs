@@ -144,17 +144,23 @@ app.MapGet("/ready", async (IConfiguration config) =>
 /// </summary>
 app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
 {
-    var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
+    var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
     var username = NormalizeUsername(req?.Username, forceLowerUsername);
+    var email = NormalizeEmail(req?.Email);
     var password = req?.Password ?? "";
     var inputErrors = new List<string>();
     if (string.IsNullOrWhiteSpace(username))
         inputErrors.Add("username_required");
+    if (string.IsNullOrWhiteSpace(email))
+        inputErrors.Add("email_required");
+    else if (!email.Contains('@', StringComparison.Ordinal))
+        inputErrors.Add("email_invalid");
     if (string.IsNullOrWhiteSpace(password))
         inputErrors.Add("password_required");
     if (inputErrors.Any())
         return Results.BadRequest(new { ok = false, error = "invalid_input", errors = inputErrors });
     var safeUsername = username!;
+    var safeEmail = email!;
 
     var policyErrors = AuthHelpers.ValidatePassword(password, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol);
     if (policyErrors.Any())
@@ -163,8 +169,15 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
         return Results.BadRequest(new { ok = false, error = "password_policy_failed", errors = policyErrors });
     }
 
+    var emailConfirmToken = Guid.NewGuid().ToString("N");
+    var emailConfirmExpires = DateTime.UtcNow.AddHours(24);
+
     var existing = await users.GetByUsernameAsync(safeUsername, ctx.RequestAborted);
     if (existing is not null)
+        return Results.StatusCode(StatusCodes.Status409Conflict);
+
+    var existingEmail = await users.GetByEmailAsync(safeEmail, ctx.RequestAborted);
+    if (existingEmail is not null)
         return Results.StatusCode(StatusCodes.Status409Conflict);
 
     var user = new User
@@ -172,12 +185,17 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
         Id = Guid.NewGuid().ToString("N"),
         Username = safeUsername,
         PasswordHash = PasswordHasher.Hash(password),
-        CreatedAtUtc = DateTime.UtcNow.ToString("O")
+        CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+        Email = req!.Email!,
+        EmailNormalized = safeEmail,
+        EmailConfirmed = false,
+        EmailConfirmToken = emailConfirmToken,
+        EmailConfirmExpiresUtc = emailConfirmExpires.ToString("O")
     };
 
     await users.CreateAsync(user, ctx.RequestAborted);
-    logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created}", user.Username, user.Id, user.CreatedAtUtc);
-    return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id });
+    logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created} emailToken={EmailToken} exp={EmailExp}", user.Username, user.Id, user.CreatedAtUtc, emailConfirmToken, emailConfirmExpires.ToString("O"));
+    return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email, emailConfirmToken, emailConfirmExpiresUtc = emailConfirmExpires.ToString("O") });
 });
 
 /// <summary>
@@ -219,6 +237,13 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         await throttle.RegisterFailureAsync(safeUsername, ctx.RequestAborted);
         await AuditAsync(auditRepo, safeUsername, "invalid_credentials", ctx, null);
         return Results.Unauthorized();
+    }
+
+    if (!user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
+    {
+        logger.LogWarning("Login bloccato: email non confermata username={Username}", safeUsername);
+        await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);
+        return Results.Json(new { ok = false, error = "email_not_confirmed" }, statusCode: StatusCodes.Status403Forbidden);
     }
 
         if (!string.IsNullOrWhiteSpace(user.TotpSecret))
@@ -372,6 +397,34 @@ app.MapPost("/mfa/disable", async (HttpContext ctx, UserRepository users) =>
 });
 
 /// <summary>
+/// Conferma email usando il token ricevuto in fase di registrazione.
+/// </summary>
+app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
+{
+    var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
+    if (string.IsNullOrWhiteSpace(req?.Token))
+        return Results.BadRequest(new { ok = false, error = "invalid_input", errors = new[] { "token_required" } });
+
+    var user = await users.GetByEmailTokenAsync(req.Token, ctx.RequestAborted);
+    if (user is null)
+        return Results.BadRequest(new { ok = false, error = "invalid_token" });
+
+    if (user.EmailConfirmed)
+    {
+        logger.LogInformation("Email giÃ  confermata userId={UserId}", user.Id);
+        await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
+        return Results.Ok(new { ok = true, alreadyConfirmed = true });
+    }
+
+    if (string.IsNullOrWhiteSpace(user.EmailConfirmExpiresUtc) || DateTime.Parse(user.EmailConfirmExpiresUtc).ToUniversalTime() <= DateTime.UtcNow)
+        return Results.Json(new { ok = false, error = "token_expired" }, statusCode: StatusCodes.Status410Gone);
+
+    await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
+    logger.LogInformation("Email confermata userId={UserId}", user.Id);
+    return Results.Ok(new { ok = true });
+});
+
+/// <summary>
 /// Introspezione: restituisce stato sessione (attiva/revocata/scaduta) usando token da header Bearer o cookie.
 /// </summary>
 app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions) =>
@@ -471,7 +524,16 @@ static string? NormalizeUsername(string? username, bool forceLower)
     return forceLower ? trimmed.ToLowerInvariant() : trimmed;
 }
 
+static string? NormalizeEmail(string? email)
+{
+    if (string.IsNullOrWhiteSpace(email))
+        return null;
+    return email.Trim().ToLowerInvariant();
+}
+
 public sealed record LoginRequest(string? Username, string? Password, string? TotpCode);
+public sealed record RegisterRequest(string? Username, string? Email, string? Password);
+public sealed record ConfirmEmailRequest(string? Token);
 
 public static class AuthHelpers
 {

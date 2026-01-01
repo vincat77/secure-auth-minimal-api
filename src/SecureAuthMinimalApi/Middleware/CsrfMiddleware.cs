@@ -30,7 +30,8 @@ public sealed class CsrfMiddleware : IMiddleware
             var path = context.Request.Path.Value ?? "";
             var isPublic = path.Equals("/login", StringComparison.OrdinalIgnoreCase)
                         || path.Equals("/health", StringComparison.OrdinalIgnoreCase)
-                        || path.Equals("/register", StringComparison.OrdinalIgnoreCase);
+                        || path.Equals("/register", StringComparison.OrdinalIgnoreCase)
+                        || path.Equals("/confirm-email", StringComparison.OrdinalIgnoreCase);
 
             if (!isPublic)
             {
