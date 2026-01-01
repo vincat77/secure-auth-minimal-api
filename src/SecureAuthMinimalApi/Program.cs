@@ -158,7 +158,10 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
     if (string.IsNullOrWhiteSpace(password))
         inputErrors.Add("password_required");
     if (inputErrors.Any())
+    {
+        logger.LogWarning("Registrazione input non valido username={Username} email={Email} errors={Errors}", username, email, string.Join(",", inputErrors));
         return Results.BadRequest(new { ok = false, error = "invalid_input", errors = inputErrors });
+    }
     var safeUsername = username!;
     var safeEmail = email!;
 
@@ -174,11 +177,17 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
 
     var existing = await users.GetByUsernameAsync(safeUsername, ctx.RequestAborted);
     if (existing is not null)
+    {
+        logger.LogWarning("Registrazione rifiutata: username esistente username={Username}", safeUsername);
         return Results.StatusCode(StatusCodes.Status409Conflict);
+    }
 
     var existingEmail = await users.GetByEmailAsync(safeEmail, ctx.RequestAborted);
     if (existingEmail is not null)
+    {
+        logger.LogWarning("Registrazione rifiutata: email esistente email={Email}", safeEmail);
         return Results.StatusCode(StatusCodes.Status409Conflict);
+    }
 
     var user = new User
     {
@@ -212,7 +221,10 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
     if (string.IsNullOrWhiteSpace(password))
         inputErrors.Add("password_required");
     if (inputErrors.Any())
+    {
+        logger.LogWarning("Login input non valido username={Username} errors={Errors}", username, string.Join(",", inputErrors));
         return Results.BadRequest(new { ok = false, error = "invalid_input", errors = inputErrors });
+    }
     var safeUsername = username!;
 
     if (await throttle.IsLockedAsync(safeUsername, ctx.RequestAborted))
@@ -241,7 +253,7 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
 
     if (!user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
     {
-        logger.LogWarning("Login bloccato: email non confermata username={Username}", safeUsername);
+        logger.LogWarning("Login bloccato: email non confermata username={Username} userId={UserId}", safeUsername, user.Id);
         await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);
         return Results.Json(new { ok = false, error = "email_not_confirmed" }, statusCode: StatusCodes.Status403Forbidden);
     }
@@ -403,11 +415,17 @@ app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
 {
     var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
     if (string.IsNullOrWhiteSpace(req?.Token))
+    {
+        logger.LogWarning("Conferma email fallita: token mancante");
         return Results.BadRequest(new { ok = false, error = "invalid_input", errors = new[] { "token_required" } });
+    }
 
     var user = await users.GetByEmailTokenAsync(req.Token, ctx.RequestAborted);
     if (user is null)
+    {
+        logger.LogWarning("Conferma email fallita: token non trovato token={Token}", req.Token);
         return Results.BadRequest(new { ok = false, error = "invalid_token" });
+    }
 
     if (user.EmailConfirmed)
     {
@@ -417,7 +435,10 @@ app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
     }
 
     if (string.IsNullOrWhiteSpace(user.EmailConfirmExpiresUtc) || DateTime.Parse(user.EmailConfirmExpiresUtc).ToUniversalTime() <= DateTime.UtcNow)
+    {
+        logger.LogWarning("Conferma email fallita: token scaduto userId={UserId} token={Token} exp={Exp}", user.Id, user.EmailConfirmToken, user.EmailConfirmExpiresUtc);
         return Results.Json(new { ok = false, error = "token_expired" }, statusCode: StatusCodes.Status410Gone);
+    }
 
     await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
     logger.LogInformation("Email confermata userId={UserId}", user.Id);
