@@ -390,6 +390,34 @@ app.MapPost("/mfa/disable", async (HttpContext ctx, UserRepository users) =>
 });
 
 /// <summary>
+/// Conferma email usando il token ricevuto in fase di registrazione.
+/// </summary>
+app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
+{
+    var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
+    if (string.IsNullOrWhiteSpace(req?.Token))
+        return Results.BadRequest(new { ok = false, error = "invalid_input", errors = new[] { "token_required" } });
+
+    var user = await users.GetByEmailTokenAsync(req.Token, ctx.RequestAborted);
+    if (user is null)
+        return Results.BadRequest(new { ok = false, error = "invalid_token" });
+
+    if (user.EmailConfirmed)
+    {
+        logger.LogInformation("Email giÃ  confermata userId={UserId}", user.Id);
+        await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
+        return Results.Ok(new { ok = true, alreadyConfirmed = true });
+    }
+
+    if (string.IsNullOrWhiteSpace(user.EmailConfirmExpiresUtc) || DateTime.Parse(user.EmailConfirmExpiresUtc).ToUniversalTime() <= DateTime.UtcNow)
+        return Results.Json(new { ok = false, error = "token_expired" }, statusCode: StatusCodes.Status410Gone);
+
+    await users.ConfirmEmailAsync(user.Id, ctx.RequestAborted);
+    logger.LogInformation("Email confermata userId={UserId}", user.Id);
+    return Results.Ok(new { ok = true });
+});
+
+/// <summary>
 /// Introspezione: restituisce stato sessione (attiva/revocata/scaduta) usando token da header Bearer o cookie.
 /// </summary>
 app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions) =>
@@ -498,6 +526,7 @@ static string? NormalizeEmail(string? email)
 
 public sealed record LoginRequest(string? Username, string? Password, string? TotpCode);
 public sealed record RegisterRequest(string? Username, string? Email, string? Password);
+public sealed record ConfirmEmailRequest(string? Token);
 
 public static class AuthHelpers
 {

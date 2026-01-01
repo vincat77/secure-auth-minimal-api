@@ -90,6 +90,34 @@ LIMIT 1;";
         return DecryptTotp(row);
     }
 
+    public async Task<User?> GetByEmailTokenAsync(string token, CancellationToken ct)
+    {
+        const string sql = @"
+SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
+FROM users
+WHERE email_confirm_token = @token
+LIMIT 1;";
+
+        using var db = Open();
+        var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { token }, cancellationToken: ct));
+        return DecryptTotp(row);
+    }
+
+    public async Task ConfirmEmailAsync(string userId, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE users
+SET email_confirmed = 1,
+    email_confirm_token = NULL,
+    email_confirm_expires_utc = NULL
+WHERE id = @userId;";
+
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId }, cancellationToken: ct));
+    }
+
     public async Task SetTotpSecretAsync(string userId, string secret, CancellationToken ct)
     {
         const string sql = @"

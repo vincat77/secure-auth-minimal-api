@@ -222,6 +222,7 @@ public class ApiTests : IAsyncLifetime
     private sealed record MeResponse(bool Ok, string SessionId, string UserId);
     private sealed record LogoutResponse(bool Ok);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
+    private sealed record ConfirmEmailResponse(bool Ok, bool? AlreadyConfirmed);
     private sealed record IntrospectResponse(bool Active, string? Reason, string? SessionId, string? UserId, string? ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
 
@@ -369,6 +370,65 @@ public class ApiTests : IAsyncLifetime
         var row = await db.QuerySingleAsync<(string Token, string Expires)>("SELECT email_confirm_token, email_confirm_expires_utc FROM users WHERE username = @u", new { u = username });
         Assert.Equal(payload.EmailConfirmToken, row.Token);
         Assert.Equal(payload.EmailConfirmExpiresUtc, row.Expires);
+    }
+
+    [Fact]
+    public async Task Confirm_email_with_valid_token_marks_confirmed()
+    {
+        LogTestStart();
+        var username = $"confirm_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var reg = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+        var payload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(payload);
+        var token = payload!.EmailConfirmToken!;
+
+        var confirm = await _client.PostAsJsonAsync("/confirm-email", new { Token = token });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+        var confirmPayload = await confirm.Content.ReadFromJsonAsync<ConfirmEmailResponse>();
+        Assert.True(confirmPayload!.Ok);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var flags = await db.QuerySingleAsync<(long Confirmed, string? Token, string? Exp)>("SELECT email_confirmed, email_confirm_token, email_confirm_expires_utc FROM users WHERE username = @u", new { u = username });
+        Assert.Equal(1, flags.Confirmed);
+        Assert.Null(flags.Token);
+        Assert.Null(flags.Exp);
+    }
+
+    [Fact]
+    public async Task Confirm_email_with_expired_token_returns_gone()
+    {
+        LogTestStart();
+        var username = $"confirm_exp_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var reg = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+        var payload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(payload);
+        var token = payload!.EmailConfirmToken!;
+
+        await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+        {
+            await db.OpenAsync();
+            await db.ExecuteAsync("UPDATE users SET email_confirm_expires_utc = @exp WHERE username = @u", new { exp = DateTime.UtcNow.AddMinutes(-5).ToString("O"), u = username });
+        }
+
+        var confirm = await _client.PostAsJsonAsync("/confirm-email", new { Token = token });
+        Assert.Equal(HttpStatusCode.Gone, confirm.StatusCode);
+    }
+
+    [Fact]
+    public async Task Confirm_email_with_invalid_token_returns_bad_request()
+    {
+        LogTestStart();
+        var response = await _client.PostAsJsonAsync("/confirm-email", new { Token = "invalid" });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
