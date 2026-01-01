@@ -27,8 +27,8 @@ public sealed class UserRepository
     public async Task CreateAsync(User user, CancellationToken ct)
     {
         const string sql = @"
-INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret)
-VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret);";
+INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, email, email_normalized, email_confirmed, email_confirm_token, email_confirm_expires_utc)
+VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Email, @EmailNormalized, @EmailConfirmed, @EmailConfirmToken, @EmailConfirmExpiresUtc);";
 
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
@@ -37,32 +37,56 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret);";
             user.Username,
             user.PasswordHash,
             user.CreatedAtUtc,
-            TotpSecret = string.IsNullOrWhiteSpace(user.TotpSecret) ? null : _protector.Protect(user.TotpSecret)
+            TotpSecret = string.IsNullOrWhiteSpace(user.TotpSecret) ? null : _protector.Protect(user.TotpSecret),
+            user.Email,
+            user.EmailNormalized,
+            user.EmailConfirmed,
+            user.EmailConfirmToken,
+            user.EmailConfirmExpiresUtc
         }, cancellationToken: ct));
     }
 
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)
     {
         const string sql = @"
-SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret
+SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
 FROM users
-WHERE username = @username
+WHERE username = @username OR username = @normalized
 LIMIT 1;";
 
         using var db = Open();
-        var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { username }, cancellationToken: ct));
+        var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { username, normalized = username.ToLowerInvariant() }, cancellationToken: ct));
         return DecryptTotp(row);
     }
     public async Task<User?> GetByIdAsync(string userId, CancellationToken ct)
     {
         const string sql = @"
-SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret
+SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
 FROM users
 WHERE id = @userId
 LIMIT 1;";
 
         using var db = Open();
         var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { userId }, cancellationToken: ct));
+        return DecryptTotp(row);
+    }
+
+    public async Task<User?> GetByEmailAsync(string emailNormalized, CancellationToken ct)
+    {
+        const string sql = @"
+SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
+FROM users
+WHERE email_normalized = @email
+LIMIT 1;";
+
+        using var db = Open();
+        var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { email = emailNormalized }, cancellationToken: ct));
         return DecryptTotp(row);
     }
 
@@ -103,7 +127,12 @@ WHERE id = @userId;";
                 Username = user.Username,
                 PasswordHash = user.PasswordHash,
                 CreatedAtUtc = user.CreatedAtUtc,
-                TotpSecret = string.IsNullOrWhiteSpace(plain) ? null : plain
+                TotpSecret = string.IsNullOrWhiteSpace(plain) ? null : plain,
+                Email = user.Email,
+                EmailNormalized = user.EmailNormalized,
+                EmailConfirmed = user.EmailConfirmed,
+                EmailConfirmToken = user.EmailConfirmToken,
+                EmailConfirmExpiresUtc = user.EmailConfirmExpiresUtc
             };
         }
 

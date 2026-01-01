@@ -144,17 +144,23 @@ app.MapGet("/ready", async (IConfiguration config) =>
 /// </summary>
 app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
 {
-    var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
+    var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
     var username = NormalizeUsername(req?.Username, forceLowerUsername);
+    var email = NormalizeEmail(req?.Email);
     var password = req?.Password ?? "";
     var inputErrors = new List<string>();
     if (string.IsNullOrWhiteSpace(username))
         inputErrors.Add("username_required");
+    if (string.IsNullOrWhiteSpace(email))
+        inputErrors.Add("email_required");
+    else if (!email.Contains('@', StringComparison.Ordinal))
+        inputErrors.Add("email_invalid");
     if (string.IsNullOrWhiteSpace(password))
         inputErrors.Add("password_required");
     if (inputErrors.Any())
         return Results.BadRequest(new { ok = false, error = "invalid_input", errors = inputErrors });
     var safeUsername = username!;
+    var safeEmail = email!;
 
     var policyErrors = AuthHelpers.ValidatePassword(password, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol);
     if (policyErrors.Any())
@@ -167,17 +173,24 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
     if (existing is not null)
         return Results.StatusCode(StatusCodes.Status409Conflict);
 
+    var existingEmail = await users.GetByEmailAsync(safeEmail, ctx.RequestAborted);
+    if (existingEmail is not null)
+        return Results.StatusCode(StatusCodes.Status409Conflict);
+
     var user = new User
     {
         Id = Guid.NewGuid().ToString("N"),
         Username = safeUsername,
         PasswordHash = PasswordHasher.Hash(password),
-        CreatedAtUtc = DateTime.UtcNow.ToString("O")
+        CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+        Email = req!.Email!,
+        EmailNormalized = safeEmail,
+        EmailConfirmed = false
     };
 
     await users.CreateAsync(user, ctx.RequestAborted);
     logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created}", user.Username, user.Id, user.CreatedAtUtc);
-    return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id });
+    return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email });
 });
 
 /// <summary>
@@ -471,7 +484,15 @@ static string? NormalizeUsername(string? username, bool forceLower)
     return forceLower ? trimmed.ToLowerInvariant() : trimmed;
 }
 
+static string? NormalizeEmail(string? email)
+{
+    if (string.IsNullOrWhiteSpace(email))
+        return null;
+    return email.Trim().ToLowerInvariant();
+}
+
 public sealed record LoginRequest(string? Username, string? Password, string? TotpCode);
+public sealed record RegisterRequest(string? Username, string? Email, string? Password);
 
 public static class AuthHelpers
 {

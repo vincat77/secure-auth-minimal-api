@@ -10,4 +10,9 @@ public sealed class User
     public required string PasswordHash { get; init; }
     public required string CreatedAtUtc { get; init; }
     public string? TotpSecret { get; init; }
+    public string? Email { get; init; }
+    public string? EmailNormalized { get; init; }
+    public bool EmailConfirmed { get; init; }
+    public string? EmailConfirmToken { get; init; }
+    public string? EmailConfirmExpiresUtc { get; init; }
 }
