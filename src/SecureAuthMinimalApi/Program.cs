@@ -19,6 +19,7 @@ builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();
 builder.Services.AddSingleton<LoginAuditRepository>();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<TotpSecretProtector>();
+builder.Services.AddSingleton<RefreshTokenRepository>();
 
 builder.Services.AddTransient<CookieJwtAuthMiddleware>();
 builder.Services.AddTransient<CsrfMiddleware>();
@@ -339,7 +340,50 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
             MaxAge = expiresUtc - DateTime.UtcNow
         });
 
-    return Results.Ok(new { ok = true, csrfToken });
+    var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
+    var rememberSameSite = (app.Configuration["RememberMe:SameSite"] ?? "Strict").Equals("Lax", StringComparison.OrdinalIgnoreCase)
+        ? SameSiteMode.Lax
+        : SameSiteMode.Strict;
+    var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
+    var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
+    var rememberIssued = false;
+
+    if (req?.RememberMe == true)
+    {
+        var refreshToken = Base64Url(RandomBytes(32));
+        var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
+        var rt = new RefreshToken
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            UserId = user.Id,
+            SessionId = sessionId,
+            Token = refreshToken,
+            CreatedAtUtc = nowIso,
+            ExpiresAtUtc = refreshExpires.ToString("O"),
+            RevokedAtUtc = null,
+            UserAgent = ctx.Request.Headers["User-Agent"].ToString(),
+            ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+            RotationParentId = null,
+            RotationReason = null
+        };
+        var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
+        await refreshRepo.CreateAsync(rt, ctx.RequestAborted);
+
+        ctx.Response.Cookies.Append(
+            rememberCookieName,
+            refreshToken,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = requireSecure,
+                SameSite = rememberSameSite,
+                Path = rememberPath,
+                MaxAge = refreshExpires - DateTime.UtcNow
+            });
+        rememberIssued = true;
+    }
+
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued });
 });
 
 app.MapGet("/me", (HttpContext ctx) =>

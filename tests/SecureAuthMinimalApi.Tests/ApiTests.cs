@@ -218,7 +218,7 @@ public class ApiTests : IAsyncLifetime
     }
 
     private sealed record HealthResponse(bool Ok);
-    private sealed record LoginResponse(bool Ok, string? CsrfToken);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId);
     private sealed record LogoutResponse(bool Ok);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
@@ -1175,6 +1175,40 @@ CREATE TABLE IF NOT EXISTS users (
         var code = totp.ComputeTotp();
         var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, TotpCode = code });
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_with_remember_emits_refresh_cookie()
+    {
+        LogTestStart();
+        var username = $"remember_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var response = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload!.Ok);
+        Assert.True(payload.RememberIssued);
+
+        var setCookies = response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.ToList()
+            : new List<string>();
+        var refresh = setCookies.FirstOrDefault(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+        Assert.False(string.IsNullOrWhiteSpace(refresh));
+        var lower = refresh!.ToLowerInvariant();
+        Assert.Contains("httponly", lower);
+        // In ambiente di test Cookie:RequireSecure=false, quindi secure potrebbe mancare; verifichiamo comunque HttpOnly/SameSite/Path/Max-Age.
+        Assert.Contains("samesite=strict", lower);
+        Assert.Contains("path=/refresh", lower);
+        Assert.Contains("max-age", lower);
     }
 
     [Fact]
