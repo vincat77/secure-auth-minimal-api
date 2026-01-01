@@ -148,6 +148,7 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
     var username = NormalizeUsername(req?.Username, forceLowerUsername);
     var email = NormalizeEmail(req?.Email);
     var password = req?.Password ?? "";
+    logger.LogInformation("Registrazione avviata username={Username} email={Email}", username, email);
     var inputErrors = new List<string>();
     if (string.IsNullOrWhiteSpace(username))
         inputErrors.Add("username_required");
@@ -170,6 +171,10 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
     {
         logger.LogWarning("Registrazione fallita: password non conforme username={Username} errors={Errors}", safeUsername, string.Join(",", policyErrors));
         return Results.BadRequest(new { ok = false, error = "password_policy_failed", errors = policyErrors });
+    }
+    else
+    {
+        logger.LogInformation("Registrazione: password conforme policy username={Username}", safeUsername);
     }
 
     var emailConfirmToken = Guid.NewGuid().ToString("N");
@@ -215,6 +220,7 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
     var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
     var username = NormalizeUsername(req?.Username, forceLowerUsername);
     var password = req?.Password ?? "";
+    logger.LogInformation("Login avviato username={Username}", username);
     var inputErrors = new List<string>();
     if (string.IsNullOrWhiteSpace(username))
         inputErrors.Add("username_required");
@@ -242,6 +248,10 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         await AuditAsync(auditRepo, safeUsername, "user_not_found", ctx, null);
         return Results.Unauthorized();
     }
+    else
+    {
+        logger.LogInformation("Login: utente trovato userId={UserId} emailConfirmed={EmailConfirmed}", user.Id, user.EmailConfirmed);
+    }
 
     if (!PasswordHasher.Verify(password, user.PasswordHash))
     {
@@ -249,6 +259,10 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         await throttle.RegisterFailureAsync(safeUsername, ctx.RequestAborted);
         await AuditAsync(auditRepo, safeUsername, "invalid_credentials", ctx, null);
         return Results.Unauthorized();
+    }
+    else
+    {
+        logger.LogInformation("Login: password verificata username={Username}", safeUsername);
     }
 
     if (!user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
@@ -273,6 +287,10 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
                 logger.LogWarning("Login fallito: TOTP errato username={Username}", safeUsername);
                 await AuditAsync(auditRepo, safeUsername, "invalid_totp", ctx, null);
                 return Results.Unauthorized();
+            }
+            else
+            {
+                logger.LogInformation("Login: TOTP verificato username={Username}", safeUsername);
             }
         }
     await throttle.RegisterSuccessAsync(safeUsername, ctx.RequestAborted);
@@ -419,6 +437,10 @@ app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
         logger.LogWarning("Conferma email fallita: token mancante");
         return Results.BadRequest(new { ok = false, error = "invalid_input", errors = new[] { "token_required" } });
     }
+    else
+    {
+        logger.LogInformation("Conferma email richiesta token={Token}", req.Token);
+    }
 
     var user = await users.GetByEmailTokenAsync(req.Token, ctx.RequestAborted);
     if (user is null)
@@ -426,6 +448,7 @@ app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
         logger.LogWarning("Conferma email fallita: token non trovato token={Token}", req.Token);
         return Results.BadRequest(new { ok = false, error = "invalid_token" });
     }
+    logger.LogInformation("Conferma email: utente trovato userId={UserId} emailConfirmed={EmailConfirmed} tokenExp={TokenExp}", user.Id, user.EmailConfirmed, user.EmailConfirmExpiresUtc);
 
     if (user.EmailConfirmed)
     {
