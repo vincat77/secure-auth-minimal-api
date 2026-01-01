@@ -39,6 +39,8 @@ public sealed class MainForm : Form
     private readonly ListBox _logBox = new() { Dock = DockStyle.Fill, Height = 120 };
     private readonly Label _busyLabel = new() { Text = "", AutoSize = true, ForeColor = System.Drawing.Color.DarkSlateGray };
     private readonly SessionCard _sessionCard = new();
+    private readonly DeviceInfoControl _deviceInfo = new();
+    private readonly DeviceAlertControl _deviceAlert = new();
     private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
     private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1000 };
     private DateTime? _refreshExpiresUtc;
@@ -61,7 +63,7 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 12,
+            RowCount = 15,
             Padding = new Padding(10),
             AutoSize = true
         };
@@ -95,18 +97,26 @@ public sealed class MainForm : Form
         layout.Controls.Add(_sessionCard, 0, 7);
         layout.SetColumnSpan(_sessionCard, 2);
 
-        layout.Controls.Add(_outputBox, 0, 8);
+        layout.Controls.Add(_deviceInfo, 0, 8);
+        layout.SetColumnSpan(_deviceInfo, 2);
+
+        layout.Controls.Add(_deviceAlert, 0, 9);
+        layout.SetColumnSpan(_deviceAlert, 2);
+
+        layout.Controls.Add(_outputBox, 0, 10);
         layout.SetColumnSpan(_outputBox, 2);
 
-        layout.Controls.Add(_busyLabel, 0, 9);
+        layout.Controls.Add(_busyLabel, 0, 11);
         layout.SetColumnSpan(_busyLabel, 2);
 
-        layout.Controls.Add(new Label { Text = "Log eventi:", AutoSize = true }, 0, 9);
-        layout.Controls.Add(_logBox, 0, 10);
+        var logLabel = new Label { Text = "Log eventi:", AutoSize = true };
+        layout.Controls.Add(logLabel, 0, 12);
+        layout.SetColumnSpan(logLabel, 2);
+        layout.Controls.Add(_logBox, 0, 13);
         layout.SetColumnSpan(_logBox, 2);
 
-        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 11);
-        layout.Controls.Add(_confirmTokenBox, 1, 11);
+        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 14);
+        layout.Controls.Add(_confirmTokenBox, 1, 14);
 
         // Aggiungi prima il layout (fill), poi il banner top per riservare spazio.
         Controls.Add(layout);
@@ -179,6 +189,8 @@ public sealed class MainForm : Form
             var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = login?.CsrfToken;
             _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
+            _deviceAlert.SetStatus(true, "Login/Device OK");
             if (string.IsNullOrWhiteSpace(_csrfToken))
             {
                 Append($"Login riuscito ma csrfToken non presente: body={body}");
@@ -215,12 +227,19 @@ public sealed class MainForm : Form
             Append($"POST /refresh -> {(int)response.StatusCode}\n{body}");
             if (!response.IsSuccessStatusCode)
             {
+                var reason = response.StatusCode == HttpStatusCode.Unauthorized
+                    ? "Refresh negato (token o device mancante/non valido)"
+                    : $"Refresh fallito status={(int)response.StatusCode}";
+                _deviceAlert.SetStatus(false, reason);
+                LogEvent("Errore", reason);
                 LogEvent("Errore", $"Refresh fallito status={(int)response.StatusCode}");
                 return;
             }
             var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = login?.CsrfToken ?? _csrfToken;
             _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
+            _deviceAlert.SetStatus(true, "Refresh/Device OK");
             if (login?.RefreshExpiresAtUtc is not null && DateTime.TryParse(login.RefreshExpiresAtUtc, out var refreshExp))
             {
                 _refreshExpiresUtc = refreshExp.ToUniversalTime();
@@ -458,7 +477,7 @@ public sealed class MainForm : Form
         }
     }
 
-    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
@@ -475,6 +494,8 @@ public sealed class MainForm : Form
         _http = new HttpClient(_handler);
         _refreshExpiresUtc = null;
         SetState("Non autenticato", null, null, null);
+        _deviceInfo.ResetInfo();
+        _deviceAlert.ResetStatus();
         _countdownTimer.Stop();
     }
 

@@ -1228,9 +1228,10 @@ CREATE TABLE IF NOT EXISTS users (
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
         var refreshCookie = setCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var deviceCookie = setCookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
 
         using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
-        refreshReq.Headers.Add("Cookie", refreshCookie);
+        refreshReq.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
         var refreshResp = await _client.SendAsync(refreshReq);
         Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
         var newSetCookies = refreshResp.Headers.GetValues("Set-Cookie").ToList();
@@ -1241,6 +1242,148 @@ CREATE TABLE IF NOT EXISTS users (
         await db.OpenAsync();
         var revoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token = @t", new { t = refreshCookie.Split('=')[1] });
         Assert.False(string.IsNullOrWhiteSpace(revoked));
+    }
+
+    [Fact]
+    public async Task Login_remember_sets_device_cookie()
+    {
+        LogTestStart();
+        var username = $"device_login_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+        Assert.Contains(cookies, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(cookies, c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Refresh_without_device_cookie_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"device_missing_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", refreshCookie); // manca device
+        var resp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_with_mismatched_device_cookie_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"device_mismatch_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", $"{refreshCookie}; device_id=fake");
+        var resp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_all_revokes_refresh_but_device_cookie_reused_on_next_login()
+    {
+        LogTestStart();
+        var username = $"device_logoutall_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var accessCookie = cookies.First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var refreshCookie = cookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using (var logoutAllReq = new HttpRequestMessage(HttpMethod.Post, "/logout-all"))
+        {
+            logoutAllReq.Headers.Add("Cookie", $"{accessCookie}; {refreshCookie}; {deviceCookie}");
+            logoutAllReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+            var logoutAll = await _client.SendAsync(logoutAllReq);
+            Assert.Equal(HttpStatusCode.OK, logoutAll.StatusCode);
+        }
+
+        using var login2Req = new HttpRequestMessage(HttpMethod.Post, "/login");
+        login2Req.Headers.Add("Cookie", deviceCookie);
+        login2Req.Content = JsonContent.Create(new { Username = username, Password = password, RememberMe = true });
+        var login2 = await _client.SendAsync(login2Req);
+        Assert.Equal(HttpStatusCode.OK, login2.StatusCode);
+        var cookies2 = login2.Headers.GetValues("Set-Cookie").ToList();
+        var newRefreshCookie = cookies2.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var oldRevoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token = @t", new { t = refreshCookie.Split('=')[1] });
+        Assert.False(string.IsNullOrWhiteSpace(oldRevoked));
+        var deviceId = await db.ExecuteScalarAsync<string>("SELECT device_id FROM refresh_tokens WHERE token = @t", new { t = newRefreshCookie.Split('=')[1] });
+        Assert.Equal(deviceCookie.Split('=')[1], deviceId);
+    }
+
+    [Fact]
+    public async Task Device_cookie_respects_samesite_and_secure_config()
+    {
+        LogTestStart();
+        var extra = new Dictionary<string, string?>
+        {
+            ["Device:SameSite"] = "Lax",
+            ["Device:RequireSecure"] = "true"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: true, forceLowerUsername: false, extraConfig: extra);
+        try
+        {
+            var username = $"device_cfg_{Guid.NewGuid():N}";
+            var password = "P@ssw0rd!Long";
+            var email = $"{username}@example.com";
+
+            var register = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+            await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+            var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).ToLowerInvariant();
+            Assert.Contains("samesite=lax", deviceCookie);
+            Assert.Contains("secure", deviceCookie);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
     }
 
     [Fact]

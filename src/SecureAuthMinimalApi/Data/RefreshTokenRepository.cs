@@ -24,8 +24,8 @@ public sealed class RefreshTokenRepository
     public async Task CreateAsync(RefreshToken token, CancellationToken ct)
     {
         const string sql = @"
-INSERT INTO refresh_tokens (id, user_id, session_id, token, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, rotation_parent_id, rotation_reason)
-VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @RotationParentId, @RotationReason);";
+INSERT INTO refresh_tokens (id, user_id, session_id, token, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, device_id, device_label, rotation_parent_id, rotation_reason)
+VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @DeviceId, @DeviceLabel, @RotationParentId, @RotationReason);";
 
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
@@ -39,6 +39,8 @@ VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @Revoked
             token.RevokedAtUtc,
             token.UserAgent,
             token.ClientIp,
+            token.DeviceId,
+            token.DeviceLabel,
             token.RotationParentId,
             token.RotationReason
         }, cancellationToken: ct));
@@ -49,6 +51,7 @@ VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @Revoked
         const string sql = @"
 SELECT id AS Id, user_id AS UserId, session_id AS SessionId, token AS Token, created_at_utc AS CreatedAtUtc,
        expires_at_utc AS ExpiresAtUtc, revoked_at_utc AS RevokedAtUtc, user_agent AS UserAgent, client_ip AS ClientIp,
+       device_id AS DeviceId, device_label AS DeviceLabel,
        rotation_parent_id AS RotationParentId, rotation_reason AS RotationReason
 FROM refresh_tokens
 WHERE token = @token
@@ -109,8 +112,8 @@ WHERE id = @id;";
         }, transaction: tx, cancellationToken: ct));
 
         const string insertSql = @"
-INSERT INTO refresh_tokens (id, user_id, session_id, token, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, rotation_parent_id, rotation_reason)
-VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @RotationParentId, @RotationReason);";
+INSERT INTO refresh_tokens (id, user_id, session_id, token, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, device_id, device_label, rotation_parent_id, rotation_reason)
+VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @DeviceId, @DeviceLabel, @RotationParentId, @RotationReason);";
 
         await db.ExecuteAsync(new CommandDefinition(insertSql, new
         {
@@ -123,6 +126,8 @@ VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @Revoked
             newToken.RevokedAtUtc,
             newToken.UserAgent,
             newToken.ClientIp,
+            newToken.DeviceId,
+            newToken.DeviceLabel,
             RotationParentId = newToken.RotationParentId ?? oldId,
             newToken.RotationReason
         }, transaction: tx, cancellationToken: ct));
