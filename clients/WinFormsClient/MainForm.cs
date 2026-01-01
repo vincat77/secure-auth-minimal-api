@@ -24,12 +24,15 @@ public sealed class MainForm : Form
     private readonly Button _loginButton = new() { Text = "Login" };
     private readonly Button _setupMfaButton = new() { Text = "Attiva MFA" };
     private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA" };
+    private readonly Button _refreshButton = new() { Text = "Refresh" };
     private readonly Button _meButton = new() { Text = "Mostra profilo" };
     private readonly Button _logoutButton = new() { Text = "Logout" };
+    private readonly CheckBox _rememberCheck = new() { Text = "Ricordami", AutoSize = true };
     private readonly Label _stateLabel = new() { Text = "Stato: Non autenticato", AutoSize = true };
     private readonly Label _userLabel = new() { Text = "Utente: -", AutoSize = true };
     private readonly Label _sessionLabel = new() { Text = "SessionId: -", AutoSize = true };
     private readonly Label _expLabel = new() { Text = "Scadenza: -", AutoSize = true };
+    private readonly Label _rememberLabel = new() { Text = "Remember: -", AutoSize = true };
     private readonly Label _badgeLabel = new() { AutoSize = true, Padding = new Padding(6), BackColor = System.Drawing.Color.Firebrick, ForeColor = System.Drawing.Color.White, Text = "Non autenticato" };
     private readonly StatusBanner _banner = new();
     private readonly TextBox _outputBox = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Height = 180 };
@@ -80,11 +83,11 @@ public sealed class MainForm : Form
         layout.Controls.Add(_totpBox, 1, 4);
 
         var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
+        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _rememberCheck, _refreshButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
         layout.Controls.Add(buttonsPanel, 1, 5);
 
         var statusPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown };
-        statusPanel.Controls.AddRange(new Control[] { _badgeLabel, _stateLabel, _userLabel, _sessionLabel, _expLabel });
+        statusPanel.Controls.AddRange(new Control[] { _badgeLabel, _stateLabel, _userLabel, _sessionLabel, _expLabel, _rememberLabel });
         layout.Controls.Add(statusPanel, 0, 6);
         layout.SetColumnSpan(statusPanel, 2);
 
@@ -111,6 +114,7 @@ public sealed class MainForm : Form
         _registerButton.Click += async (_, _) => await RegisterAsync();
         _confirmEmailButton.Click += async (_, _) => await ConfirmEmailAsync();
         _loginButton.Click += async (_, _) => await LoginAsync();
+        _refreshButton.Click += async (_, _) => await RefreshAsync();
         _setupMfaButton.Click += async (_, _) => await SetupMfaAsync();
         _disableMfaButton.Click += async (_, _) => await DisableMfaAsync();
         _meButton.Click += async (_, _) => await MeAsync();
@@ -160,7 +164,7 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Login in corso...");
         try
         {
-            var payload = new { username = _userBox.Text, password = _passBox.Text, totpCode = _totpBox.Text };
+            var payload = new { username = _userBox.Text, password = _passBox.Text, totpCode = _totpBox.Text, rememberMe = _rememberCheck.Checked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -173,6 +177,7 @@ public sealed class MainForm : Form
 
             var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = login?.CsrfToken;
+            _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
             if (string.IsNullOrWhiteSpace(_csrfToken))
             {
                 Append($"Login riuscito ma csrfToken non presente: body={body}");
@@ -189,6 +194,35 @@ public sealed class MainForm : Form
         {
             Append($"Errore login: {ex.Message}");
             LogEvent("Errore", $"Login eccezione: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Chiede un nuovo access/refresh chiamando /refresh.
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        using var busy = BeginBusy("Refresh in corso...");
+        try
+        {
+            var response = await _http.PostAsync(new Uri(BaseUri, "/refresh"), content: null);
+            var body = await response.Content.ReadAsStringAsync();
+            Append($"POST /refresh -> {(int)response.StatusCode}\n{body}");
+            if (!response.IsSuccessStatusCode)
+            {
+                LogEvent("Errore", $"Refresh fallito status={(int)response.StatusCode}");
+                return;
+            }
+            var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            _csrfToken = login?.CsrfToken ?? _csrfToken;
+            _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            LogEvent("Info", "Refresh OK");
+            await RefreshSessionInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Append($"Errore refresh: {ex.Message}");
+            LogEvent("Errore", $"Refresh eccezione: {ex.Message}");
         }
     }
 
@@ -392,6 +426,7 @@ public sealed class MainForm : Form
         _registerButton.Enabled = enabled;
         _confirmEmailButton.Enabled = enabled;
         _loginButton.Enabled = enabled;
+        _refreshButton.Enabled = enabled;
         _meButton.Enabled = enabled;
         _logoutButton.Enabled = enabled;
     }
@@ -414,7 +449,7 @@ public sealed class MainForm : Form
         }
     }
 
-    private sealed record LoginResponse(bool Ok, string? CsrfToken);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
