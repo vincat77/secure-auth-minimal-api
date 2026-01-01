@@ -1328,6 +1328,35 @@ CREATE TABLE IF NOT EXISTS users (
     }
 
     [Fact]
+    public async Task Refresh_without_cookie_returns_unauthorized()
+    {
+        LogTestStart();
+        var resp = await _client.PostAsync("/refresh", content: null);
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_without_remember_does_not_emit_refresh_cookie()
+    {
+        LogTestStart();
+        var username = $"norem_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = false });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var setCookies = login.Headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.ToList()
+            : new List<string>();
+        Assert.DoesNotContain(setCookies, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task Login_remember_respects_configured_days_for_maxage()
     {
         LogTestStart();
