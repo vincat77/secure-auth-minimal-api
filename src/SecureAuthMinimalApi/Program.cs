@@ -324,7 +324,8 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         ExpiresAtUtc = expIso,
         RevokedAtUtc = null,
         UserDataJson = JsonSerializer.Serialize(new { username = user.Username }),
-        CsrfToken = csrfToken
+        CsrfToken = csrfToken,
+        LastSeenUtc = nowIso
     };
 
     await sessions.CreateAsync(session, ctx.RequestAborted);
@@ -614,7 +615,8 @@ app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshToke
         ExpiresAtUtc = expIso,
         RevokedAtUtc = null,
         UserDataJson = JsonSerializer.Serialize(new { username = user.Username }),
-        CsrfToken = csrfToken
+        CsrfToken = csrfToken,
+        LastSeenUtc = nowIso
     };
     await sessions.CreateAsync(session, ctx.RequestAborted);
 

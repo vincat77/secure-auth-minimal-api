@@ -28,9 +28,9 @@ public sealed class SessionRepository
     {
         const string sql = @"
 INSERT INTO user_sessions (
-  session_id, user_id, created_at_utc, expires_at_utc, revoked_at_utc, user_data_json, csrf_token
+  session_id, user_id, created_at_utc, expires_at_utc, revoked_at_utc, user_data_json, csrf_token, last_seen_utc
 ) VALUES (
-  @SessionId, @UserId, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserDataJson, @CsrfToken
+  @SessionId, @UserId, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserDataJson, @CsrfToken, @LastSeenUtc
 );";
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, session, cancellationToken: ct));
@@ -49,7 +49,8 @@ SELECT
   expires_at_utc AS ExpiresAtUtc,
   revoked_at_utc AS RevokedAtUtc,
   user_data_json AS UserDataJson,
-  csrf_token     AS CsrfToken
+  csrf_token     AS CsrfToken,
+  last_seen_utc  AS LastSeenUtc
 FROM user_sessions
 WHERE session_id = @sessionId
 LIMIT 1;";
@@ -68,5 +69,18 @@ SET revoked_at_utc = @revokedAtUtcIso
 WHERE session_id = @sessionId;";
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, revokedAtUtcIso }, cancellationToken: ct));
+    }
+
+    /// <summary>
+    /// Aggiorna last_seen_utc per la sessione (idle timeout).
+    /// </summary>
+    public async Task UpdateLastSeenAsync(string sessionId, string lastSeenUtcIso, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE user_sessions
+SET last_seen_utc = @lastSeenUtcIso
+WHERE session_id = @sessionId;";
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, lastSeenUtcIso }, cancellationToken: ct));
     }
 }
