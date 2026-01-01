@@ -70,4 +70,17 @@ WHERE session_id = @sessionId;";
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, revokedAtUtcIso }, cancellationToken: ct));
     }
+
+    /// <summary>
+    /// Aggiorna last_seen_utc per la sessione (idle timeout).
+    /// </summary>
+    public async Task UpdateLastSeenAsync(string sessionId, string lastSeenUtcIso, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE user_sessions
+SET last_seen_utc = @lastSeenUtcIso
+WHERE session_id = @sessionId;";
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, lastSeenUtcIso }, cancellationToken: ct));
+    }
 }
