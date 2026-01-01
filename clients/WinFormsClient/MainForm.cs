@@ -37,6 +37,7 @@ public sealed class MainForm : Form
     private readonly Label _busyLabel = new() { Text = "", AutoSize = true, ForeColor = System.Drawing.Color.DarkSlateGray };
     private readonly SessionCard _sessionCard = new();
     private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
+    private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1000 };
 
     private HttpClient _http = null!;
     private HttpClientHandler _handler = null!;
@@ -114,6 +115,7 @@ public sealed class MainForm : Form
         _disableMfaButton.Click += async (_, _) => await DisableMfaAsync();
         _meButton.Click += async (_, _) => await MeAsync();
         _logoutButton.Click += async (_, _) => await LogoutAsync();
+        _countdownTimer.Tick += (_, _) => _sessionCard.TickCountdown();
     }
 
     private Uri BaseUri => new(_urlBox.Text.TrimEnd('/'));
@@ -414,7 +416,7 @@ public sealed class MainForm : Form
 
     private sealed record LoginResponse(bool Ok, string? CsrfToken);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
-    private sealed record MeResponse(bool Ok, string SessionId, string UserId, string ExpiresAtUtc);
+    private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
 
     private void ResetHttpClient()
@@ -428,6 +430,7 @@ public sealed class MainForm : Form
         };
         _http = new HttpClient(_handler);
         SetState("Non autenticato", null, null, null);
+        _countdownTimer.Stop();
     }
 
     private async Task RefreshSessionInfoAsync()
@@ -440,7 +443,7 @@ public sealed class MainForm : Form
             if (me is not null)
             {
                 Append($"GET /me -> {(int)response.StatusCode}\n{body}");
-                SetState("Autenticato", me.UserId, me.SessionId, me.ExpiresAtUtc);
+                SetState("Autenticato", me.UserId, me.SessionId, me.ExpiresAtUtc, createdAtUtc: me.CreatedAtUtc);
                 return;
             }
         }
@@ -455,13 +458,13 @@ public sealed class MainForm : Form
         Append($"GET /me -> {(int)response.StatusCode}\n{body}");
     }
 
-    private void SetState(string state, string? userId, string? sessionId, string? expiresAtUtc)
+    private void SetState(string state, string? userId, string? sessionId, string? expiresAtUtc, string? createdAtUtc = null)
     {
         _stateLabel.Text = $"Stato: {state}";
         _userLabel.Text = $"Utente: {(string.IsNullOrWhiteSpace(userId) ? "-" : userId)}";
         _sessionLabel.Text = $"SessionId: {(string.IsNullOrWhiteSpace(sessionId) ? "-" : sessionId)}";
         _expLabel.Text = $"Scadenza: {(string.IsNullOrWhiteSpace(expiresAtUtc) ? "-" : expiresAtUtc)}";
-        _sessionCard.UpdateInfo(userId, sessionId, expiresAtUtc);
+        _sessionCard.UpdateInfo(userId, sessionId, expiresAtUtc, createdAtUtc);
 
         switch (state.ToLowerInvariant())
         {
@@ -469,16 +472,19 @@ public sealed class MainForm : Form
                 _badgeLabel.Text = "Autenticato";
                 _badgeLabel.BackColor = System.Drawing.Color.SeaGreen;
                 _banner.UpdateState(state, userId);
+                _countdownTimer.Start();
                 break;
             case "sessione scaduta o revocata":
                 _badgeLabel.Text = "Sessione scaduta/revocata";
                 _badgeLabel.BackColor = System.Drawing.Color.Peru;
                 _banner.UpdateState(state, userId);
+                _countdownTimer.Stop();
                 break;
             default:
                 _badgeLabel.Text = "Non autenticato";
                 _badgeLabel.BackColor = System.Drawing.Color.Firebrick;
                 _banner.UpdateState(state, userId);
+                _countdownTimer.Stop();
                 break;
         }
     }
