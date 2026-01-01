@@ -5,10 +5,19 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
-var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<Program>();
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());
+var logger = loggerFactory.CreateLogger<Program>();
 
 // Hard fail if secret is missing/too short is handled by JwtTokenService constructor.
 builder.Services.AddSingleton<JwtTokenService>();
