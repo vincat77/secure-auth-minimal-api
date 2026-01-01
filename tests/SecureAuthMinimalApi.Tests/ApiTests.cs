@@ -221,7 +221,7 @@ public class ApiTests : IAsyncLifetime
     private sealed record LoginResponse(bool Ok, string? CsrfToken);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId);
     private sealed record LogoutResponse(bool Ok);
-    private sealed record RegisterResponse(bool Ok, string? UserId);
+    private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private sealed record IntrospectResponse(bool Active, string? Reason, string? SessionId, string? UserId, string? ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
 
@@ -316,6 +316,8 @@ public class ApiTests : IAsyncLifetime
         Assert.NotNull(regPayload);
         Assert.True(regPayload!.Ok);
         Assert.False(string.IsNullOrWhiteSpace(regPayload.UserId));
+        Assert.False(string.IsNullOrWhiteSpace(regPayload.EmailConfirmToken));
+        Assert.False(string.IsNullOrWhiteSpace(regPayload.EmailConfirmExpiresUtc));
 
         var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
 
@@ -344,6 +346,29 @@ public class ApiTests : IAsyncLifetime
 
         var second = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_generates_email_confirmation_token_and_persists()
+    {
+        LogTestStart();
+        var username = $"mailtoken_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var resp = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
+
+        var payload = await resp.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(payload);
+        Assert.False(string.IsNullOrWhiteSpace(payload!.EmailConfirmToken));
+        Assert.False(string.IsNullOrWhiteSpace(payload.EmailConfirmExpiresUtc));
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var row = await db.QuerySingleAsync<(string Token, string Expires)>("SELECT email_confirm_token, email_confirm_expires_utc FROM users WHERE username = @u", new { u = username });
+        Assert.Equal(payload.EmailConfirmToken, row.Token);
+        Assert.Equal(payload.EmailConfirmExpiresUtc, row.Expires);
     }
 
     [Fact]

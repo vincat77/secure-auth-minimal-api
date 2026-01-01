@@ -169,6 +169,9 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
         return Results.BadRequest(new { ok = false, error = "password_policy_failed", errors = policyErrors });
     }
 
+    var emailConfirmToken = Guid.NewGuid().ToString("N");
+    var emailConfirmExpires = DateTime.UtcNow.AddHours(24);
+
     var existing = await users.GetByUsernameAsync(safeUsername, ctx.RequestAborted);
     if (existing is not null)
         return Results.StatusCode(StatusCodes.Status409Conflict);
@@ -185,12 +188,14 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
         CreatedAtUtc = DateTime.UtcNow.ToString("O"),
         Email = req!.Email!,
         EmailNormalized = safeEmail,
-        EmailConfirmed = false
+        EmailConfirmed = false,
+        EmailConfirmToken = emailConfirmToken,
+        EmailConfirmExpiresUtc = emailConfirmExpires.ToString("O")
     };
 
     await users.CreateAsync(user, ctx.RequestAborted);
-    logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created}", user.Username, user.Id, user.CreatedAtUtc);
-    return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email });
+    logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created} emailToken={EmailToken} exp={EmailExp}", user.Username, user.Id, user.CreatedAtUtc, emailConfirmToken, emailConfirmExpires.ToString("O"));
+    return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email, emailConfirmToken, emailConfirmExpiresUtc = emailConfirmExpires.ToString("O") });
 });
 
 /// <summary>
