@@ -24,6 +24,9 @@ _ReSharper*/
 *.nupkg
 *.snupkg
 
+# DB files
+*.db
+
 # Rider/JetBrains
 .idea/
 *.iml
