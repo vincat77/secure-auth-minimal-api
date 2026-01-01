@@ -1,0 +1,40 @@
+# VS / VS Code / .NET ignore
+bin/
+obj/
+/.vs/
+/packages/
+*.user
+*.suo
+*.cache
+*.ncrunchsolution
+*.ncrunchproject
+_ReSharper*/
+*.DotSettings.user
+*.sln.docstates
+
+# Build artifacts
+*.exe
+*.dll
+*.pdb
+*.log
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.nupkg
+*.snupkg
+
+# Rider/JetBrains
+.idea/
+*.iml
+
+# VS Code
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# OS
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
