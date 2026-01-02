@@ -25,8 +25,7 @@ public sealed class MainForm : Form
     private ActionButtonsControl _actions = null!;
     private StatusInfoControl _statusInfo = null!;
     private StatusBanner _banner = null!;
-    private TextBox _outputBox = null!;
-    private ListBox _logBox = null!;
+    private LogPanelControl _logPanel = null!;
     private Label _busyLabel = null!;
     private SessionCard _sessionCard = null!;
     private DeviceInfoControl _deviceInfo = null!;
@@ -55,8 +54,7 @@ public sealed class MainForm : Form
         _actions = new ActionButtonsControl();
         _statusInfo = new StatusInfoControl();
         _banner = new StatusBanner();
-        _outputBox = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Height = 180 };
-        _logBox = new ListBox { Height = 120 };
+        _logPanel = new LogPanelControl();
         _busyLabel = new Label { Text = "", AutoSize = true, ForeColor = System.Drawing.Color.DarkSlateGray };
         _sessionCard = new SessionCard();
         _deviceInfo = new DeviceInfoControl();
@@ -119,13 +117,9 @@ public sealed class MainForm : Form
         _qrBox.Location = new Point(10, 510);
         root.Controls.Add(_qrBox);
 
-        _outputBox.Location = new Point(10, 680);
-        _outputBox.Size = new Size(700, 150);
-        root.Controls.Add(_outputBox);
-
-        _logBox.Location = new Point(10, 840);
-        _logBox.Size = new Size(700, 140);
-        root.Controls.Add(_logBox);
+        _logPanel.Location = new Point(10, 680);
+        _logPanel.Size = new Size(720, 320);
+        root.Controls.Add(_logPanel);
 
         _confirmTokenBox.Location = new Point(10, 990);
         _confirmTokenBox.Size = new Size(300, 23);
@@ -534,16 +528,12 @@ public sealed class MainForm : Form
 
     private void Append(string message)
     {
-        _outputBox.AppendText($"[{DateTime.Now:T}] {message}{Environment.NewLine}");
+        _logPanel.AppendOutput($"[{DateTime.Now:T}] {message}");
     }
 
     private void LogEvent(string level, string message)
     {
-        _logBox.Items.Insert(0, $"[{DateTime.Now:T}] {level}: {message}");
-        if (_logBox.Items.Count > 200)
-        {
-            _logBox.Items.RemoveAt(_logBox.Items.Count - 1);
-        }
+        _logPanel.AddLog($"[{DateTime.Now:T}] {level}: {message}", maxItems: 200);
     }
 
     private IDisposable BeginBusy(string message)
