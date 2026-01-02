@@ -23,12 +23,7 @@ public sealed class MainForm : Form
     private PasswordInputControl _passwordControl = null!;
     private TextBox _totpBox = null!;
     private ActionButtonsControl _actions = null!;
-    private Label _stateLabel = null!;
-    private Label _userLabel = null!;
-    private Label _sessionLabel = null!;
-    private Label _expLabel = null!;
-    private Label _rememberLabel = null!;
-    private Label _badgeLabel = null!;
+    private StatusInfoControl _statusInfo = null!;
     private StatusBanner _banner = null!;
     private TextBox _outputBox = null!;
     private ListBox _logBox = null!;
@@ -37,7 +32,6 @@ public sealed class MainForm : Form
     private DeviceInfoControl _deviceInfo = null!;
     private DeviceAlertControl _deviceAlert = null!;
     private TextBox _challengeBox = null!;
-    private Label _mfaStatusLabel = null!;
     private TextBox _confirmTokenBox = null!;
     private PictureBox _qrBox = null!;
     private System.Windows.Forms.Timer _countdownTimer = null!;
@@ -49,6 +43,7 @@ public sealed class MainForm : Form
     private HttpClientHandler _handler = null!;
     private CookieContainer _cookies = null!;
     private string? _csrfToken;
+    private string _rememberText = "-";
 
     public MainForm()
     {
@@ -58,12 +53,7 @@ public sealed class MainForm : Form
         _passwordControl = new PasswordInputControl();
         _totpBox = new TextBox { Text = "", PlaceholderText = "TOTP (se richiesto)" };
         _actions = new ActionButtonsControl();
-        _stateLabel = new Label { Text = "Stato: Non autenticato", AutoSize = true };
-        _userLabel = new Label { Text = "Utente: -", AutoSize = true };
-        _sessionLabel = new Label { Text = "SessionId: -", AutoSize = true };
-        _expLabel = new Label { Text = "Scadenza: -", AutoSize = true };
-        _rememberLabel = new Label { Text = "Remember: -", AutoSize = true };
-        _badgeLabel = new Label { AutoSize = true, Padding = new Padding(6), BackColor = System.Drawing.Color.Firebrick, ForeColor = System.Drawing.Color.White, Text = "Non autenticato" };
+        _statusInfo = new StatusInfoControl();
         _banner = new StatusBanner();
         _outputBox = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Height = 180 };
         _logBox = new ListBox { Height = 120 };
@@ -72,7 +62,6 @@ public sealed class MainForm : Form
         _deviceInfo = new DeviceInfoControl();
         _deviceAlert = new DeviceAlertControl();
         _challengeBox = new TextBox { ReadOnly = true, PlaceholderText = "Challenge MFA" };
-        _mfaStatusLabel = new Label { Text = "MFA: -", AutoSize = true };
         _confirmTokenBox = new TextBox { PlaceholderText = "Token conferma email" };
         _qrBox = new PictureBox { SizeMode = PictureBoxSizeMode.StretchImage, Height = QrSize, Width = QrSize, BorderStyle = BorderStyle.FixedSingle, BackColor = System.Drawing.Color.White };
         _countdownTimer = new System.Windows.Forms.Timer { Interval = 1000 };
@@ -144,30 +133,19 @@ public sealed class MainForm : Form
 
         // Colonna destra
         int rightX = 550;
-        _badgeLabel.Location = new Point(rightX, 20);
-        root.Controls.Add(_badgeLabel);
-        _stateLabel.Location = new Point(rightX, 55);
-        root.Controls.Add(_stateLabel);
-        _userLabel.Location = new Point(rightX, 75);
-        root.Controls.Add(_userLabel);
-        _sessionLabel.Location = new Point(rightX, 95);
-        root.Controls.Add(_sessionLabel);
-        _expLabel.Location = new Point(rightX, 115);
-        root.Controls.Add(_expLabel);
-        _rememberLabel.Location = new Point(rightX, 135);
-        root.Controls.Add(_rememberLabel);
-        _mfaStatusLabel.Location = new Point(rightX, 155);
-        root.Controls.Add(_mfaStatusLabel);
+        _statusInfo.Location = new Point(rightX, 20);
+        _statusInfo.Size = new Size(320, 180);
+        root.Controls.Add(_statusInfo);
 
-        _sessionCard.Location = new Point(rightX, 190);
+        _sessionCard.Location = new Point(rightX, 210);
         _sessionCard.Size = new Size(320, 140);
         root.Controls.Add(_sessionCard);
 
-        _deviceInfo.Location = new Point(rightX, 340);
+        _deviceInfo.Location = new Point(rightX, 360);
         _deviceInfo.Size = new Size(320, 90);
         root.Controls.Add(_deviceInfo);
 
-        _deviceAlert.Location = new Point(rightX, 440);
+        _deviceAlert.Location = new Point(rightX, 460);
         _deviceAlert.Size = new Size(320, 60);
         root.Controls.Add(_deviceAlert);
 
@@ -262,7 +240,8 @@ public sealed class MainForm : Form
 
             var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = login?.CsrfToken;
-            _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
+            _statusInfo.SetStatus("Autenticato", login?.DeviceId, login?.DeviceId, null, _rememberText, System.Drawing.Color.SeaGreen, "Autenticato");
             _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
             _deviceAlert.SetStatus(true, "Login/Device OK");
             ClearMfa();
@@ -323,7 +302,7 @@ public sealed class MainForm : Form
 
             var confirm = JsonSerializer.Deserialize<MfaConfirmResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = confirm?.CsrfToken ?? _csrfToken;
-            _rememberLabel.Text = $"Remember: {(confirm?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            _rememberText = confirm?.RememberIssued == true ? "Emesso" : "Non emesso";
             _deviceInfo.UpdateDevice(confirm?.DeviceId, confirm?.DeviceIssued);
             _deviceAlert.SetStatus(true, "MFA confermata");
             if (confirm?.RefreshExpiresAtUtc is not null && DateTime.TryParse(confirm.RefreshExpiresAtUtc, out var refreshExp))
@@ -364,7 +343,7 @@ public sealed class MainForm : Form
             }
             var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             _csrfToken = login?.CsrfToken ?? _csrfToken;
-            _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
             _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
             _deviceAlert.SetStatus(true, "Refresh/Device OK");
             if (login?.RefreshExpiresAtUtc is not null && DateTime.TryParse(login.RefreshExpiresAtUtc, out var refreshExp))
@@ -658,33 +637,31 @@ public sealed class MainForm : Form
 
     private void SetState(string state, string? userId, string? sessionId, string? expiresAtUtc, string? createdAtUtc = null)
     {
-        _stateLabel.Text = $"Stato: {state}";
-        _userLabel.Text = $"Utente: {(string.IsNullOrWhiteSpace(userId) ? "-" : userId)}";
-        _sessionLabel.Text = $"SessionId: {(string.IsNullOrWhiteSpace(sessionId) ? "-" : sessionId)}";
-        _expLabel.Text = $"Scadenza: {(string.IsNullOrWhiteSpace(expiresAtUtc) ? "-" : expiresAtUtc)}";
         _sessionCard.UpdateInfo(userId, sessionId, expiresAtUtc, createdAtUtc, _refreshExpiresUtc);
 
+        string badgeText;
+        System.Drawing.Color badgeColor;
         switch (state.ToLowerInvariant())
         {
             case "autenticato":
-                _badgeLabel.Text = "Autenticato";
-                _badgeLabel.BackColor = System.Drawing.Color.SeaGreen;
-                _banner.UpdateState(state, userId);
+                badgeText = "Autenticato";
+                badgeColor = System.Drawing.Color.SeaGreen;
                 _countdownTimer.Start();
                 break;
             case "sessione scaduta o revocata":
-                _badgeLabel.Text = "Sessione scaduta/revocata";
-                _badgeLabel.BackColor = System.Drawing.Color.Peru;
-                _banner.UpdateState(state, userId);
+                badgeText = "Sessione scaduta/revocata";
+                badgeColor = System.Drawing.Color.Peru;
                 _countdownTimer.Stop();
                 break;
             default:
-                _badgeLabel.Text = "Non autenticato";
-                _badgeLabel.BackColor = System.Drawing.Color.Firebrick;
-                _banner.UpdateState(state, userId);
+                badgeText = "Non autenticato";
+                badgeColor = System.Drawing.Color.Firebrick;
                 _countdownTimer.Stop();
                 break;
         }
+
+        _statusInfo.SetStatus(state, userId, sessionId, expiresAtUtc, _rememberText, badgeColor, badgeText);
+        _banner.UpdateState(state, userId);
     }
 
     private void ClearMfa()
@@ -697,7 +674,7 @@ public sealed class MainForm : Form
 
     private void SetMfaState(string message)
     {
-        _mfaStatusLabel.Text = message;
+        _statusInfo.SetMfa(message);
     }
 
     private void RenderQr()
