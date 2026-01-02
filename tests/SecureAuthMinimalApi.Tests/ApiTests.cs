@@ -1871,8 +1871,13 @@ CREATE TABLE IF NOT EXISTS users (
         // login con TOTP deve comunque funzionare
         var totp = new Totp(Base32Encoding.ToBytes(secretPlain));
         var code = totp.ComputeTotp();
-        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, TotpCode = code });
-        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        var mfa = await login.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.Equal("mfa_required", mfa!.Error);
+
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa.ChallengeId, TotpCode = code });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
     }
 
     [Fact]
@@ -1943,10 +1948,13 @@ CREATE TABLE IF NOT EXISTS users (
         // Login con TOTP ok
         var totp = new Totp(Base32Encoding.ToBytes(setup!.Secret!));
         var code = totp.ComputeTotp();
-        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, TotpCode = code });
-        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
-        var csrf2 = (await login.Content.ReadFromJsonAsync<LoginResponse>())!.CsrfToken!;
-        var cookie2 = login.Headers.GetValues("Set-Cookie").First(h => h.StartsWith("access_token", StringComparison.Ordinal)).Split(';', 2)[0];
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        var mfa = await login.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa!.ChallengeId, TotpCode = code });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+        var csrf2 = (await confirm.Content.ReadFromJsonAsync<MfaConfirmResponse>())!.CsrfToken!;
+        var cookie2 = confirm.Headers.GetValues("Set-Cookie").First(h => h.StartsWith("access_token", StringComparison.Ordinal)).Split(';', 2)[0];
 
         // Disable MFA
         using var disableReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/disable");
