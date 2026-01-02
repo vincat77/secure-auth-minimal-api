@@ -21,7 +21,6 @@ public sealed class MainForm : Form
     private TextBox _userBox = null!;
     private TextBox _emailBox = null!;
     private PasswordInputControl _passwordControl = null!;
-    private TextBox _totpBox = null!;
     private ActionButtonsControl _actions = null!;
     private StatusInfoControl _statusInfo = null!;
     private StatusBanner _banner = null!;
@@ -50,7 +49,6 @@ public sealed class MainForm : Form
         _userBox = new TextBox { Text = "demo" };
         _emailBox = new TextBox { Text = "demo@example.com" };
         _passwordControl = new PasswordInputControl();
-        _totpBox = new TextBox { Text = "", PlaceholderText = "TOTP (se richiesto)" };
         _actions = new ActionButtonsControl();
         _statusInfo = new StatusInfoControl();
         _banner = new StatusBanner();
@@ -101,10 +99,6 @@ public sealed class MainForm : Form
         _passwordControl.Size = new Size(320, 32);
         _passwordControl.PasswordText = "demo";
         root.Controls.Add(_passwordControl);
-
-        _totpBox.Location = new Point(10, 155);
-        _totpBox.Size = new Size(200, 23);
-        root.Controls.Add(_totpBox);
 
         _actions.Location = new Point(10, 190);
         _actions.Size = new Size(200, 280);
@@ -202,7 +196,7 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Login in corso...");
         try
         {
-        var payload = new { username = _userBox.Text, password = _passwordControl.PasswordText, rememberMe = _actions.RememberChecked };
+            var payload = new { username = _userBox.Text, password = _passwordControl.PasswordText, rememberMe = _actions.RememberChecked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -277,14 +271,14 @@ public sealed class MainForm : Form
                 LogEvent("Errore", "Conferma MFA senza challenge");
                 return;
             }
-            if (string.IsNullOrWhiteSpace(_totpBox.Text))
+            if (string.IsNullOrWhiteSpace(_mfaPanel.TotpCode))
             {
                 Append("Inserire il codice TOTP.");
                 LogEvent("Errore", "TOTP mancante");
                 return;
             }
 
-            var payload = new { challengeId = _challengeId, totpCode = _totpBox.Text, rememberMe = _actions.RememberChecked };
+            var payload = new { challengeId = _challengeId, totpCode = _mfaPanel.TotpCode, rememberMe = _actions.RememberChecked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login/confirm-mfa"), payload);
             var body = await response.Content.ReadAsStringAsync();
             Append($"POST /login/confirm-mfa -> {(int)response.StatusCode}\n{body}");

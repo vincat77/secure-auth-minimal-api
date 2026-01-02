@@ -11,6 +11,7 @@ public sealed class MfaPanelControl : UserControl
 {
     private readonly Label _label = new() { Text = "Challenge MFA:", AutoSize = true };
     private readonly TextBox _challengeBox = new() { ReadOnly = true, Width = 180 };
+    private readonly TextBox _totpBox = new() { PlaceholderText = "TOTP (se richiesto)", Width = 180 };
     private readonly Button _confirmMfaButton = new() { Text = "Conferma MFA", Width = 155, Height = 30 };
     private readonly Button _setupMfaButton = new() { Text = "Attiva MFA", Width = 155, Height = 30 };
     private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA", Width = 155, Height = 30 };
@@ -25,15 +26,17 @@ public sealed class MfaPanelControl : UserControl
 
         _label.Location = new Point(0, 0);
         _challengeBox.Location = new Point(120, 0);
-        _confirmMfaButton.Location = new Point(0, 35);
-        _setupMfaButton.Location = new Point(0, 70);
-        _disableMfaButton.Location = new Point(0, 105);
-        _showQrButton.Location = new Point(0, 140);
+        _totpBox.Location = new Point(120, 30);
+        _confirmMfaButton.Location = new Point(0, 70);
+        _setupMfaButton.Location = new Point(0, 105);
+        _disableMfaButton.Location = new Point(0, 140);
+        _showQrButton.Location = new Point(0, 175);
         _qrBox.Location = new Point(200, 35);
-        _mfaStatus.Location = new Point(0, 180);
+        _mfaStatus.Location = new Point(0, 210);
 
         Controls.Add(_label);
         Controls.Add(_challengeBox);
+        Controls.Add(_totpBox);
         Controls.Add(_confirmMfaButton);
         Controls.Add(_setupMfaButton);
         Controls.Add(_disableMfaButton);
@@ -56,6 +59,12 @@ public sealed class MfaPanelControl : UserControl
     {
         get => _challengeBox.Text;
         set => _challengeBox.Text = value ?? string.Empty;
+    }
+
+    public string TotpCode
+    {
+        get => _totpBox.Text;
+        set => _totpBox.Text = value ?? string.Empty;
     }
 
     public void SetMfaState(string text) => _mfaStatus.Text = text;
