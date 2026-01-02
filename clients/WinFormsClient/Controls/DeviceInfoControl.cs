@@ -7,31 +7,13 @@ namespace WinFormsClient.Controls;
 /// <summary>
 /// Mostra il device_id ricevuto dal server e l'istante (locale) dell'ultimo rilascio/riuso.
 /// </summary>
-public sealed class DeviceInfoControl : UserControl
+public partial class DeviceInfoControl : UserControl
 {
-    private readonly Label _title = new() { Text = "Dispositivo", Font = new Font("Segoe UI", 9, FontStyle.Bold), AutoSize = true };
-    private readonly Label _deviceId = new() { Text = "DeviceId: -", AutoSize = true };
-    private readonly Label _issuedAt = new() { Text = "Ricevuto/aggiornato: -", AutoSize = true };
-    private readonly Label _note = new() { Text = "Stato: -", AutoSize = true };
     private DateTime? _lastLocal;
 
     public DeviceInfoControl()
     {
-        BackColor = Color.WhiteSmoke;
-        BorderStyle = BorderStyle.FixedSingle;
-        Padding = new Padding(8);
-        Height = 90;
-        Dock = DockStyle.Fill;
-
-        var layout = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            AutoSize = true,
-            WrapContents = false
-        };
-        layout.Controls.AddRange(new Control[] { _title, _deviceId, _issuedAt, _note });
-        Controls.Add(layout);
+        InitializeComponent();
     }
 
     /// <summary>
