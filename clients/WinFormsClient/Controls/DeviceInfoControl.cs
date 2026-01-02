@@ -21,17 +21,22 @@ public sealed class DeviceInfoControl : UserControl
         BorderStyle = BorderStyle.FixedSingle;
         Padding = new Padding(8);
         Height = 90;
-        Dock = DockStyle.Fill;
+        Dock = DockStyle.None;
 
-        var layout = new FlowLayoutPanel
+        var panel = new Panel
         {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            AutoSize = true,
-            WrapContents = false
+            Dock = DockStyle.None,
+            AutoScroll = false
         };
-        layout.Controls.AddRange(new Control[] { _title, _deviceId, _issuedAt, _note });
-        Controls.Add(layout);
+        _title.Location = new Point(0, 0);
+        _deviceId.Location = new Point(0, 22);
+        _issuedAt.Location = new Point(0, 40);
+        _note.Location = new Point(0, 58);
+        panel.Controls.Add(_title);
+        panel.Controls.Add(_deviceId);
+        panel.Controls.Add(_issuedAt);
+        panel.Controls.Add(_note);
+        Controls.Add(panel);
     }
 
     /// <summary>

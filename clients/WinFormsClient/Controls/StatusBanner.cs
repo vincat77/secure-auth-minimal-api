@@ -5,13 +5,17 @@ namespace WinFormsClient.Controls;
 
 public sealed class StatusBanner : UserControl
 {
-    private readonly Panel _panel = new() { Dock = DockStyle.Fill };
-    private readonly Label _label = new() { Dock = DockStyle.Fill, ForeColor = Color.White, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0) };
+    private readonly Panel _panel = new() { Dock = DockStyle.None };
+    private readonly Label _label = new() { Dock = DockStyle.None, ForeColor = Color.White, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0) };
 
     public StatusBanner()
     {
         Height = 30;
         Dock = DockStyle.Top;
+        _panel.Width = 1200;
+        _panel.Height = 30;
+        _label.Location = new Point(0, 0);
+        _label.Width = 1200;
         _panel.Controls.Add(_label);
         Controls.Add(_panel);
         UpdateState("Non autenticato", null);

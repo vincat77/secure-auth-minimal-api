@@ -18,17 +18,18 @@ public sealed class DeviceAlertControl : UserControl
         BorderStyle = BorderStyle.FixedSingle;
         Padding = new Padding(8);
         Height = 60;
-        Dock = DockStyle.Fill;
+        Dock = DockStyle.None;
 
-        var layout = new FlowLayoutPanel
+        var panel = new Panel
         {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            AutoSize = true,
-            WrapContents = false
+            Dock = DockStyle.None,
+            AutoScroll = false
         };
-        layout.Controls.AddRange(new Control[] { _title, _status });
-        Controls.Add(layout);
+        _title.Location = new Point(0, 0);
+        _status.Location = new Point(0, 22);
+        panel.Controls.Add(_title);
+        panel.Controls.Add(_status);
+        Controls.Add(panel);
     }
 
     public void SetStatus(bool success, string message)

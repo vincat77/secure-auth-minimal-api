@@ -10,24 +10,19 @@ namespace WinFormsClient.Controls;
 public sealed class SessionCountdownControl : UserControl
 {
     private readonly Label _countdownLabel = new() { Text = "Scadenza tra: -", AutoSize = true };
-    private readonly ProgressBar _progress = new() { Dock = DockStyle.Top, Height = 14 };
+    private readonly ProgressBar _progress = new() { Dock = DockStyle.None, Height = 14 };
     private DateTime? _createdUtc;
     private DateTime? _expiresUtc;
 
     public SessionCountdownControl()
     {
         Height = 50;
-        Dock = DockStyle.Top;
-        var layout = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoSize = true
-        };
-        layout.Controls.Add(_countdownLabel);
-        layout.Controls.Add(_progress);
-        Controls.Add(layout);
+        Dock = DockStyle.None;
+        Controls.Add(_countdownLabel);
+        Controls.Add(_progress);
+        _countdownLabel.Location = new Point(0, 0);
+        _progress.Location = new Point(0, 20);
+        _progress.Width = 200;
     }
 
     public void SetSession(DateTime? createdUtc, DateTime? expiresUtc)

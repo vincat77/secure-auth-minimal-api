@@ -10,23 +10,18 @@ namespace WinFormsClient.Controls;
 public sealed class RefreshCountdownControl : UserControl
 {
     private readonly Label _label = new() { Text = "Refresh: -", AutoSize = true };
-    private readonly ProgressBar _progress = new() { Dock = DockStyle.Top, Height = 14 };
+    private readonly ProgressBar _progress = new() { Dock = DockStyle.None, Height = 14 };
     private DateTime? _expiresUtc;
 
     public RefreshCountdownControl()
     {
         Height = 50;
-        Dock = DockStyle.Top;
-        var layout = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoSize = true
-        };
-        layout.Controls.Add(_label);
-        layout.Controls.Add(_progress);
-        Controls.Add(layout);
+        Dock = DockStyle.None;
+        Controls.Add(_label);
+        Controls.Add(_progress);
+        _label.Location = new Point(0, 0);
+        _progress.Location = new Point(0, 20);
+        _progress.Width = 200;
     }
 
     public void SetRefreshExpiry(DateTime? expiresUtc)
