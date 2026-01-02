@@ -14,20 +14,24 @@ namespace WinFormsClient;
 /// </summary>
 public sealed class MainForm : Form
 {
+    private const int ButtonWidth = 120;
+    private const int QrSize = 160;
+
     private readonly TextBox _urlBox = new() { Text = "https://localhost:52899", Dock = DockStyle.Fill };
     private readonly TextBox _userBox = new() { Text = "demo", Dock = DockStyle.Fill };
     private readonly TextBox _emailBox = new() { Text = "demo@example.com", Dock = DockStyle.Fill };
     private readonly TextBox _passBox = new() { Text = "demo", UseSystemPasswordChar = true, Dock = DockStyle.Fill };
     private readonly TextBox _totpBox = new() { Text = "", Dock = DockStyle.Fill, PlaceholderText = "TOTP (se richiesto)" };
-    private readonly Button _registerButton = new() { Text = "Registrati" };
-    private readonly Button _confirmEmailButton = new() { Text = "Conferma email" };
-    private readonly Button _loginButton = new() { Text = "Login (password)" };
-    private readonly Button _confirmMfaButton = new() { Text = "Conferma MFA" };
-    private readonly Button _setupMfaButton = new() { Text = "Attiva MFA" };
-    private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA" };
-    private readonly Button _refreshButton = new() { Text = "Refresh" };
-    private readonly Button _meButton = new() { Text = "Mostra profilo" };
-    private readonly Button _logoutButton = new() { Text = "Logout" };
+    private readonly Button _registerButton = new() { Text = "Registrati", Width = ButtonWidth };
+    private readonly Button _confirmEmailButton = new() { Text = "Conferma email", Width = ButtonWidth };
+    private readonly Button _loginButton = new() { Text = "Login (password)", Width = ButtonWidth };
+    private readonly Button _confirmMfaButton = new() { Text = "Conferma MFA", Width = ButtonWidth };
+    private readonly Button _setupMfaButton = new() { Text = "Attiva MFA", Width = ButtonWidth };
+    private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA", Width = ButtonWidth };
+    private readonly Button _refreshButton = new() { Text = "Refresh", Width = ButtonWidth };
+    private readonly Button _meButton = new() { Text = "Mostra profilo", Width = ButtonWidth };
+    private readonly Button _logoutButton = new() { Text = "Logout", Width = ButtonWidth };
+    private readonly Button _showQrButton = new() { Text = "Mostra QR MFA", Width = ButtonWidth };
     private readonly CheckBox _rememberCheck = new() { Text = "Ricordami", AutoSize = true };
     private readonly Label _stateLabel = new() { Text = "Stato: Non autenticato", AutoSize = true };
     private readonly Label _userLabel = new() { Text = "Utente: -", AutoSize = true };
@@ -45,9 +49,11 @@ public sealed class MainForm : Form
     private readonly TextBox _challengeBox = new() { Dock = DockStyle.Fill, ReadOnly = true, PlaceholderText = "Challenge MFA" };
     private readonly Label _mfaStatusLabel = new() { Text = "MFA: -", AutoSize = true };
     private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
+    private readonly PictureBox _qrBox = new() { SizeMode = PictureBoxSizeMode.StretchImage, Height = QrSize, Width = QrSize, BorderStyle = BorderStyle.FixedSingle, BackColor = System.Drawing.Color.White };
     private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1000 };
     private DateTime? _refreshExpiresUtc;
     private string? _challengeId;
+    private string? _otpauthUri;
 
     private HttpClient _http = null!;
     private HttpClientHandler _handler = null!;
@@ -67,7 +73,7 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 16,
+            RowCount = 17,
             Padding = new Padding(10),
             AutoSize = true
         };
@@ -90,7 +96,7 @@ public sealed class MainForm : Form
         layout.Controls.Add(_totpBox, 1, 4);
 
         var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _confirmMfaButton, _rememberCheck, _refreshButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
+        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _confirmMfaButton, _rememberCheck, _refreshButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton, _showQrButton });
         layout.Controls.Add(buttonsPanel, 1, 5);
 
         var statusPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown };
@@ -110,20 +116,23 @@ public sealed class MainForm : Form
         layout.Controls.Add(new Label { Text = "Challenge MFA:", AutoSize = true }, 0, 10);
         layout.Controls.Add(_challengeBox, 1, 10);
 
-        layout.Controls.Add(_outputBox, 0, 11);
+        layout.Controls.Add(_qrBox, 0, 11);
+        layout.SetColumnSpan(_qrBox, 2);
+
+        layout.Controls.Add(_outputBox, 0, 12);
         layout.SetColumnSpan(_outputBox, 2);
 
-        layout.Controls.Add(_busyLabel, 0, 12);
+        layout.Controls.Add(_busyLabel, 0, 13);
         layout.SetColumnSpan(_busyLabel, 2);
 
         var logLabel = new Label { Text = "Log eventi:", AutoSize = true };
-        layout.Controls.Add(logLabel, 0, 13);
+        layout.Controls.Add(logLabel, 0, 14);
         layout.SetColumnSpan(logLabel, 2);
-        layout.Controls.Add(_logBox, 0, 14);
+        layout.Controls.Add(_logBox, 0, 15);
         layout.SetColumnSpan(_logBox, 2);
 
-        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 15);
-        layout.Controls.Add(_confirmTokenBox, 1, 15);
+        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 16);
+        layout.Controls.Add(_confirmTokenBox, 1, 16);
 
         // Aggiungi prima il layout (fill), poi il banner top per riservare spazio.
         Controls.Add(layout);
@@ -133,6 +142,7 @@ public sealed class MainForm : Form
         _confirmEmailButton.Click += async (_, _) => await ConfirmEmailAsync();
         _loginButton.Click += async (_, _) => await LoginAsync();
         _confirmMfaButton.Click += async (_, _) => await ConfirmMfaAsync();
+        _showQrButton.Click += (_, _) => RenderQr();
         _refreshButton.Click += async (_, _) => await RefreshAsync();
         _setupMfaButton.Click += async (_, _) => await SetupMfaAsync();
         _disableMfaButton.Click += async (_, _) => await DisableMfaAsync();
@@ -197,6 +207,7 @@ public sealed class MainForm : Form
                     {
                         _challengeId = mfa.ChallengeId;
                         _challengeBox.Text = mfa.ChallengeId ?? "";
+                        _confirmMfaButton.Enabled = !string.IsNullOrWhiteSpace(_challengeId);
                         SetMfaState("MFA richiesta: inserisci TOTP e conferma");
                         Append($"Login richiede MFA: challengeId={mfa.ChallengeId}");
                         LogEvent("Info", "MFA richiesta, procedi con la conferma");
@@ -412,6 +423,8 @@ public sealed class MainForm : Form
             if (resp.IsSuccessStatusCode)
             {
                 var setup = JsonSerializer.Deserialize<MfaSetupResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                _otpauthUri = setup?.OtpauthUri;
+                RenderQr();
                 LogEvent("Info", $"MFA attivata secret={setup?.Secret}");
             }
             else
@@ -534,10 +547,11 @@ public sealed class MainForm : Form
         _registerButton.Enabled = enabled;
         _confirmEmailButton.Enabled = enabled;
         _loginButton.Enabled = enabled;
-        _confirmMfaButton.Enabled = enabled;
+        _confirmMfaButton.Enabled = enabled && !string.IsNullOrWhiteSpace(_challengeId);
         _refreshButton.Enabled = enabled;
         _meButton.Enabled = enabled;
         _logoutButton.Enabled = enabled;
+        _showQrButton.Enabled = enabled && !string.IsNullOrWhiteSpace(_otpauthUri);
     }
 
     private sealed class BusyScope : IDisposable
@@ -576,6 +590,9 @@ public sealed class MainForm : Form
         };
         _http = new HttpClient(_handler);
         _refreshExpiresUtc = null;
+        _otpauthUri = null;
+        _qrBox.Image = null;
+        _showQrButton.Enabled = false;
         SetState("Non autenticato", null, null, null);
         _deviceInfo.ResetInfo();
         _deviceAlert.ResetStatus();
@@ -643,11 +660,39 @@ public sealed class MainForm : Form
     {
         _challengeId = null;
         _challengeBox.Text = "";
+        _confirmMfaButton.Enabled = false;
         SetMfaState("MFA: -");
     }
 
     private void SetMfaState(string message)
     {
         _mfaStatusLabel.Text = message;
+    }
+
+    private void RenderQr()
+    {
+        if (string.IsNullOrWhiteSpace(_otpauthUri))
+        {
+            _qrBox.Image = null;
+            _showQrButton.Enabled = false;
+            return;
+        }
+
+        try
+        {
+            using var generator = new QRCoder.QRCodeGenerator();
+            using var data = generator.CreateQrCode(_otpauthUri, QRCoder.QRCodeGenerator.ECCLevel.Q);
+            using var code = new QRCoder.QRCode(data);
+            var bmp = code.GetGraphic(20);
+            _qrBox.Image = bmp;
+            _showQrButton.Enabled = true;
+            Append("QR MFA generato: scansiona con Authenticator");
+            LogEvent("Info", "QR MFA generato");
+        }
+        catch (Exception ex)
+        {
+            _qrBox.Image = null;
+            LogEvent("Errore", $"QR MFA non generato: {ex.Message}");
+        }
     }
 }
