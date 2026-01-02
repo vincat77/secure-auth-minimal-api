@@ -152,10 +152,12 @@ Obiettivo: separare il login in due fasi quando l’utente ha MFA attivo:
   - [ ] Aggiungi tabella `mfa_challenges` con campi id, user_id, created_at_utc, expires_at_utc, used_at_utc, user_agent, client_ip.
   - [ ] Indici: per user_id (e opzionale expires_at_utc per cleanup).
   - [ ] Verifica che la creazione sia additive (non modifica tabelle esistenti).
+  - **Stato:** FATTO (tabella `mfa_challenges` + indice utente).
 
 - **Modello/Repository**
   - [ ] Nuovo modello `MfaChallenge` con proprietà Id, UserId, CreatedAtUtc, ExpiresAtUtc, UsedAtUtc, UserAgent, ClientIp, AttemptCount (se si usa MaxAttempts).
   - [ ] Nuovo repo `MfaChallengeRepository` con metodi CreateAsync, GetValidAsync (scadenza, non usato, match UA/IP opzionali), MarkUsedAsync, IncrementAttemptAsync/MaxAttempts.
+  - **Stato:** FATTO (CreateAsync, GetById, MarkUsed, IncrementAttempt; GetValid da valutare).
 
 - **Program.cs (API)**
   - [ ] Config Mfa: ChallengeMinutes (>=1, default 10), RequireUaMatch=true, RequireIpMatch=false, MaxAttemptsPerChallenge=5.
@@ -171,12 +173,14 @@ Obiettivo: separare il login in due fasi quando l’utente ha MFA attivo:
   - [ ] Audit: registra mfa_required, invalid_totp, mfa_confirmed.
   - [ ] Cookie emissione: solo in /confirm-mfa (non in /login).
   - [ ] Cleanup best-effort: DELETE challenge scaduti (es. in /login o /confirm).
+  - **Stato:** PARZIALE. /login e /confirm-mfa implementati con emissione cookie solo al secondo step; config Mfa aggiunta; audit parziale (mfa_required, invalid_totp, mfa_confirmed). Cleanup scaduti ancora da fare.
 
 - **Test (tests/SecureAuthMinimalApi.Tests/ApiTests.cs)**
   - [ ] Nuovi test: mfa_required (nessun cookie), confirm-mfa ok (cookie access/refresh/device), confirm-mfa errato (401), challenge scaduto/usato (410/401), UA/IP mismatch (se RequireIpMatch attivo), MaxAttempts (se configurato).
   - [ ] Aggiorna `Totp_setup_and_login_success`, `Totp_disable_allows_login_without_code`, test remember/device/refresh per flusso two-step.
   - [ ] Helper LoginAndGetSessionAsync: gestire mfa_required (param per auto-confirm).
   - [ ] Test che il primo step non emette cookie; il secondo sì.
+  - **Stato:** FATTO. Suite two-step aggiunta/aggiornata; helper non ancora adattato (test usano chiamate esplicite).
 
 - **WinForms (MainForm.cs)**
   - [ ] UI: label/textbox challengeId (read-only), bottoni separati “Login (password)” e “Conferma MFA”.
@@ -190,3 +194,4 @@ Obiettivo: separare il login in due fasi quando l’utente ha MFA attivo:
 - **Pulizia/Maintenance**
   - [ ] Cleanup challenge scaduti (anche manuale) per evitare crescita DB.
   - [ ] Non loggare challengeId in chiaro se non necessario (eventuale mascheramento).
+  - **Stato:** DA FARE (cleanup, Postman, masking non implementati).
