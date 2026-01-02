@@ -30,7 +30,7 @@ public sealed class MainForm : Form
     private SessionCard _sessionCard = null!;
     private DeviceInfoControl _deviceInfo = null!;
     private DeviceAlertControl _deviceAlert = null!;
-    private TextBox _challengeBox = null!;
+    private MfaPanelControl _mfaPanel = null!;
     private TextBox _confirmTokenBox = null!;
     private PictureBox _qrBox = null!;
     private System.Windows.Forms.Timer _countdownTimer = null!;
@@ -59,7 +59,7 @@ public sealed class MainForm : Form
         _sessionCard = new SessionCard();
         _deviceInfo = new DeviceInfoControl();
         _deviceAlert = new DeviceAlertControl();
-        _challengeBox = new TextBox { ReadOnly = true, PlaceholderText = "Challenge MFA" };
+        _mfaPanel = new MfaPanelControl();
         _confirmTokenBox = new TextBox { PlaceholderText = "Token conferma email" };
         _qrBox = new PictureBox { SizeMode = PictureBoxSizeMode.StretchImage, Height = QrSize, Width = QrSize, BorderStyle = BorderStyle.FixedSingle, BackColor = System.Drawing.Color.White };
         _countdownTimer = new System.Windows.Forms.Timer { Interval = 1000 };
@@ -110,12 +110,9 @@ public sealed class MainForm : Form
         _actions.Size = new Size(200, 280);
         root.Controls.Add(_actions);
 
-        _challengeBox.Location = new Point(10, 480);
-        _challengeBox.Size = new Size(200, 23);
-        root.Controls.Add(_challengeBox);
-
-        _qrBox.Location = new Point(10, 510);
-        root.Controls.Add(_qrBox);
+        _mfaPanel.Location = new Point(10, 480);
+        _mfaPanel.Size = new Size(520, 320);
+        root.Controls.Add(_mfaPanel);
 
         _logPanel.Location = new Point(10, 680);
         _logPanel.Size = new Size(720, 320);
@@ -156,6 +153,10 @@ public sealed class MainForm : Form
         _actions.MeClicked += async (_, _) => await MeAsync();
         _actions.LogoutClicked += async (_, _) => await LogoutAsync();
         _actions.ShowQrClicked += (_, _) => RenderQr();
+        _mfaPanel.ConfirmMfaClicked += async (_, _) => await ConfirmMfaAsync();
+        _mfaPanel.SetupMfaClicked += async (_, _) => await SetupMfaAsync();
+        _mfaPanel.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
+        _mfaPanel.ShowQrClicked += (_, _) => RenderQr();
         _countdownTimer.Tick += (_, _) => _sessionCard.TickCountdown();
     }
 
@@ -214,7 +215,7 @@ public sealed class MainForm : Form
                     if (mfa?.Error == "mfa_required")
                     {
                         _challengeId = mfa.ChallengeId;
-                        _challengeBox.Text = mfa.ChallengeId ?? "";
+                        _mfaPanel.ChallengeId = mfa.ChallengeId ?? "";
                         _actions.SetMfaEnabled(!string.IsNullOrWhiteSpace(_challengeId));
                         SetMfaState("MFA richiesta: inserisci TOTP e conferma");
                         Append($"Login richiede MFA: challengeId={mfa.ChallengeId}");
@@ -657,9 +658,9 @@ public sealed class MainForm : Form
     private void ClearMfa()
     {
         _challengeId = null;
-        _challengeBox.Text = "";
+        _mfaPanel.ChallengeId = "";
         _actions.SetMfaEnabled(false);
-        SetMfaState("MFA: -");
+        _mfaPanel.SetMfaState("MFA: -");
     }
 
     private void SetMfaState(string message)
