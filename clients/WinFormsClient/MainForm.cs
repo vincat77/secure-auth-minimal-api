@@ -17,40 +17,30 @@ public sealed class MainForm : Form
     private const int ButtonWidth = 120;
     private const int QrSize = 160;
 
-    private readonly TextBox _urlBox = new() { Text = "https://localhost:52899", Dock = DockStyle.Fill };
-    private readonly TextBox _userBox = new() { Text = "demo", Dock = DockStyle.Fill };
-    private readonly TextBox _emailBox = new() { Text = "demo@example.com", Dock = DockStyle.Fill };
-    private readonly TextBox _passBox = new() { Text = "demo", UseSystemPasswordChar = true, Dock = DockStyle.Fill };
-    private readonly TextBox _totpBox = new() { Text = "", Dock = DockStyle.Fill, PlaceholderText = "TOTP (se richiesto)" };
-    private readonly Button _registerButton = new() { Text = "Registrati", Width = ButtonWidth };
-    private readonly Button _confirmEmailButton = new() { Text = "Conferma email", Width = ButtonWidth };
-    private readonly Button _loginButton = new() { Text = "Login (password)", Width = ButtonWidth };
-    private readonly Button _confirmMfaButton = new() { Text = "Conferma MFA", Width = ButtonWidth };
-    private readonly Button _setupMfaButton = new() { Text = "Attiva MFA", Width = ButtonWidth };
-    private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA", Width = ButtonWidth };
-    private readonly Button _refreshButton = new() { Text = "Refresh", Width = ButtonWidth };
-    private readonly Button _meButton = new() { Text = "Mostra profilo", Width = ButtonWidth };
-    private readonly Button _logoutButton = new() { Text = "Logout", Width = ButtonWidth };
-    private readonly Button _showQrButton = new() { Text = "Mostra QR MFA", Width = ButtonWidth };
-    private readonly CheckBox _rememberCheck = new() { Text = "Ricordami", AutoSize = true };
-    private readonly Label _stateLabel = new() { Text = "Stato: Non autenticato", AutoSize = true };
-    private readonly Label _userLabel = new() { Text = "Utente: -", AutoSize = true };
-    private readonly Label _sessionLabel = new() { Text = "SessionId: -", AutoSize = true };
-    private readonly Label _expLabel = new() { Text = "Scadenza: -", AutoSize = true };
-    private readonly Label _rememberLabel = new() { Text = "Remember: -", AutoSize = true };
-    private readonly Label _badgeLabel = new() { AutoSize = true, Padding = new Padding(6), BackColor = System.Drawing.Color.Firebrick, ForeColor = System.Drawing.Color.White, Text = "Non autenticato" };
-    private readonly StatusBanner _banner = new();
-    private readonly TextBox _outputBox = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Height = 180 };
-    private readonly ListBox _logBox = new() { Dock = DockStyle.Fill, Height = 120 };
-    private readonly Label _busyLabel = new() { Text = "", AutoSize = true, ForeColor = System.Drawing.Color.DarkSlateGray };
-    private readonly SessionCard _sessionCard = new();
-    private readonly DeviceInfoControl _deviceInfo = new();
-    private readonly DeviceAlertControl _deviceAlert = new();
-    private readonly TextBox _challengeBox = new() { Dock = DockStyle.Fill, ReadOnly = true, PlaceholderText = "Challenge MFA" };
-    private readonly Label _mfaStatusLabel = new() { Text = "MFA: -", AutoSize = true };
-    private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
-    private readonly PictureBox _qrBox = new() { SizeMode = PictureBoxSizeMode.StretchImage, Height = QrSize, Width = QrSize, BorderStyle = BorderStyle.FixedSingle, BackColor = System.Drawing.Color.White };
-    private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1000 };
+    private UrlInputControl _urlControl = null!;
+    private TextBox _userBox = null!;
+    private TextBox _emailBox = null!;
+    private PasswordInputControl _passwordControl = null!;
+    private TextBox _totpBox = null!;
+    private ActionButtonsControl _actions = null!;
+    private Label _stateLabel = null!;
+    private Label _userLabel = null!;
+    private Label _sessionLabel = null!;
+    private Label _expLabel = null!;
+    private Label _rememberLabel = null!;
+    private Label _badgeLabel = null!;
+    private StatusBanner _banner = null!;
+    private TextBox _outputBox = null!;
+    private ListBox _logBox = null!;
+    private Label _busyLabel = null!;
+    private SessionCard _sessionCard = null!;
+    private DeviceInfoControl _deviceInfo = null!;
+    private DeviceAlertControl _deviceAlert = null!;
+    private TextBox _challengeBox = null!;
+    private Label _mfaStatusLabel = null!;
+    private TextBox _confirmTokenBox = null!;
+    private PictureBox _qrBox = null!;
+    private System.Windows.Forms.Timer _countdownTimer = null!;
     private DateTime? _refreshExpiresUtc;
     private string? _challengeId;
     private string? _otpauthUri;
@@ -62,96 +52,142 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
+        _urlControl = new UrlInputControl();
+        _userBox = new TextBox { Text = "demo" };
+        _emailBox = new TextBox { Text = "demo@example.com" };
+        _passwordControl = new PasswordInputControl();
+        _totpBox = new TextBox { Text = "", PlaceholderText = "TOTP (se richiesto)" };
+        _actions = new ActionButtonsControl();
+        _stateLabel = new Label { Text = "Stato: Non autenticato", AutoSize = true };
+        _userLabel = new Label { Text = "Utente: -", AutoSize = true };
+        _sessionLabel = new Label { Text = "SessionId: -", AutoSize = true };
+        _expLabel = new Label { Text = "Scadenza: -", AutoSize = true };
+        _rememberLabel = new Label { Text = "Remember: -", AutoSize = true };
+        _badgeLabel = new Label { AutoSize = true, Padding = new Padding(6), BackColor = System.Drawing.Color.Firebrick, ForeColor = System.Drawing.Color.White, Text = "Non autenticato" };
+        _banner = new StatusBanner();
+        _outputBox = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Height = 180 };
+        _logBox = new ListBox { Height = 120 };
+        _busyLabel = new Label { Text = "", AutoSize = true, ForeColor = System.Drawing.Color.DarkSlateGray };
+        _sessionCard = new SessionCard();
+        _deviceInfo = new DeviceInfoControl();
+        _deviceAlert = new DeviceAlertControl();
+        _challengeBox = new TextBox { ReadOnly = true, PlaceholderText = "Challenge MFA" };
+        _mfaStatusLabel = new Label { Text = "MFA: -", AutoSize = true };
+        _confirmTokenBox = new TextBox { PlaceholderText = "Token conferma email" };
+        _qrBox = new PictureBox { SizeMode = PictureBoxSizeMode.StretchImage, Height = QrSize, Width = QrSize, BorderStyle = BorderStyle.FixedSingle, BackColor = System.Drawing.Color.White };
+        _countdownTimer = new System.Windows.Forms.Timer { Interval = 1000 };
+
         Text = "SecureAuth WinForms Client";
-        Width = 640;
-        Height = 420;
+        Width = 1100;
+        Height = 800;
 
-        // Gestore HTTP condiviso con cookie jar; accetta cert dev self-signed.
-        ResetHttpClient();
-
-        var layout = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 17,
-            Padding = new Padding(10),
-            AutoSize = true
-        };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-        layout.Controls.Add(new Label { Text = "Base URL:", AutoSize = true }, 0, 0);
-        layout.Controls.Add(_urlBox, 1, 0);
-
-        layout.Controls.Add(new Label { Text = "Username:", AutoSize = true }, 0, 1);
-        layout.Controls.Add(_userBox, 1, 1);
-
-        layout.Controls.Add(new Label { Text = "Email:", AutoSize = true }, 0, 2);
-        layout.Controls.Add(_emailBox, 1, 2);
-
-        layout.Controls.Add(new Label { Text = "Password:", AutoSize = true }, 0, 3);
-        layout.Controls.Add(_passBox, 1, 3);
-
-        layout.Controls.Add(new Label { Text = "TOTP (opzionale):", AutoSize = true }, 0, 4);
-        layout.Controls.Add(_totpBox, 1, 4);
-
-        var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _confirmMfaButton, _rememberCheck, _refreshButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton, _showQrButton });
-        layout.Controls.Add(buttonsPanel, 1, 5);
-
-        var statusPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown };
-        statusPanel.Controls.AddRange(new Control[] { _badgeLabel, _stateLabel, _userLabel, _sessionLabel, _expLabel, _rememberLabel, _mfaStatusLabel });
-        layout.Controls.Add(statusPanel, 0, 6);
-        layout.SetColumnSpan(statusPanel, 2);
-
-        layout.Controls.Add(_sessionCard, 0, 7);
-        layout.SetColumnSpan(_sessionCard, 2);
-
-        layout.Controls.Add(_deviceInfo, 0, 8);
-        layout.SetColumnSpan(_deviceInfo, 2);
-
-        layout.Controls.Add(_deviceAlert, 0, 9);
-        layout.SetColumnSpan(_deviceAlert, 2);
-
-        layout.Controls.Add(new Label { Text = "Challenge MFA:", AutoSize = true }, 0, 10);
-        layout.Controls.Add(_challengeBox, 1, 10);
-
-        layout.Controls.Add(_qrBox, 0, 11);
-        layout.SetColumnSpan(_qrBox, 2);
-
-        layout.Controls.Add(_outputBox, 0, 12);
-        layout.SetColumnSpan(_outputBox, 2);
-
-        layout.Controls.Add(_busyLabel, 0, 13);
-        layout.SetColumnSpan(_busyLabel, 2);
-
-        var logLabel = new Label { Text = "Log eventi:", AutoSize = true };
-        layout.Controls.Add(logLabel, 0, 14);
-        layout.SetColumnSpan(logLabel, 2);
-        layout.Controls.Add(_logBox, 0, 15);
-        layout.SetColumnSpan(_logBox, 2);
-
-        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 16);
-        layout.Controls.Add(_confirmTokenBox, 1, 16);
-
-        // Aggiungi prima il layout (fill), poi il banner top per riservare spazio.
-        Controls.Add(layout);
+        Controls.Clear();
+        _banner.Dock = DockStyle.Top;
         Controls.Add(_banner);
 
-        _registerButton.Click += async (_, _) => await RegisterAsync();
-        _confirmEmailButton.Click += async (_, _) => await ConfirmEmailAsync();
-        _loginButton.Click += async (_, _) => await LoginAsync();
-        _confirmMfaButton.Click += async (_, _) => await ConfirmMfaAsync();
-        _showQrButton.Click += (_, _) => RenderQr();
-        _refreshButton.Click += async (_, _) => await RefreshAsync();
-        _setupMfaButton.Click += async (_, _) => await SetupMfaAsync();
-        _disableMfaButton.Click += async (_, _) => await DisableMfaAsync();
-        _meButton.Click += async (_, _) => await MeAsync();
-        _logoutButton.Click += async (_, _) => await LogoutAsync();
+        var root = new Panel
+        {
+            AutoScroll = true,
+            Dock = DockStyle.None,
+            Size = new System.Drawing.Size(1100, 760),
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+        };
+        Controls.Add(root);
+
+        // Colonna sinistra
+        _urlControl.Location = new Point(10, 10);
+        _urlControl.Size = new Size(500, 32);
+        _urlControl.UrlText = "https://localhost:52899";
+        root.Controls.Add(_urlControl);
+
+        _userBox.Location = new Point(10, 55);
+        _userBox.Size = new Size(300, 23);
+        _userBox.Text = "demo";
+        root.Controls.Add(_userBox);
+
+        _emailBox.Location = new Point(10, 85);
+        _emailBox.Size = new Size(300, 23);
+        _emailBox.Text = "demo@example.com";
+        root.Controls.Add(_emailBox);
+
+        _passwordControl.Location = new Point(10, 115);
+        _passwordControl.Size = new Size(320, 32);
+        _passwordControl.PasswordText = "demo";
+        root.Controls.Add(_passwordControl);
+
+        _totpBox.Location = new Point(10, 155);
+        _totpBox.Size = new Size(200, 23);
+        root.Controls.Add(_totpBox);
+
+        _actions.Location = new Point(10, 190);
+        _actions.Size = new Size(200, 280);
+        root.Controls.Add(_actions);
+
+        _challengeBox.Location = new Point(10, 480);
+        _challengeBox.Size = new Size(200, 23);
+        root.Controls.Add(_challengeBox);
+
+        _qrBox.Location = new Point(10, 510);
+        root.Controls.Add(_qrBox);
+
+        _outputBox.Location = new Point(10, 680);
+        _outputBox.Size = new Size(700, 150);
+        root.Controls.Add(_outputBox);
+
+        _logBox.Location = new Point(10, 840);
+        _logBox.Size = new Size(700, 140);
+        root.Controls.Add(_logBox);
+
+        _confirmTokenBox.Location = new Point(10, 990);
+        _confirmTokenBox.Size = new Size(300, 23);
+        root.Controls.Add(_confirmTokenBox);
+
+        // Colonna destra
+        int rightX = 550;
+        _badgeLabel.Location = new Point(rightX, 20);
+        root.Controls.Add(_badgeLabel);
+        _stateLabel.Location = new Point(rightX, 55);
+        root.Controls.Add(_stateLabel);
+        _userLabel.Location = new Point(rightX, 75);
+        root.Controls.Add(_userLabel);
+        _sessionLabel.Location = new Point(rightX, 95);
+        root.Controls.Add(_sessionLabel);
+        _expLabel.Location = new Point(rightX, 115);
+        root.Controls.Add(_expLabel);
+        _rememberLabel.Location = new Point(rightX, 135);
+        root.Controls.Add(_rememberLabel);
+        _mfaStatusLabel.Location = new Point(rightX, 155);
+        root.Controls.Add(_mfaStatusLabel);
+
+        _sessionCard.Location = new Point(rightX, 190);
+        _sessionCard.Size = new Size(320, 140);
+        root.Controls.Add(_sessionCard);
+
+        _deviceInfo.Location = new Point(rightX, 340);
+        _deviceInfo.Size = new Size(320, 90);
+        root.Controls.Add(_deviceInfo);
+
+        _deviceAlert.Location = new Point(rightX, 440);
+        _deviceAlert.Size = new Size(320, 60);
+        root.Controls.Add(_deviceAlert);
+
+        _busyLabel.Location = new Point(rightX, 510);
+        root.Controls.Add(_busyLabel);
+
+        _actions.RegisterClicked += async (_, _) => await RegisterAsync();
+        _actions.ConfirmEmailClicked += async (_, _) => await ConfirmEmailAsync();
+        _actions.LoginClicked += async (_, _) => await LoginAsync();
+        _actions.ConfirmMfaClicked += async (_, _) => await ConfirmMfaAsync();
+        _actions.RefreshClicked += async (_, _) => await RefreshAsync();
+        _actions.SetupMfaClicked += async (_, _) => await SetupMfaAsync();
+        _actions.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
+        _actions.MeClicked += async (_, _) => await MeAsync();
+        _actions.LogoutClicked += async (_, _) => await LogoutAsync();
+        _actions.ShowQrClicked += (_, _) => RenderQr();
         _countdownTimer.Tick += (_, _) => _sessionCard.TickCountdown();
     }
 
-    private Uri BaseUri => new(_urlBox.Text.TrimEnd('/'));
+    private Uri BaseUri => new(_urlControl.UrlText.TrimEnd('/'));
 
     /// <summary>
     /// Esegue registrazione utente con username/password correnti.
@@ -161,7 +197,7 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Registrazione in corso...");
         try
         {
-            var payload = new { username = _userBox.Text, password = _passBox.Text, email = _emailBox.Text };
+        var payload = new { username = _userBox.Text, password = _passwordControl.PasswordText, email = _emailBox.Text };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/register"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -193,7 +229,7 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Login in corso...");
         try
         {
-            var payload = new { username = _userBox.Text, password = _passBox.Text, rememberMe = _rememberCheck.Checked };
+        var payload = new { username = _userBox.Text, password = _passwordControl.PasswordText, rememberMe = _actions.RememberChecked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -207,7 +243,7 @@ public sealed class MainForm : Form
                     {
                         _challengeId = mfa.ChallengeId;
                         _challengeBox.Text = mfa.ChallengeId ?? "";
-                        _confirmMfaButton.Enabled = !string.IsNullOrWhiteSpace(_challengeId);
+                        _actions.SetMfaEnabled(!string.IsNullOrWhiteSpace(_challengeId));
                         SetMfaState("MFA richiesta: inserisci TOTP e conferma");
                         Append($"Login richiede MFA: challengeId={mfa.ChallengeId}");
                         LogEvent("Info", "MFA richiesta, procedi con la conferma");
@@ -274,7 +310,7 @@ public sealed class MainForm : Form
                 return;
             }
 
-            var payload = new { challengeId = _challengeId, totpCode = _totpBox.Text, rememberMe = _rememberCheck.Checked };
+            var payload = new { challengeId = _challengeId, totpCode = _totpBox.Text, rememberMe = _actions.RememberChecked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login/confirm-mfa"), payload);
             var body = await response.Content.ReadAsStringAsync();
             Append($"POST /login/confirm-mfa -> {(int)response.StatusCode}\n{body}");
@@ -544,14 +580,9 @@ public sealed class MainForm : Form
 
     private void SetButtonsEnabled(bool enabled)
     {
-        _registerButton.Enabled = enabled;
-        _confirmEmailButton.Enabled = enabled;
-        _loginButton.Enabled = enabled;
-        _confirmMfaButton.Enabled = enabled && !string.IsNullOrWhiteSpace(_challengeId);
-        _refreshButton.Enabled = enabled;
-        _meButton.Enabled = enabled;
-        _logoutButton.Enabled = enabled;
-        _showQrButton.Enabled = enabled && !string.IsNullOrWhiteSpace(_otpauthUri);
+        _actions.SetEnabled(enabled);
+        _actions.SetMfaEnabled(enabled && !string.IsNullOrWhiteSpace(_challengeId));
+        _actions.SetQrEnabled(enabled && !string.IsNullOrWhiteSpace(_otpauthUri));
     }
 
     private sealed class BusyScope : IDisposable
@@ -592,7 +623,7 @@ public sealed class MainForm : Form
         _refreshExpiresUtc = null;
         _otpauthUri = null;
         _qrBox.Image = null;
-        _showQrButton.Enabled = false;
+        _actions.SetQrEnabled(false);
         SetState("Non autenticato", null, null, null);
         _deviceInfo.ResetInfo();
         _deviceAlert.ResetStatus();
@@ -660,7 +691,7 @@ public sealed class MainForm : Form
     {
         _challengeId = null;
         _challengeBox.Text = "";
-        _confirmMfaButton.Enabled = false;
+        _actions.SetMfaEnabled(false);
         SetMfaState("MFA: -");
     }
 
@@ -674,7 +705,7 @@ public sealed class MainForm : Form
         if (string.IsNullOrWhiteSpace(_otpauthUri))
         {
             _qrBox.Image = null;
-            _showQrButton.Enabled = false;
+            _actions.SetQrEnabled(false);
             return;
         }
 
@@ -685,7 +716,7 @@ public sealed class MainForm : Form
             using var code = new QRCoder.QRCode(data);
             var bmp = code.GetGraphic(20);
             _qrBox.Image = bmp;
-            _showQrButton.Enabled = true;
+            _actions.SetQrEnabled(true);
             Append("QR MFA generato: scansiona con Authenticator");
             LogEvent("Info", "QR MFA generato");
         }
