@@ -3,6 +3,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
 
 namespace SecureAuthMinimalApi.Data;
 
@@ -12,11 +13,13 @@ namespace SecureAuthMinimalApi.Data;
 public sealed class RefreshTokenRepository
 {
     private readonly string _connectionString;
+    private readonly RefreshTokenHasher _hasher;
 
-    public RefreshTokenRepository(IConfiguration config)
+    public RefreshTokenRepository(IConfiguration config, RefreshTokenHasher hasher)
     {
         _connectionString = config.GetConnectionString("Sqlite")
             ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite in appsettings.json");
+        _hasher = hasher;
     }
 
     private IDbConnection Open() => new SqliteConnection(_connectionString);
@@ -24,16 +27,17 @@ public sealed class RefreshTokenRepository
     public async Task CreateAsync(RefreshToken token, CancellationToken ct)
     {
         const string sql = @"
-INSERT INTO refresh_tokens (id, user_id, session_id, token, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, device_id, device_label, rotation_parent_id, rotation_reason)
-VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @DeviceId, @DeviceLabel, @RotationParentId, @RotationReason);";
+INSERT INTO refresh_tokens (id, user_id, session_id, token_hash, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, device_id, device_label, rotation_parent_id, rotation_reason)
+VALUES (@Id, @UserId, @SessionId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @DeviceId, @DeviceLabel, @RotationParentId, @RotationReason);";
 
+        var tokenHash = _hasher.ComputeHash(token.Token);
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
         {
             token.Id,
             token.UserId,
             token.SessionId,
-            token.Token,
+            TokenHash = tokenHash,
             token.CreatedAtUtc,
             token.ExpiresAtUtc,
             token.RevokedAtUtc,
@@ -49,16 +53,17 @@ VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @Revoked
     public async Task<RefreshToken?> GetByTokenAsync(string tokenValue, CancellationToken ct)
     {
         const string sql = @"
-SELECT id AS Id, user_id AS UserId, session_id AS SessionId, token AS Token, created_at_utc AS CreatedAtUtc,
+SELECT id AS Id, user_id AS UserId, session_id AS SessionId, token_hash AS TokenHash, created_at_utc AS CreatedAtUtc,
        expires_at_utc AS ExpiresAtUtc, revoked_at_utc AS RevokedAtUtc, user_agent AS UserAgent, client_ip AS ClientIp,
        device_id AS DeviceId, device_label AS DeviceLabel,
        rotation_parent_id AS RotationParentId, rotation_reason AS RotationReason
 FROM refresh_tokens
-WHERE token = @token
+WHERE token_hash = @tokenHash
 LIMIT 1;";
 
+        var tokenHash = _hasher.ComputeHash(tokenValue);
         using var db = Open();
-        return await db.QuerySingleOrDefaultAsync<RefreshToken>(new CommandDefinition(sql, new { token = tokenValue }, cancellationToken: ct));
+        return await db.QuerySingleOrDefaultAsync<RefreshToken>(new CommandDefinition(sql, new { tokenHash }, cancellationToken: ct));
     }
 
     public async Task RevokeByIdAsync(string id, string reason, CancellationToken ct)
@@ -82,12 +87,13 @@ WHERE id = @id;";
         const string sql = @"
 UPDATE refresh_tokens
 SET revoked_at_utc = @revokedAt, rotation_reason = @reason
-WHERE token = @token;";
+WHERE token_hash = @tokenHash;";
 
+        var tokenHash = _hasher.ComputeHash(tokenValue);
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
         {
-            token = tokenValue,
+            tokenHash,
             revokedAt = DateTime.UtcNow.ToString("O"),
             reason
         }, cancellationToken: ct));
@@ -112,15 +118,16 @@ WHERE id = @id;";
         }, transaction: tx, cancellationToken: ct));
 
         const string insertSql = @"
-INSERT INTO refresh_tokens (id, user_id, session_id, token, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, device_id, device_label, rotation_parent_id, rotation_reason)
-VALUES (@Id, @UserId, @SessionId, @Token, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @DeviceId, @DeviceLabel, @RotationParentId, @RotationReason);";
+INSERT INTO refresh_tokens (id, user_id, session_id, token_hash, created_at_utc, expires_at_utc, revoked_at_utc, user_agent, client_ip, device_id, device_label, rotation_parent_id, rotation_reason)
+VALUES (@Id, @UserId, @SessionId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, @RevokedAtUtc, @UserAgent, @ClientIp, @DeviceId, @DeviceLabel, @RotationParentId, @RotationReason);";
 
+        var tokenHash = _hasher.ComputeHash(newToken.Token);
         await db.ExecuteAsync(new CommandDefinition(insertSql, new
         {
             newToken.Id,
             newToken.UserId,
             newToken.SessionId,
-            newToken.Token,
+            TokenHash = tokenHash,
             newToken.CreatedAtUtc,
             newToken.ExpiresAtUtc,
             newToken.RevokedAtUtc,

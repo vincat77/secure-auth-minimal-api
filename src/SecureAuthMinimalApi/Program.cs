@@ -28,6 +28,7 @@ builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();
 builder.Services.AddSingleton<LoginAuditRepository>();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<TotpSecretProtector>();
+builder.Services.AddSingleton<RefreshTokenHasher>();
 builder.Services.AddSingleton<RefreshTokenRepository>();
 builder.Services.AddSingleton<MfaChallengeRepository>();
 
@@ -411,6 +412,7 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
             UserId = user.Id,
             SessionId = sessionId,
             Token = refreshToken,
+            TokenHash = null,
             CreatedAtUtc = nowIso,
             ExpiresAtUtc = refreshExpires.ToString("O"),
             RevokedAtUtc = null,
@@ -597,6 +599,7 @@ app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, S
             UserId = user.Id,
             SessionId = sessionId,
             Token = refreshToken,
+            TokenHash = null,
             CreatedAtUtc = nowIso,
             ExpiresAtUtc = refreshExpires.ToString("O"),
             RevokedAtUtc = null,
@@ -927,6 +930,7 @@ app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshToke
         UserId = user.Id,
         SessionId = sessionId,
         Token = newRefreshToken,
+        TokenHash = null,
         CreatedAtUtc = nowIso,
         ExpiresAtUtc = refreshExpires.ToString("O"),
         RevokedAtUtc = null,

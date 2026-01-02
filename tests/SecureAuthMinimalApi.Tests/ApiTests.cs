@@ -28,6 +28,7 @@ public class ApiTests : IAsyncLifetime
     private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"secure-auth-tests-{Guid.NewGuid():N}.db");
     private WebApplicationFactory<Program> _factory = null!;
     private HttpClient _client = null!;
+    private RefreshTokenHasher _hasher = null!;
 
     public ApiTests(ITestOutputHelper output)
     {
@@ -106,6 +107,7 @@ public class ApiTests : IAsyncLifetime
             HandleCookies = false,
             AllowAutoRedirect = false
         });
+        _hasher = new RefreshTokenHasher(_factory.Services.GetRequiredService<IConfiguration>());
 
         return Task.CompletedTask;
     }
@@ -1546,7 +1548,9 @@ CREATE TABLE IF NOT EXISTS users (
 
         await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
         await db.OpenAsync();
-        var revoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token = @t", new { t = refreshCookie.Split('=')[1] });
+        var refreshValue = refreshCookie.Split('=')[1];
+        var refreshHash = _hasher.ComputeHash(refreshValue);
+        var revoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token_hash = @h", new { h = refreshHash });
         Assert.False(string.IsNullOrWhiteSpace(revoked));
     }
 
@@ -1567,6 +1571,125 @@ CREATE TABLE IF NOT EXISTS users (
         var cookies = login.Headers.GetValues("Set-Cookie").ToList();
         Assert.Contains(cookies, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(cookies, c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Login_remember_stores_hashed_refresh_token()
+    {
+        LogTestStart();
+        var username = $"hash_refresh_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var refreshCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var refreshValue = refreshCookie.Split('=')[1];
+        var hash = _hasher.ComputeHash(refreshValue);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var tokenColumnExists = await db.ExecuteScalarAsync<long>("SELECT COUNT(1) FROM pragma_table_info('refresh_tokens') WHERE name = 'token';");
+        Assert.Equal(0, tokenColumnExists);
+        var tokenHashFromDb = await db.ExecuteScalarAsync<string>("SELECT token_hash FROM refresh_tokens WHERE token_hash = @h", new { h = hash });
+        Assert.Equal(hash, tokenHashFromDb);
+    }
+
+    [Fact]
+    public async Task Full_auth_flow_with_remember_and_mfa()
+    {
+        LogTestStart();
+        var username = $"fullflow_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        // Registrazione e conferma email
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        // Login base
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.True(loginPayload!.Ok);
+        var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        // Logout base
+        using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+        {
+            logoutReq.Headers.Add("Cookie", accessCookie);
+            logoutReq.Headers.Add("X-CSRF-Token", loginPayload.CsrfToken);
+            var logout = await _client.SendAsync(logoutReq);
+            Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+        }
+
+        // Login con remember-me
+        var loginRemember = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, loginRemember.StatusCode);
+        var rememberPayload = await loginRemember.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.True(rememberPayload!.RememberIssued);
+        var rememberCookies = loginRemember.Headers.GetValues("Set-Cookie").ToList();
+        var accessCookie2 = rememberCookies.First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var refreshCookie = rememberCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        // Logout dopo remember
+        using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+        {
+            logoutReq.Headers.Add("Cookie", $"{accessCookie2}; {refreshCookie}");
+            logoutReq.Headers.Add("X-CSRF-Token", rememberPayload.CsrfToken);
+            var logout = await _client.SendAsync(logoutReq);
+            Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+        }
+
+        // Login per setup MFA
+        var loginForMfa = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        var loginForMfaPayload = await loginForMfa.Content.ReadFromJsonAsync<LoginResponse>();
+        var accessCookie3 = loginForMfa.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        string secret;
+        using (var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup"))
+        {
+            setupReq.Headers.Add("Cookie", accessCookie3);
+            setupReq.Headers.Add("X-CSRF-Token", loginForMfaPayload!.CsrfToken);
+            var setupResp = await _client.SendAsync(setupReq);
+            Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+            var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+            secret = setupPayload!.Secret!;
+        }
+        // Logout dopo setup MFA
+        using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+        {
+            logoutReq.Headers.Add("Cookie", accessCookie3);
+            logoutReq.Headers.Add("X-CSRF-Token", loginForMfaPayload!.CsrfToken);
+            var logout = await _client.SendAsync(logoutReq);
+            Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+        }
+
+        // Login con MFA richiesto
+        var loginMfa = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, loginMfa.StatusCode);
+        var mfaReq = await loginMfa.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.Equal("mfa_required", mfaReq!.Error);
+
+        // Conferma MFA
+        var totp = new Totp(Base32Encoding.ToBytes(secret));
+        var code = totp.ComputeTotp();
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfaReq.ChallengeId, TotpCode = code });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+        var confirmPayload = await confirm.Content.ReadFromJsonAsync<MfaConfirmResponse>();
+        var accessCookie4 = confirm.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        // Logout finale
+        using var finalLogoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        finalLogoutReq.Headers.Add("Cookie", accessCookie4);
+        finalLogoutReq.Headers.Add("X-CSRF-Token", confirmPayload!.CsrfToken);
+        var finalLogout = await _client.SendAsync(finalLogoutReq);
+        Assert.Equal(HttpStatusCode.OK, finalLogout.StatusCode);
     }
 
     [Fact]
@@ -1648,9 +1771,11 @@ CREATE TABLE IF NOT EXISTS users (
 
         await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
         await db.OpenAsync();
-        var oldRevoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token = @t", new { t = refreshCookie.Split('=')[1] });
+        var oldHash = _hasher.ComputeHash(refreshCookie.Split('=')[1]);
+        var newHash = _hasher.ComputeHash(newRefreshCookie.Split('=')[1]);
+        var oldRevoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token_hash = @h", new { h = oldHash });
         Assert.False(string.IsNullOrWhiteSpace(oldRevoked));
-        var deviceId = await db.ExecuteScalarAsync<string>("SELECT device_id FROM refresh_tokens WHERE token = @t", new { t = newRefreshCookie.Split('=')[1] });
+        var deviceId = await db.ExecuteScalarAsync<string>("SELECT device_id FROM refresh_tokens WHERE token_hash = @h", new { h = newHash });
         Assert.Equal(deviceCookie.Split('=')[1], deviceId);
     }
 
@@ -1741,7 +1866,8 @@ CREATE TABLE IF NOT EXISTS users (
         await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
         {
             await db.OpenAsync();
-            await db.ExecuteAsync("UPDATE refresh_tokens SET expires_at_utc = @exp WHERE token = @t", new { exp = DateTime.UtcNow.AddMinutes(-1).ToString("O"), t = refreshCookie.Split('=')[1] });
+            var hash = _hasher.ComputeHash(refreshCookie.Split('=')[1]);
+            await db.ExecuteAsync("UPDATE refresh_tokens SET expires_at_utc = @exp WHERE token_hash = @h", new { exp = DateTime.UtcNow.AddMinutes(-1).ToString("O"), h = hash });
         }
 
         using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");

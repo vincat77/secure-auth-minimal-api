@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
 using Xunit;
 
 namespace SecureAuthMinimalApi.Tests;
@@ -15,6 +16,7 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
     private string _dbPath = null!;
     private RefreshTokenRepository _repo = null!;
     private IConfiguration _config = null!;
+    private RefreshTokenHasher _hasher = null!;
 
     public Task InitializeAsync()
     {
@@ -22,12 +24,14 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
         _config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Sqlite"] = $"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"
+                ["ConnectionStrings:Sqlite"] = $"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared",
+                ["Refresh:HmacKey"] = "TEST_REFRESH_HMAC_KEY_32_CHARS_MIN_LEN__"
             })
             .Build();
 
         DbInitializer.EnsureCreated(_config);
-        _repo = new RefreshTokenRepository(_config);
+        _hasher = new RefreshTokenHasher(_config);
+        _repo = new RefreshTokenRepository(_config, _hasher);
         return Task.CompletedTask;
     }
 
@@ -49,6 +53,7 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
             UserId = userId,
             SessionId = sessionId,
             Token = $"tok_{Guid.NewGuid():N}",
+            TokenHash = null,
             CreatedAtUtc = now.ToString("O"),
             ExpiresAtUtc = now.AddDays(7).ToString("O"),
             RevokedAtUtc = null,
@@ -69,7 +74,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
         Assert.NotNull(loaded);
         Assert.Equal(token.Id, loaded!.Id);
         Assert.Equal(token.UserId, loaded.UserId);
-        Assert.Equal(token.Token, loaded.Token);
+        Assert.False(string.IsNullOrWhiteSpace(loaded.TokenHash));
+        Assert.True(string.IsNullOrWhiteSpace(loaded.Token));
         Assert.Null(loaded.RevokedAtUtc);
     }
 
@@ -89,6 +95,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
 
         var parentId = await db.ExecuteScalarAsync<string>("SELECT rotation_parent_id FROM refresh_tokens WHERE id = @id", new { id = newToken.Id });
         Assert.Equal(oldToken.Id, parentId);
+        var tokenHash = await db.ExecuteScalarAsync<string>("SELECT token_hash FROM refresh_tokens WHERE id = @id", new { id = newToken.Id });
+        Assert.False(string.IsNullOrWhiteSpace(tokenHash));
     }
 
     [Fact]
