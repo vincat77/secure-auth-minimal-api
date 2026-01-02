@@ -7,22 +7,14 @@ namespace WinFormsClient.Controls;
 /// <summary>
 /// Mostra countdown e barra di avanzamento fino alla scadenza della sessione.
 /// </summary>
-public sealed class SessionCountdownControl : UserControl
+public partial class SessionCountdownControl : UserControl
 {
-    private readonly Label _countdownLabel = new() { Text = "Scadenza tra: -", AutoSize = true };
-    private readonly ProgressBar _progress = new() { Dock = DockStyle.None, Height = 14 };
     private DateTime? _createdUtc;
     private DateTime? _expiresUtc;
 
     public SessionCountdownControl()
     {
-        Height = 50;
-        Dock = DockStyle.None;
-        Controls.Add(_countdownLabel);
-        Controls.Add(_progress);
-        _countdownLabel.Location = new Point(0, 0);
-        _progress.Location = new Point(0, 20);
-        _progress.Width = 200;
+        InitializeComponent();
     }
 
     public void SetSession(DateTime? createdUtc, DateTime? expiresUtc)

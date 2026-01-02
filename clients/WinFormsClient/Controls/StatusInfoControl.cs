@@ -6,37 +6,11 @@ namespace WinFormsClient.Controls;
 /// <summary>
 /// Mostra lo stato utente/sessione con badge e informazioni collegate.
 /// </summary>
-public sealed class StatusInfoControl : UserControl
+public partial class StatusInfoControl : UserControl
 {
-    private readonly Label _badge = new() { AutoSize = true, Padding = new Padding(6), BackColor = Color.Firebrick, ForeColor = Color.White, Text = "Non autenticato" };
-    private readonly Label _state = new() { Text = "Stato: -", AutoSize = true };
-    private readonly Label _user = new() { Text = "Utente: -", AutoSize = true };
-    private readonly Label _session = new() { Text = "SessionId: -", AutoSize = true };
-    private readonly Label _exp = new() { Text = "Scadenza: -", AutoSize = true };
-    private readonly Label _remember = new() { Text = "Remember: -", AutoSize = true };
-    private readonly Label _mfa = new() { Text = "MFA: -", AutoSize = true };
-
     public StatusInfoControl()
     {
-        Height = 180;
-        Width = 340;
-        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-
-        _badge.Location = new Point(0, 0);
-        _state.Location = new Point(0, 32);
-        _user.Location = new Point(0, 52);
-        _session.Location = new Point(0, 72);
-        _exp.Location = new Point(0, 92);
-        _remember.Location = new Point(0, 112);
-        _mfa.Location = new Point(0, 132);
-
-        Controls.Add(_badge);
-        Controls.Add(_state);
-        Controls.Add(_user);
-        Controls.Add(_session);
-        Controls.Add(_exp);
-        Controls.Add(_remember);
-        Controls.Add(_mfa);
+        InitializeComponent();
     }
 
     public void SetStatus(string stateText, string? userId, string? sessionId, string? expiresAtUtc, string? rememberText, Color badgeColor, string badgeText)
