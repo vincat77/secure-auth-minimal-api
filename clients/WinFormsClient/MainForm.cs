@@ -18,8 +18,8 @@ public sealed class MainForm : Form
     private const int QrSize = 160;
 
     private UrlInputControl _urlControl = null!;
-    private TextBox _userBox = null!;
-    private TextBox _emailBox = null!;
+    private LabeledTextBoxControl _userInput = null!;
+    private LabeledTextBoxControl _emailInput = null!;
     private PasswordInputControl _passwordControl = null!;
     private ActionButtonsControl _actions = null!;
     private StatusInfoControl _statusInfo = null!;
@@ -30,7 +30,7 @@ public sealed class MainForm : Form
     private DeviceInfoControl _deviceInfo = null!;
     private DeviceAlertControl _deviceAlert = null!;
     private MfaPanelControl _mfaPanel = null!;
-    private TextBox _confirmTokenBox = null!;
+    private LabeledTextBoxControl _confirmTokenInput = null!;
     private PictureBox _qrBox = null!;
     private System.Windows.Forms.Timer _countdownTimer = null!;
     private DateTime? _refreshExpiresUtc;
@@ -45,10 +45,10 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
-        _urlControl = new UrlInputControl();
-        _userBox = new TextBox { Text = "demo" };
-        _emailBox = new TextBox { Text = "demo@example.com" };
-        _passwordControl = new PasswordInputControl();
+        _urlControl = new UrlInputControl { UrlText = "https://localhost:52899" };
+        _userInput = new LabeledTextBoxControl { LabelText = "Username:", ValueText = "demo" };
+        _emailInput = new LabeledTextBoxControl { LabelText = "Email:", ValueText = "demo@example.com" };
+        _passwordControl = new PasswordInputControl { PasswordText = "demo" };
         _actions = new ActionButtonsControl();
         _statusInfo = new StatusInfoControl();
         _banner = new StatusBanner();
@@ -58,7 +58,7 @@ public sealed class MainForm : Form
         _deviceInfo = new DeviceInfoControl();
         _deviceAlert = new DeviceAlertControl();
         _mfaPanel = new MfaPanelControl();
-        _confirmTokenBox = new TextBox { PlaceholderText = "Token conferma email" };
+        _confirmTokenInput = new LabeledTextBoxControl { LabelText = "Token conferma email:", ValueText = "" };
         _qrBox = new PictureBox { SizeMode = PictureBoxSizeMode.StretchImage, Height = QrSize, Width = QrSize, BorderStyle = BorderStyle.FixedSingle, BackColor = System.Drawing.Color.White };
         _countdownTimer = new System.Windows.Forms.Timer { Interval = 1000 };
 
@@ -85,15 +85,13 @@ public sealed class MainForm : Form
         _urlControl.UrlText = "https://localhost:52899";
         root.Controls.Add(_urlControl);
 
-        _userBox.Location = new Point(10, 55);
-        _userBox.Size = new Size(300, 23);
-        _userBox.Text = "demo";
-        root.Controls.Add(_userBox);
+        _userInput.Location = new Point(10, 55);
+        _userInput.Size = new Size(320, 30);
+        root.Controls.Add(_userInput);
 
-        _emailBox.Location = new Point(10, 85);
-        _emailBox.Size = new Size(300, 23);
-        _emailBox.Text = "demo@example.com";
-        root.Controls.Add(_emailBox);
+        _emailInput.Location = new Point(10, 90);
+        _emailInput.Size = new Size(320, 30);
+        root.Controls.Add(_emailInput);
 
         _passwordControl.Location = new Point(10, 115);
         _passwordControl.Size = new Size(320, 32);
@@ -112,9 +110,9 @@ public sealed class MainForm : Form
         _logPanel.Size = new Size(720, 320);
         root.Controls.Add(_logPanel);
 
-        _confirmTokenBox.Location = new Point(10, 990);
-        _confirmTokenBox.Size = new Size(300, 23);
-        root.Controls.Add(_confirmTokenBox);
+        _confirmTokenInput.Location = new Point(10, 990);
+        _confirmTokenInput.Size = new Size(350, 30);
+        root.Controls.Add(_confirmTokenInput);
 
         // Colonna destra
         int rightX = 550;
@@ -164,14 +162,14 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Registrazione in corso...");
         try
         {
-        var payload = new { username = _userBox.Text, password = _passwordControl.PasswordText, email = _emailBox.Text };
+        var payload = new { username = _userInput.ValueText, password = _passwordControl.PasswordText, email = _emailInput.ValueText };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/register"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
             if (response.StatusCode == HttpStatusCode.Created)
             {
                 var reg = JsonSerializer.Deserialize<RegisterResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                _confirmTokenBox.Text = reg?.EmailConfirmToken ?? "";
+                _confirmTokenInput.ValueText = reg?.EmailConfirmToken ?? "";
                 Append($"Registrazione OK. userId={reg?.UserId} token={reg?.EmailConfirmToken}");
                 LogEvent("Info", $"Registrazione utente {reg?.UserId} token conferma impostato");
                 SetState("Non autenticato", null, null, null);
@@ -196,7 +194,7 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Login in corso...");
         try
         {
-            var payload = new { username = _userBox.Text, password = _passwordControl.PasswordText, rememberMe = _actions.RememberChecked };
+            var payload = new { username = _userInput.ValueText, password = _passwordControl.PasswordText, rememberMe = _actions.RememberChecked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -357,7 +355,7 @@ public sealed class MainForm : Form
         using var busy = BeginBusy("Conferma email in corso...");
         try
         {
-            var token = _confirmTokenBox.Text;
+            var token = _confirmTokenInput.ValueText;
             if (string.IsNullOrWhiteSpace(token))
             {
                 Append("Token conferma email mancante.");
