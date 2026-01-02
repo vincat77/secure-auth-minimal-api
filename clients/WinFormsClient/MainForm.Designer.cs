@@ -119,16 +119,17 @@ public partial class MainForm
     // 
     // _actions
     // 
+    _actions.BorderStyle = BorderStyle.FixedSingle;
     _actions.Location = new Point(16, 186);
     _actions.Name = "_actions";
     _actions.RememberChecked = false;
-    _actions.Size = new Size(180, 380);
+    _actions.Size = new Size(162, 380);
     _actions.TabIndex = 4;
     // 
     // _mfaPanel
     // 
     _mfaPanel.ChallengeId = "";
-    _mfaPanel.Location = new Point(784, 383);
+    _mfaPanel.Location = new Point(858, 202);
     _mfaPanel.Name = "_mfaPanel";
     _mfaPanel.Size = new Size(380, 260);
     _mfaPanel.TabIndex = 5;
@@ -137,16 +138,16 @@ public partial class MainForm
     // _confirmTokenInput
     // 
     _confirmTokenInput.LabelText = "Token conferma email:";
-    _confirmTokenInput.Location = new Point(16, 856);
+    _confirmTokenInput.Location = new Point(512, 166);
     _confirmTokenInput.Name = "_confirmTokenInput";
-    _confirmTokenInput.Size = new Size(330, 30);
+    _confirmTokenInput.Size = new Size(340, 30);
     _confirmTokenInput.TabIndex = 6;
     _confirmTokenInput.UseSystemPasswordChar = false;
     _confirmTokenInput.ValueText = "";
     // 
     // _statusInfo
     // 
-    _statusInfo.Location = new Point(392, 16);
+    _statusInfo.Location = new Point(184, 186);
     _statusInfo.Name = "_statusInfo";
     _statusInfo.Size = new Size(340, 160);
     _statusInfo.TabIndex = 7;
@@ -155,7 +156,7 @@ public partial class MainForm
     // 
     _sessionCard.BackColor = Color.FromArgb(240, 248, 255);
     _sessionCard.BorderStyle = BorderStyle.FixedSingle;
-    _sessionCard.Location = new Point(392, 196);
+    _sessionCard.Location = new Point(858, 6);
     _sessionCard.Name = "_sessionCard";
     _sessionCard.Padding = new Padding(8);
     _sessionCard.Size = new Size(340, 190);
@@ -165,7 +166,7 @@ public partial class MainForm
     // 
     _deviceInfo.BackColor = Color.WhiteSmoke;
     _deviceInfo.BorderStyle = BorderStyle.FixedSingle;
-    _deviceInfo.Location = new Point(392, 396);
+    _deviceInfo.Location = new Point(512, 3);
     _deviceInfo.Name = "_deviceInfo";
     _deviceInfo.Padding = new Padding(8);
     _deviceInfo.Size = new Size(340, 90);
@@ -175,7 +176,7 @@ public partial class MainForm
     // 
     _deviceAlert.BackColor = Color.White;
     _deviceAlert.BorderStyle = BorderStyle.FixedSingle;
-    _deviceAlert.Location = new Point(392, 496);
+    _deviceAlert.Location = new Point(512, 96);
     _deviceAlert.Name = "_deviceAlert";
     _deviceAlert.Padding = new Padding(8);
     _deviceAlert.Size = new Size(340, 60);
@@ -192,9 +193,9 @@ public partial class MainForm
     // 
     // _logPanel
     // 
-    _logPanel.Location = new Point(760, 16);
+    _logPanel.Location = new Point(184, 352);
     _logPanel.Name = "_logPanel";
-    _logPanel.Size = new Size(520, 500);
+    _logPanel.Size = new Size(666, 322);
     _logPanel.TabIndex = 12;
     // 
     // _countdownTimer
