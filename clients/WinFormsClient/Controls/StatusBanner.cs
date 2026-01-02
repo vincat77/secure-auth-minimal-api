@@ -3,17 +3,11 @@ using System.Windows.Forms;
 
 namespace WinFormsClient.Controls;
 
-public sealed class StatusBanner : UserControl
+public partial class StatusBanner : UserControl
 {
-    private readonly Panel _panel = new() { Dock = DockStyle.Fill };
-    private readonly Label _label = new() { Dock = DockStyle.Fill, ForeColor = Color.White, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0) };
-
     public StatusBanner()
     {
-        Height = 30;
-        Dock = DockStyle.Top;
-        _panel.Controls.Add(_label);
-        Controls.Add(_panel);
+        InitializeComponent();
         UpdateState("Non autenticato", null);
     }
 
