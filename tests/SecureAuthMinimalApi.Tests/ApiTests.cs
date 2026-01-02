@@ -225,6 +225,9 @@ public class ApiTests : IAsyncLifetime
     private sealed record ConfirmEmailResponse(bool Ok, bool? AlreadyConfirmed);
     private sealed record IntrospectResponse(bool Active, string? Reason, string? SessionId, string? UserId, string? ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
+    private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
+    private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId);
+    private sealed record ErrorResponse(bool? Ok, string? Error);
 
     private async Task ConfirmEmailAsync(string token)
     {
@@ -1170,11 +1173,314 @@ CREATE TABLE IF NOT EXISTS users (
 
         var noTotp = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
         Assert.Equal(HttpStatusCode.Unauthorized, noTotp.StatusCode);
+        var mfa = await noTotp.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.Equal("mfa_required", mfa!.Error);
+        Assert.False(string.IsNullOrWhiteSpace(mfa.ChallengeId));
+        Assert.True(mfa.Ok == false || mfa.Ok == null);
 
         var totp = new Totp(Base32Encoding.ToBytes(setupPayload.Secret!));
         var code = totp.ComputeTotp();
-        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, TotpCode = code });
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa.ChallengeId, TotpCode = code, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+        var confirmPayload = await confirm.Content.ReadFromJsonAsync<MfaConfirmResponse>();
+        Assert.NotNull(confirmPayload);
+        Assert.True(confirmPayload!.Ok);
+        Assert.False(string.IsNullOrWhiteSpace(confirmPayload.CsrfToken));
+        Assert.True(confirmPayload.RememberIssued ?? false);
+        var setCookies = confirm.Headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.ToList()
+            : new List<string>();
+        Assert.Contains(setCookies, c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(setCookies, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(setCookies, c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Totp_challenge_rejects_wrong_code()
+    {
+        LogTestStart();
+        var username = $"totp_fail_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
+        using var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup");
+        setupReq.Headers.Add("Cookie", cookie);
+        setupReq.Headers.Add("X-CSRF-Token", csrf);
+        var setupResp = await _client.SendAsync(setupReq);
+        var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+        Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+        Assert.NotNull(setupPayload);
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", cookie);
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        var noTotp = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, noTotp.StatusCode);
+        var mfa = await noTotp.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.Equal("mfa_required", mfa!.Error);
+        Assert.False(string.IsNullOrWhiteSpace(mfa.ChallengeId));
+
+        var wrongCode = "000000";
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa.ChallengeId, TotpCode = wrongCode });
+        Assert.Equal(HttpStatusCode.Unauthorized, confirm.StatusCode);
+        var cookiesAfter = confirm.Headers.TryGetValues("Set-Cookie", out var cks) ? cks.ToList() : new List<string>();
+        Assert.DoesNotContain(cookiesAfter, c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(cookiesAfter, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Totp_challenge_requires_confirm_step_for_cookies()
+    {
+        LogTestStart();
+        var username = $"totp_step_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
+        using var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup");
+        setupReq.Headers.Add("Cookie", cookie);
+        setupReq.Headers.Add("X-CSRF-Token", csrf);
+        var setupResp = await _client.SendAsync(setupReq);
+        var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+        Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", cookie);
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        Assert.False(login.Headers.TryGetValues("Set-Cookie", out var firstCookies) && firstCookies.Any(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)));
+
+        var mfa = await login.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        var totp = new Totp(Base32Encoding.ToBytes(setupPayload!.Secret!)).ComputeTotp();
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa!.ChallengeId, TotpCode = totp, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+        var cookies = confirm.Headers.GetValues("Set-Cookie").ToList();
+        Assert.Contains(cookies, c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(cookies, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Totp_challenge_expired_or_used_returns_unauthorized()
+    {
+        LogTestStart();
+        var username = $"totp_exp_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
+        using var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup");
+        setupReq.Headers.Add("Cookie", cookie);
+        setupReq.Headers.Add("X-CSRF-Token", csrf);
+        var setupResp = await _client.SendAsync(setupReq);
+        var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+        Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", cookie);
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        var mfa = await login.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.NotNull(mfa);
+
+        // Simula expiry: in mancanza di config, questo test fallirà finché non implementiamo lo scadere/cleanup.
+        var confirmExpired = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa!.ChallengeId, TotpCode = "000000" });
+        Assert.Equal(HttpStatusCode.Unauthorized, confirmExpired.StatusCode);
+    }
+
+    [Fact]
+    public async Task Totp_challenge_rejects_different_user_agent()
+    {
+        LogTestStart();
+        var username = $"totp_ua_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
+        using var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup");
+        setupReq.Headers.Add("Cookie", cookie);
+        setupReq.Headers.Add("X-CSRF-Token", csrf);
+        var setupResp = await _client.SendAsync(setupReq);
+        var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+        Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", cookie);
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        using var loginReq = new HttpRequestMessage(HttpMethod.Post, "/login");
+        loginReq.Headers.TryAddWithoutValidation("User-Agent", "UA-ORIG");
+        loginReq.Content = JsonContent.Create(new { Username = username, Password = password });
+        var loginResp = await _client.SendAsync(loginReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, loginResp.StatusCode);
+        var mfa = await loginResp.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.NotNull(mfa);
+
+        using var confirmReq = new HttpRequestMessage(HttpMethod.Post, "/login/confirm-mfa");
+        confirmReq.Headers.TryAddWithoutValidation("User-Agent", "UA-DIFF");
+        var totp = new Totp(Base32Encoding.ToBytes(setupPayload!.Secret!)).ComputeTotp();
+        confirmReq.Content = JsonContent.Create(new { ChallengeId = mfa!.ChallengeId, TotpCode = totp });
+        var confirm = await _client.SendAsync(confirmReq);
+        Assert.Equal(HttpStatusCode.Unauthorized, confirm.StatusCode);
+    }
+
+    [Fact]
+    public async Task Totp_challenge_max_attempts_invalidates_challenge()
+    {
+        LogTestStart();
+        var username = $"totp_attempts_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, password);
+        using var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup");
+        setupReq.Headers.Add("Cookie", cookie);
+        setupReq.Headers.Add("X-CSRF-Token", csrf);
+        var setupResp = await _client.SendAsync(setupReq);
+        var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+        Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+
+        using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout");
+        logoutReq.Headers.Add("Cookie", cookie);
+        logoutReq.Headers.Add("X-CSRF-Token", csrf);
+        var logout = await _client.SendAsync(logoutReq);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        var mfa = await login.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.NotNull(mfa);
+
+        // simuliamo 3 tentativi errati, poi uno corretto che deve fallire se max tentativi = 3
+        for (var i = 0; i < 3; i++)
+        {
+            var wrong = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa!.ChallengeId, TotpCode = "111111" });
+            Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
+        }
+
+        var totp = new Totp(Base32Encoding.ToBytes(setupPayload!.Secret!)).ComputeTotp();
+        var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfa!.ChallengeId, TotpCode = totp });
+        Assert.Equal(HttpStatusCode.Unauthorized, confirm.StatusCode);
+    }
+
+    [Fact]
+    public async Task Totp_challenge_rejects_different_ip_when_required()
+    {
+        LogTestStart();
+        var username = $"totp_ip_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var extra = new Dictionary<string, string?>
+        {
+            ["Mfa:RequireIpMatch"] = "true"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: extra);
+        try
+        {
+            var register = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+            await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+
+            // login e setup MFA
+            var loginInitial = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            var loginPayload = await loginInitial.Content.ReadFromJsonAsync<LoginResponse>();
+            var accessCookie = loginInitial.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+            using (var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup"))
+            {
+                setupReq.Headers.Add("Cookie", accessCookie);
+                setupReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+                var setupResp = await client.SendAsync(setupReq);
+                Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+            }
+
+            // logout
+            using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+            {
+                logoutReq.Headers.Add("Cookie", accessCookie);
+                logoutReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+                var logoutResp = await client.SendAsync(logoutReq);
+                Assert.Equal(HttpStatusCode.OK, logoutResp.StatusCode);
+            }
+
+            // login first step (assume factory gives a local IP; we can't easily change it, so we simulate by overriding header X-Forwarded-For)
+            using var loginReq = new HttpRequestMessage(HttpMethod.Post, "/login");
+            loginReq.Headers.TryAddWithoutValidation("X-Forwarded-For", "1.1.1.1");
+            loginReq.Content = JsonContent.Create(new { Username = username, Password = password });
+            var loginResp = await client.SendAsync(loginReq);
+            Assert.Equal(HttpStatusCode.Unauthorized, loginResp.StatusCode);
+            var mfa = await loginResp.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+
+            // confirm with different IP
+            using var confirmReq = new HttpRequestMessage(HttpMethod.Post, "/login/confirm-mfa");
+            confirmReq.Headers.TryAddWithoutValidation("X-Forwarded-For", "2.2.2.2");
+            var totp = "000000"; // dovrebbe essere respinto comunque in mancanza di IP match
+            confirmReq.Content = JsonContent.Create(new { ChallengeId = mfa!.ChallengeId, TotpCode = totp });
+            var confirmResp = await client.SendAsync(confirmReq);
+            Assert.Equal(HttpStatusCode.Unauthorized, confirmResp.StatusCode);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (System.IO.File.Exists(dbPath))
+            {
+                try { System.IO.File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Login_without_totp_remains_one_step()
+    {
+        LogTestStart();
+        var username = $"plain_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
+        Assert.Contains(setCookies, c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

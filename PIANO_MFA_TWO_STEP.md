@@ -138,7 +138,7 @@ Obiettivo: separare il login in due fasi quando l’utente ha MFA attivo:
 
 ## Sequenza di sviluppo consigliata
 1) **Test prima** (approccio TDD light):
-   - Scrivere i nuovi test xUnit che descrivono il comportamento atteso (mfa_required, confirm-mfa ok/ko, fallback utenti senza TOTP, remember/device nel secondo step). In questa fase falliranno (red).
+   - Scrivere i nuovi test xUnit che descrivono il comportamento atteso (mfa_required, confirm-mfa ok/ko, fallback utenti senza TOTP, remember/device nel secondo step). In questa fase falliranno (red). Esempio: `Totp_setup_and_login_success` ora aspetta 401 mfa_required e fallisce.
 2) DB + modello + repo challenge.
 3) Endpoint `/login` aggiornato (two-step per utenti MFA) con eventuale `AllowLegacyOneStep` per compat.
 4) Endpoint `/login/confirm-mfa`.
