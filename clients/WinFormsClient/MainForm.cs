@@ -21,7 +21,8 @@ public sealed class MainForm : Form
     private readonly TextBox _totpBox = new() { Text = "", Dock = DockStyle.Fill, PlaceholderText = "TOTP (se richiesto)" };
     private readonly Button _registerButton = new() { Text = "Registrati" };
     private readonly Button _confirmEmailButton = new() { Text = "Conferma email" };
-    private readonly Button _loginButton = new() { Text = "Login" };
+    private readonly Button _loginButton = new() { Text = "Login (password)" };
+    private readonly Button _confirmMfaButton = new() { Text = "Conferma MFA" };
     private readonly Button _setupMfaButton = new() { Text = "Attiva MFA" };
     private readonly Button _disableMfaButton = new() { Text = "Disattiva MFA" };
     private readonly Button _refreshButton = new() { Text = "Refresh" };
@@ -41,9 +42,12 @@ public sealed class MainForm : Form
     private readonly SessionCard _sessionCard = new();
     private readonly DeviceInfoControl _deviceInfo = new();
     private readonly DeviceAlertControl _deviceAlert = new();
+    private readonly TextBox _challengeBox = new() { Dock = DockStyle.Fill, ReadOnly = true, PlaceholderText = "Challenge MFA" };
+    private readonly Label _mfaStatusLabel = new() { Text = "MFA: -", AutoSize = true };
     private readonly TextBox _confirmTokenBox = new() { Dock = DockStyle.Fill, PlaceholderText = "Token conferma email" };
     private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1000 };
     private DateTime? _refreshExpiresUtc;
+    private string? _challengeId;
 
     private HttpClient _http = null!;
     private HttpClientHandler _handler = null!;
@@ -63,7 +67,7 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 15,
+            RowCount = 16,
             Padding = new Padding(10),
             AutoSize = true
         };
@@ -86,11 +90,11 @@ public sealed class MainForm : Form
         layout.Controls.Add(_totpBox, 1, 4);
 
         var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _rememberCheck, _refreshButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
+        buttonsPanel.Controls.AddRange(new Control[] { _registerButton, _confirmEmailButton, _loginButton, _confirmMfaButton, _rememberCheck, _refreshButton, _setupMfaButton, _disableMfaButton, _meButton, _logoutButton });
         layout.Controls.Add(buttonsPanel, 1, 5);
 
         var statusPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown };
-        statusPanel.Controls.AddRange(new Control[] { _badgeLabel, _stateLabel, _userLabel, _sessionLabel, _expLabel, _rememberLabel });
+        statusPanel.Controls.AddRange(new Control[] { _badgeLabel, _stateLabel, _userLabel, _sessionLabel, _expLabel, _rememberLabel, _mfaStatusLabel });
         layout.Controls.Add(statusPanel, 0, 6);
         layout.SetColumnSpan(statusPanel, 2);
 
@@ -103,20 +107,23 @@ public sealed class MainForm : Form
         layout.Controls.Add(_deviceAlert, 0, 9);
         layout.SetColumnSpan(_deviceAlert, 2);
 
-        layout.Controls.Add(_outputBox, 0, 10);
+        layout.Controls.Add(new Label { Text = "Challenge MFA:", AutoSize = true }, 0, 10);
+        layout.Controls.Add(_challengeBox, 1, 10);
+
+        layout.Controls.Add(_outputBox, 0, 11);
         layout.SetColumnSpan(_outputBox, 2);
 
-        layout.Controls.Add(_busyLabel, 0, 11);
+        layout.Controls.Add(_busyLabel, 0, 12);
         layout.SetColumnSpan(_busyLabel, 2);
 
         var logLabel = new Label { Text = "Log eventi:", AutoSize = true };
-        layout.Controls.Add(logLabel, 0, 12);
+        layout.Controls.Add(logLabel, 0, 13);
         layout.SetColumnSpan(logLabel, 2);
-        layout.Controls.Add(_logBox, 0, 13);
+        layout.Controls.Add(_logBox, 0, 14);
         layout.SetColumnSpan(_logBox, 2);
 
-        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 14);
-        layout.Controls.Add(_confirmTokenBox, 1, 14);
+        layout.Controls.Add(new Label { Text = "Token conferma email:", AutoSize = true }, 0, 15);
+        layout.Controls.Add(_confirmTokenBox, 1, 15);
 
         // Aggiungi prima il layout (fill), poi il banner top per riservare spazio.
         Controls.Add(layout);
@@ -125,6 +132,7 @@ public sealed class MainForm : Form
         _registerButton.Click += async (_, _) => await RegisterAsync();
         _confirmEmailButton.Click += async (_, _) => await ConfirmEmailAsync();
         _loginButton.Click += async (_, _) => await LoginAsync();
+        _confirmMfaButton.Click += async (_, _) => await ConfirmMfaAsync();
         _refreshButton.Click += async (_, _) => await RefreshAsync();
         _setupMfaButton.Click += async (_, _) => await SetupMfaAsync();
         _disableMfaButton.Click += async (_, _) => await DisableMfaAsync();
@@ -168,19 +176,38 @@ public sealed class MainForm : Form
     }
 
     /// <summary>
-    /// Esegue login demo/demo e salva il token CSRF per le chiamate di logout.
+    /// Esegue login (solo password) e salva eventuale challenge MFA o la sessione.
     /// </summary>
     private async Task LoginAsync()
     {
         using var busy = BeginBusy("Login in corso...");
         try
         {
-            var payload = new { username = _userBox.Text, password = _passBox.Text, totpCode = _totpBox.Text, rememberMe = _rememberCheck.Checked };
+            var payload = new { username = _userBox.Text, password = _passBox.Text, rememberMe = _rememberCheck.Checked };
             var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login"), payload);
             var body = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
+                // Gestione MFA required
+                try
+                {
+                    var mfa = JsonSerializer.Deserialize<MfaRequiredResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (mfa?.Error == "mfa_required")
+                    {
+                        _challengeId = mfa.ChallengeId;
+                        _challengeBox.Text = mfa.ChallengeId ?? "";
+                        SetMfaState("MFA richiesta: inserisci TOTP e conferma");
+                        Append($"Login richiede MFA: challengeId={mfa.ChallengeId}");
+                        LogEvent("Info", "MFA richiesta, procedi con la conferma");
+                        return;
+                    }
+                }
+                catch
+                {
+                    // ignore parse errors, gestisci come errore generico
+                }
+
                 Append($"Login fallito: {(int)response.StatusCode} {response.ReasonPhrase}\n{body}");
                 LogEvent("Errore", $"Login fallito status={(int)response.StatusCode}");
                 return;
@@ -191,6 +218,7 @@ public sealed class MainForm : Form
             _rememberLabel.Text = $"Remember: {(login?.RememberIssued == true ? "Emesso" : "Non emesso")}";
             _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
             _deviceAlert.SetStatus(true, "Login/Device OK");
+            ClearMfa();
             if (string.IsNullOrWhiteSpace(_csrfToken))
             {
                 Append($"Login riuscito ma csrfToken non presente: body={body}");
@@ -211,6 +239,58 @@ public sealed class MainForm : Form
         {
             Append($"Errore login: {ex.Message}");
             LogEvent("Errore", $"Login eccezione: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Conclude il login per utenti MFA con il challenge ricevuto.
+    /// </summary>
+    private async Task ConfirmMfaAsync()
+    {
+        using var busy = BeginBusy("Conferma MFA in corso...");
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_challengeId))
+            {
+                Append("Nessun challenge MFA salvato: esegui prima il login.");
+                LogEvent("Errore", "Conferma MFA senza challenge");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(_totpBox.Text))
+            {
+                Append("Inserire il codice TOTP.");
+                LogEvent("Errore", "TOTP mancante");
+                return;
+            }
+
+            var payload = new { challengeId = _challengeId, totpCode = _totpBox.Text, rememberMe = _rememberCheck.Checked };
+            var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login/confirm-mfa"), payload);
+            var body = await response.Content.ReadAsStringAsync();
+            Append($"POST /login/confirm-mfa -> {(int)response.StatusCode}\n{body}");
+            if (!response.IsSuccessStatusCode)
+            {
+                LogEvent("Errore", $"Confirm MFA fallita status={(int)response.StatusCode}");
+                SetMfaState("MFA fallita: controlla codice/challenge");
+                return;
+            }
+
+            var confirm = JsonSerializer.Deserialize<MfaConfirmResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            _csrfToken = confirm?.CsrfToken ?? _csrfToken;
+            _rememberLabel.Text = $"Remember: {(confirm?.RememberIssued == true ? "Emesso" : "Non emesso")}";
+            _deviceInfo.UpdateDevice(confirm?.DeviceId, confirm?.DeviceIssued);
+            _deviceAlert.SetStatus(true, "MFA confermata");
+            if (confirm?.RefreshExpiresAtUtc is not null && DateTime.TryParse(confirm.RefreshExpiresAtUtc, out var refreshExp))
+            {
+                _refreshExpiresUtc = refreshExp.ToUniversalTime();
+            }
+            ClearMfa();
+            LogEvent("Info", "MFA confermata, sessione attiva");
+            await RefreshSessionInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Append($"Errore conferma MFA: {ex.Message}");
+            LogEvent("Errore", $"Conferma MFA eccezione: {ex.Message}");
         }
     }
 
@@ -454,6 +534,7 @@ public sealed class MainForm : Form
         _registerButton.Enabled = enabled;
         _confirmEmailButton.Enabled = enabled;
         _loginButton.Enabled = enabled;
+        _confirmMfaButton.Enabled = enabled;
         _refreshButton.Enabled = enabled;
         _meButton.Enabled = enabled;
         _logoutButton.Enabled = enabled;
@@ -481,6 +562,8 @@ public sealed class MainForm : Form
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
+    private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
+    private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId);
 
     private void ResetHttpClient()
     {
@@ -496,6 +579,7 @@ public sealed class MainForm : Form
         SetState("Non autenticato", null, null, null);
         _deviceInfo.ResetInfo();
         _deviceAlert.ResetStatus();
+        ClearMfa();
         _countdownTimer.Stop();
     }
 
@@ -553,5 +637,17 @@ public sealed class MainForm : Form
                 _countdownTimer.Stop();
                 break;
         }
+    }
+
+    private void ClearMfa()
+    {
+        _challengeId = null;
+        _challengeBox.Text = "";
+        SetMfaState("MFA: -");
+    }
+
+    private void SetMfaState(string message)
+    {
+        _mfaStatusLabel.Text = message;
     }
 }
