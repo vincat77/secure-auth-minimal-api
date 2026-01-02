@@ -74,6 +74,17 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   device_label TEXT NULL,
   rotation_parent_id TEXT NULL,
   rotation_reason TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mfa_challenges (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  created_at_utc TEXT NOT NULL,
+  expires_at_utc TEXT NOT NULL,
+  used_at_utc TEXT NULL,
+  user_agent TEXT NULL,
+  client_ip TEXT NULL,
+  attempt_count INTEGER NOT NULL DEFAULT 0
 );";
         conn.Execute(ddl);
 
@@ -95,10 +106,12 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
         const string idxRefreshUser = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);";
         const string idxRefreshSession = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_session ON refresh_tokens(session_id);";
         const string idxRefreshDevice = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_device ON refresh_tokens(device_id);";
+        const string idxMfaUser = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_user ON mfa_challenges(user_id);";
         conn.Execute(idxRefreshToken);
         conn.Execute(idxRefreshUser);
         conn.Execute(idxRefreshSession);
         conn.Execute(idxRefreshDevice);
+        conn.Execute(idxMfaUser);
 
         const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
         var exists = conn.ExecuteScalar<long>(seedCheck);
