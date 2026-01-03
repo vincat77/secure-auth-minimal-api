@@ -1,4 +1,4 @@
-# Piano azione: claim profilo in id_token (name, given_name, family_name, email, picture)
+﻿# Piano azione: claim profilo in id_token (name, given_name, family_name, email, picture)
 
 ## Vincoli e contesto
 - Nessuna migrazione retrocompatibile necessaria: prodotto in sviluppo, schema modificabile direttamente.
@@ -24,10 +24,9 @@
 
 4) **UI/Client e test**  
    - Aggiorna client WinForms (view/submit dei nuovi campi, mostra id_token arricchito) se rilevante.  
-   - Aggiorna test integrazione/unitari per coprire registrazione e presenza dei nuovi claim nell’id_token.  
+   - Aggiorna test integrazione/unitari e aggiungi molti xUnit test dedicati (registrazione con nuovi campi, validazione, emissione id_token con claim profilo, presenza/assenza picture/email).  
    - Commit: client+test profilo.
 
 5) **Documentazione**  
    - Aggiorna `DESCRIZIONE_SOLUTION.md` e/o `appsettings.guida.md` con i nuovi campi/claim e comportamento.  
    - Commit: docs profilo id_token.
-
