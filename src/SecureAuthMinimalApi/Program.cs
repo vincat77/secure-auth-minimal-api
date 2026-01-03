@@ -18,6 +18,16 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());
 var logger = loggerFactory.CreateLogger<Program>();
+var cleanupEnabled = builder.Configuration.GetValue<bool?>("Cleanup:Enabled") ?? true;
+var cleanupInterval = builder.Configuration.GetValue<int?>("Cleanup:IntervalSeconds") ?? 300;
+var cleanupBatch = builder.Configuration.GetValue<int?>("Cleanup:BatchSize") ?? 200;
+var cleanupMaxIterations = builder.Configuration.GetValue<int?>("Cleanup:MaxIterationsPerRun");
+logger.LogInformation(
+    "Cleanup configurazione: enabled={Enabled}, intervalSeconds={Interval}, batchSize={Batch}, maxIterations={MaxIterations}",
+    cleanupEnabled,
+    cleanupInterval,
+    cleanupBatch,
+    cleanupMaxIterations?.ToString() ?? "null");
 
 // Hard fail if secret is missing/too short is handled by JwtTokenService constructor.
 builder.Services.AddSingleton<JwtTokenService>();
@@ -32,6 +42,8 @@ builder.Services.AddSingleton<RefreshTokenHasher>();
 builder.Services.AddSingleton<RefreshTokenRepository>();
 builder.Services.AddSingleton<MfaChallengeRepository>();
 builder.Services.AddSingleton<IdTokenService>();
+builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
+builder.Services.AddHostedService<ExpiredCleanupService>();
 
 builder.Services.AddTransient<CookieJwtAuthMiddleware>();
 builder.Services.AddTransient<CsrfMiddleware>();
@@ -706,7 +718,6 @@ app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions) =>
     return Results.Ok(new { ok = true });
 
     // TODO PROD: refresh token
-    // TODO PROD: cleanup background service
     // TODO PROD: multi-device session mgmt
     // TODO PROD: security logging
 });

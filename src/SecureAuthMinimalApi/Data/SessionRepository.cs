@@ -83,4 +83,17 @@ WHERE session_id = @sessionId;";
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, lastSeenUtcIso }, cancellationToken: ct));
     }
+
+    /// <summary>
+    /// Elimina sessioni scadute o revocate in batch.
+    /// </summary>
+    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct)
+    {
+        const string sql = @"
+DELETE FROM user_sessions
+WHERE (expires_at_utc <= @now OR revoked_at_utc IS NOT NULL)
+LIMIT @batchSize;";
+        using var db = Open();
+        return await db.ExecuteAsync(new CommandDefinition(sql, new { now = nowIso, batchSize }, cancellationToken: ct));
+    }
 }

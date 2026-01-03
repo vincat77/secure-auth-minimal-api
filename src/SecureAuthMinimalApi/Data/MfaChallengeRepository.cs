@@ -67,4 +67,18 @@ LIMIT 1;";
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new { id }, cancellationToken: ct));
     }
+
+    /// <summary>
+    /// Elimina challenge scaduti o gia' usati in batch.
+    /// </summary>
+    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct)
+    {
+        const string sql = @"
+DELETE FROM mfa_challenges
+WHERE (expires_at_utc <= @now OR used_at_utc IS NOT NULL)
+LIMIT @batchSize;";
+
+        using var db = Open();
+        return await db.ExecuteAsync(new CommandDefinition(sql, new { now = nowIso, batchSize }, cancellationToken: ct));
+    }
 }
