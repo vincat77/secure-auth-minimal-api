@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -39,6 +40,7 @@ public sealed partial class MainForm : Form
     _actions.MeClicked += async (_, _) => await MeAsync();
     _actions.LogoutClicked += async (_, _) => await LogoutAsync();
     _actions.ShowQrClicked += (_, _) => RenderQr();
+    _actions.ShowCookiesClicked += (_, _) => DumpCookies();
     _mfaPanel.ConfirmMfaClicked += async (_, _) => await ConfirmMfaAsync();
     _mfaPanel.SetupMfaClicked += async (_, _) => await SetupMfaAsync();
     _mfaPanel.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
@@ -447,6 +449,24 @@ public sealed partial class MainForm : Form
     _actions.SetEnabled(enabled);
     _actions.SetMfaEnabled(enabled && !string.IsNullOrWhiteSpace(_challengeId));
     _actions.SetQrEnabled(enabled && !string.IsNullOrWhiteSpace(_otpauthUri));
+  }
+
+  private void DumpCookies()
+  {
+    EnsureHttpClient();
+    var uri = BaseUri;
+    var sb = new StringBuilder();
+    foreach (Cookie c in _cookies.GetCookies(uri))
+    {
+      var expires = c.Expires == DateTime.MinValue ? "session" : c.Expires.ToUniversalTime().ToString("O");
+      sb.AppendLine($"{c.Name}={c.Value}; Path={c.Path}; HttpOnly={c.HttpOnly}; Secure={c.Secure}; Expires={expires}");
+    }
+    if (sb.Length == 0)
+    {
+      sb.AppendLine("Nessun cookie nel CookieContainer.");
+    }
+    Append(sb.ToString());
+    LogEvent("Info", "Dump cookie eseguito");
   }
 
   private sealed class BusyScope : IDisposable
