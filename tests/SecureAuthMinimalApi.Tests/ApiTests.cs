@@ -238,6 +238,7 @@ public class ApiTests : IAsyncLifetime
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
     private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
     private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
+    private sealed record ChangePasswordApiResponse(bool Ok, string? Error, IEnumerable<string>? Errors, string? CsrfToken);
     private sealed record ErrorResponse(bool? Ok, string? Error);
 
     private async Task ConfirmEmailAsync(string token)
@@ -2514,6 +2515,133 @@ CREATE TABLE IF NOT EXISTS users (
         Assert.NotNull(after);
         Assert.False(after!.Active);
         Assert.Equal("revoked", after.Reason);
+    }
+
+    [Fact]
+    public async Task Change_password_rotates_session_and_rejects_old_credentials()
+    {
+        LogTestStart();
+        var username = $"changepw_{Guid.NewGuid():N}";
+        var oldPassword = "OldP@ssw0rd!1";
+        var newPassword = "NewP@ssw0rd!2";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = oldPassword, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, oldPassword);
+        var oldCookie = cookie;
+
+        using var changeReq = new HttpRequestMessage(HttpMethod.Post, "/me/password");
+        changeReq.Headers.Add("Cookie", cookie);
+        changeReq.Headers.Add("X-CSRF-Token", csrf);
+        changeReq.Content = JsonContent.Create(new { CurrentPassword = oldPassword, NewPassword = newPassword, ConfirmPassword = newPassword });
+        var changeResp = await _client.SendAsync(changeReq);
+        Assert.Equal(HttpStatusCode.OK, changeResp.StatusCode);
+
+        var changePayload = await changeResp.Content.ReadFromJsonAsync<ChangePasswordApiResponse>();
+        Assert.NotNull(changePayload);
+        Assert.True(changePayload!.Ok);
+        Assert.False(string.IsNullOrWhiteSpace(changePayload.CsrfToken));
+        var newCsrf = changePayload.CsrfToken!;
+        var newCookie = changeResp.Headers.GetValues("Set-Cookie").First(h => h.StartsWith("access_token", StringComparison.Ordinal)).Split(';', 2)[0];
+
+        using (var meOldReq = new HttpRequestMessage(HttpMethod.Get, "/me"))
+        {
+            meOldReq.Headers.Add("Cookie", oldCookie);
+            var meOld = await _client.SendAsync(meOldReq);
+            Assert.Equal(HttpStatusCode.Unauthorized, meOld.StatusCode);
+        }
+
+        using (var meReq = new HttpRequestMessage(HttpMethod.Get, "/me"))
+        {
+            meReq.Headers.Add("Cookie", newCookie);
+            var me = await _client.SendAsync(meReq);
+            Assert.Equal(HttpStatusCode.OK, me.StatusCode);
+        }
+
+        var loginOld = await _client.PostAsJsonAsync("/login", new { Username = username, Password = oldPassword });
+        Assert.Equal(HttpStatusCode.Unauthorized, loginOld.StatusCode);
+
+        var loginNew = await _client.PostAsJsonAsync("/login", new { Username = username, Password = newPassword });
+        Assert.Equal(HttpStatusCode.OK, loginNew.StatusCode);
+        var loginPayload = await loginNew.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(loginPayload);
+        Assert.True(loginPayload!.Ok);
+        Assert.False(string.IsNullOrWhiteSpace(loginPayload.CsrfToken));
+        Assert.NotEqual(csrf, newCsrf);
+    }
+
+    [Fact]
+    public async Task Change_password_with_wrong_current_returns_400()
+    {
+        LogTestStart();
+        var username = $"changepw_wrong_{Guid.NewGuid():N}";
+        var oldPassword = "OldP@ssw0rd!1";
+        var newPassword = "NewP@ssw0rd!2";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = oldPassword, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, oldPassword);
+
+        using var changeReq = new HttpRequestMessage(HttpMethod.Post, "/me/password");
+        changeReq.Headers.Add("Cookie", cookie);
+        changeReq.Headers.Add("X-CSRF-Token", csrf);
+        changeReq.Content = JsonContent.Create(new { CurrentPassword = "WRONG!", NewPassword = newPassword, ConfirmPassword = newPassword });
+        var changeResp = await _client.SendAsync(changeReq);
+        Assert.Equal(HttpStatusCode.BadRequest, changeResp.StatusCode);
+
+        var payload = await changeResp.Content.ReadFromJsonAsync<ChangePasswordApiResponse>();
+        Assert.NotNull(payload);
+        Assert.False(payload!.Ok);
+        Assert.Equal("invalid_current_password", payload.Error);
+
+        var loginOld = await _client.PostAsJsonAsync("/login", new { Username = username, Password = oldPassword });
+        Assert.Equal(HttpStatusCode.OK, loginOld.StatusCode);
+    }
+
+    [Fact]
+    public async Task Change_password_policy_failure_returns_errors()
+    {
+        LogTestStart();
+        var username = $"changepw_policy_{Guid.NewGuid():N}";
+        var oldPassword = "OldP@ssw0rd!1";
+        var weakPassword = "short";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = oldPassword, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        Assert.NotNull(regPayload);
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var (cookie, csrf) = await LoginAndGetSessionAsync(username, oldPassword);
+
+        using var changeReq = new HttpRequestMessage(HttpMethod.Post, "/me/password");
+        changeReq.Headers.Add("Cookie", cookie);
+        changeReq.Headers.Add("X-CSRF-Token", csrf);
+        changeReq.Content = JsonContent.Create(new { CurrentPassword = oldPassword, NewPassword = weakPassword, ConfirmPassword = weakPassword });
+        var changeResp = await _client.SendAsync(changeReq);
+        Assert.Equal(HttpStatusCode.BadRequest, changeResp.StatusCode);
+
+        var payload = await changeResp.Content.ReadFromJsonAsync<ChangePasswordApiResponse>();
+        Assert.NotNull(payload);
+        Assert.False(payload!.Ok);
+        Assert.Equal("password_policy_failed", payload.Error);
+        Assert.NotNull(payload.Errors);
+        Assert.NotEmpty(payload.Errors!);
+        Assert.Contains(payload.Errors!, e => e == "too_short");
+
+        var loginOld = await _client.PostAsJsonAsync("/login", new { Username = username, Password = oldPassword });
+        Assert.Equal(HttpStatusCode.OK, loginOld.StatusCode);
     }
 
     [Fact]
