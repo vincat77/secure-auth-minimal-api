@@ -18,6 +18,9 @@ public partial class MainForm
     private LabeledTextBoxControl _familyNameInput = null!;
     private LabeledTextBoxControl _pictureInput = null!;
     private LabeledTextBoxControl _passwordControl = null!;
+    private LabeledTextBoxControl _currentPasswordInput = null!;
+    private LabeledTextBoxControl _newPasswordInput = null!;
+    private LabeledTextBoxControl _confirmPasswordInput = null!;
     private ActionButtonsControl _actions = null!;
     private MfaPanelControl _mfaPanel = null!;
     private LabeledTextBoxControl _confirmTokenInput = null!;
@@ -43,6 +46,9 @@ public partial class MainForm
     _familyNameInput = new LabeledTextBoxControl();
     _pictureInput = new LabeledTextBoxControl();
     _passwordControl = new LabeledTextBoxControl();
+    _currentPasswordInput = new LabeledTextBoxControl();
+    _newPasswordInput = new LabeledTextBoxControl();
+    _confirmPasswordInput = new LabeledTextBoxControl();
     _actions = new ActionButtonsControl();
     _mfaPanel = new MfaPanelControl();
     _confirmTokenInput = new LabeledTextBoxControl();
@@ -77,6 +83,9 @@ public partial class MainForm
     _rootPanel.Controls.Add(_familyNameInput);
     _rootPanel.Controls.Add(_pictureInput);
     _rootPanel.Controls.Add(_passwordControl);
+    _rootPanel.Controls.Add(_currentPasswordInput);
+    _rootPanel.Controls.Add(_newPasswordInput);
+    _rootPanel.Controls.Add(_confirmPasswordInput);
     _rootPanel.Controls.Add(_actions);
     _rootPanel.Controls.Add(_mfaPanel);
     _rootPanel.Controls.Add(_confirmTokenInput);
@@ -172,13 +181,43 @@ public partial class MainForm
     _passwordControl.UseSystemPasswordChar = true;
     _passwordControl.ValueText = "123456789012";
     // 
+    // _currentPasswordInput
+    // 
+    _currentPasswordInput.LabelText = "Password corrente:";
+    _currentPasswordInput.Location = new Point(184, 690);
+    _currentPasswordInput.Name = "_currentPasswordInput";
+    _currentPasswordInput.Size = new Size(330, 30);
+    _currentPasswordInput.TabIndex = 13;
+    _currentPasswordInput.UseSystemPasswordChar = true;
+    _currentPasswordInput.ValueText = "";
+    // 
+    // _newPasswordInput
+    // 
+    _newPasswordInput.LabelText = "Nuova password:";
+    _newPasswordInput.Location = new Point(184, 730);
+    _newPasswordInput.Name = "_newPasswordInput";
+    _newPasswordInput.Size = new Size(330, 30);
+    _newPasswordInput.TabIndex = 14;
+    _newPasswordInput.UseSystemPasswordChar = true;
+    _newPasswordInput.ValueText = "";
+    // 
+    // _confirmPasswordInput
+    // 
+    _confirmPasswordInput.LabelText = "Conferma password:";
+    _confirmPasswordInput.Location = new Point(184, 770);
+    _confirmPasswordInput.Name = "_confirmPasswordInput";
+    _confirmPasswordInput.Size = new Size(330, 30);
+    _confirmPasswordInput.TabIndex = 15;
+    _confirmPasswordInput.UseSystemPasswordChar = true;
+    _confirmPasswordInput.ValueText = "";
+    // 
     // _actions
     // 
     _actions.BorderStyle = BorderStyle.FixedSingle;
     _actions.Location = new Point(16, 336);
     _actions.Name = "_actions";
     _actions.RememberChecked = false;
-    _actions.Size = new Size(162, 417);
+    _actions.Size = new Size(162, 464);
     _actions.TabIndex = 8;
     // 
     // _mfaPanel

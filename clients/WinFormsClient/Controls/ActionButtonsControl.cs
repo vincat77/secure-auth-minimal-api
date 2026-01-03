@@ -56,4 +56,5 @@ public sealed partial class ActionButtonsControl : UserControl
 
     public void SetMfaEnabled(bool enabled) => _confirmMfaButton.Enabled = enabled;
     public void SetQrEnabled(bool enabled) => _showQrButton.Enabled = enabled;
+    public void SetChangePasswordEnabled(bool enabled) => _changePasswordButton.Enabled = enabled;
 }
