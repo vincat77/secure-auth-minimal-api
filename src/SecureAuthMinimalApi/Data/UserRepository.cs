@@ -153,6 +153,17 @@ WHERE id = @userId;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { userId }, cancellationToken: ct));
     }
 
+    public async Task UpdatePasswordAsync(string userId, string passwordHash, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE users
+SET password_hash = @passwordHash
+WHERE id = @userId;";
+
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, passwordHash }, cancellationToken: ct));
+    }
+
     private User? DecryptTotp(User? user)
     {
         if (user is null)

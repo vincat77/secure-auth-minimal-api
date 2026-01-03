@@ -84,6 +84,28 @@ WHERE session_id = @sessionId;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, lastSeenUtcIso }, cancellationToken: ct));
     }
 
+    public async Task RevokeAllForUserAsync(string userId, string revokedAtUtcIso, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE user_sessions
+SET revoked_at_utc = @revokedAtUtcIso
+WHERE user_id = @userId AND revoked_at_utc IS NULL;";
+
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, revokedAtUtcIso }, cancellationToken: ct));
+    }
+
+    public async Task RevokeAllForUserExceptAsync(string userId, string sessionIdToKeep, string revokedAtUtcIso, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE user_sessions
+SET revoked_at_utc = @revokedAtUtcIso
+WHERE user_id = @userId AND session_id <> @sessionIdToKeep AND revoked_at_utc IS NULL;";
+
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, sessionIdToKeep, revokedAtUtcIso }, cancellationToken: ct));
+    }
+
     /// <summary>
     /// Elimina sessioni scadute o revocate in batch.
     /// </summary>
