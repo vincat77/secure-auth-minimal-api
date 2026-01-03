@@ -7,6 +7,12 @@ Descrizione di ogni sezione/chiave, utilizzo e valori attesi.
 - `Jwt:SecretKey` — Chiave simmetrica per firmare i JWT. Min 32 caratteri; mettere in variabile d’ambiente/KeyVault in prod.
 - `Jwt:AccessTokenMinutes` — Durata (minuti) del token d’accesso. Intero >0; tipicamente 5–15 in prod.
 
+## IdToken
+- `IdToken:Issuer` — Issuer dell'id_token (può differire dall'access token). Stringa/URL.
+- `IdToken:Audience` — Audience prevista per l'id_token.
+- `IdToken:SigningKeyPath` — Percorso chiave RSA/EC per firmare l'id_token (PEM/XML). Se vuoto e solo in dev, fallback HMAC (meno sicuro).
+- `IdToken:IncludeEmail` — Se true include email/username come claim opzionali. Bool.
+
 ## LoginThrottle
 - `LoginThrottle:MaxFailures` — Tentativi di login falliti prima del lockout. Intero ≥1.
 - `LoginThrottle:LockMinutes` — Durata lockout (minuti) dopo superamento soglia. Intero ≥1.
@@ -40,7 +46,7 @@ Descrizione di ogni sezione/chiave, utilizzo e valori attesi.
 - `Mfa:MaxAttemptsPerChallenge` — Tentativi TOTP per challenge. Intero ≥1.
 
 ## Refresh (token persistenti)
-- `Refresh:HmacKey` â€” Chiave HMAC (32+ caratteri) usata per hashare i refresh token prima di salvarli in DB. In prod metterla in variabile d'ambiente/KeyVault. Se assente, si puÃ² riusare `Jwt:SecretKey` ma Ã¨ preferibile una chiave separata.
+- `Refresh:HmacKey` — Chiave HMAC (32+ caratteri) usata per hashare i refresh token prima di salvarli in DB. In prod metterla in variabile d'ambiente/KeyVault. Se assente, si può riusare `Jwt:SecretKey` ma è preferibile una chiave separata.
 
 ## Device
 - `Device:CookieName` — Nome cookie device-id. Stringa.
