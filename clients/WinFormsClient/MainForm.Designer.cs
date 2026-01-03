@@ -170,7 +170,7 @@ public partial class MainForm
     _passwordControl.Size = new Size(330, 30);
     _passwordControl.TabIndex = 7;
     _passwordControl.UseSystemPasswordChar = true;
-    _passwordControl.ValueText = "demo";
+    _passwordControl.ValueText = "123456789012";
     // 
     // _actions
     // 

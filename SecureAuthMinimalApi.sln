@@ -83,11 +83,12 @@ Global
 		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|x86.ActiveCfg = Release|Any CPU
 		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
-GlobalSection(SolutionProperties) = preSolution
-	HideSolutionNode = FALSE
-EndGlobalSection
-GlobalSection(NestedProjects) = preSolution
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 		{138DE077-2380-4C92-ADCD-0026667939D6} = {9123F88B-E531-3118-42D7-ED8CEF4BD00E}
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171} = {9123F88B-E531-3118-42D7-ED8CEF4BD00E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1DE0AFA5-9884-4834-A734-6E304C199667}
