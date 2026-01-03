@@ -108,11 +108,23 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
         const string idxRefreshSession = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_session ON refresh_tokens(session_id);";
         const string idxRefreshDevice = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_device ON refresh_tokens(device_id);";
         const string idxMfaUser = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_user ON mfa_challenges(user_id);";
+        const string idxSessionsExpires = "CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at_utc);";
+        const string idxSessionsRevoked = "CREATE INDEX IF NOT EXISTS idx_user_sessions_revoked ON user_sessions(revoked_at_utc);";
+        const string idxRefreshExpires = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at_utc);";
+        const string idxRefreshRevoked = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_revoked ON refresh_tokens(revoked_at_utc);";
+        const string idxMfaExpires = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_expires ON mfa_challenges(expires_at_utc);";
+        const string idxMfaUsed = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_used ON mfa_challenges(used_at_utc);";
         conn.Execute(idxRefreshTokenHash);
         conn.Execute(idxRefreshUser);
         conn.Execute(idxRefreshSession);
         conn.Execute(idxRefreshDevice);
         conn.Execute(idxMfaUser);
+        conn.Execute(idxSessionsExpires);
+        conn.Execute(idxSessionsRevoked);
+        conn.Execute(idxRefreshExpires);
+        conn.Execute(idxRefreshRevoked);
+        conn.Execute(idxMfaExpires);
+        conn.Execute(idxMfaUsed);
 
         const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
         var exists = conn.ExecuteScalar<long>(seedCheck);
