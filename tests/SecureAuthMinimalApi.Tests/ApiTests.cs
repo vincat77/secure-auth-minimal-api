@@ -760,6 +760,7 @@ public class ApiTests : IAsyncLifetime
         var extra = new Dictionary<string, string?>
         {
             ["Jwt:SecretKey"] = "",
+            ["Refresh:HmacKey"] = "TEST_REFRESH_HASH_KEY_32_CHARS_MINIMUM_____",
             ["Tests:SkipDbInit"] = "true"
         };
         var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: extra);

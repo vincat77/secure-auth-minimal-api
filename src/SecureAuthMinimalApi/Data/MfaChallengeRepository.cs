@@ -75,8 +75,11 @@ LIMIT 1;";
     {
         const string sql = @"
 DELETE FROM mfa_challenges
-WHERE (expires_at_utc <= @now OR used_at_utc IS NOT NULL)
-LIMIT @batchSize;";
+WHERE rowid IN (
+    SELECT rowid FROM mfa_challenges
+    WHERE (expires_at_utc <= @now OR used_at_utc IS NOT NULL)
+    LIMIT @batchSize
+);";
 
         using var db = Open();
         return await db.ExecuteAsync(new CommandDefinition(sql, new { now = nowIso, batchSize }, cancellationToken: ct));

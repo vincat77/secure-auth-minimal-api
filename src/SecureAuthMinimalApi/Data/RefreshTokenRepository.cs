@@ -165,8 +165,11 @@ WHERE user_id = @userId AND revoked_at_utc IS NULL;";
     {
         const string sql = @"
 DELETE FROM refresh_tokens
-WHERE (expires_at_utc <= @now OR revoked_at_utc IS NOT NULL)
-LIMIT @batchSize;";
+WHERE rowid IN (
+    SELECT rowid FROM refresh_tokens
+    WHERE (expires_at_utc <= @now OR revoked_at_utc IS NOT NULL)
+    LIMIT @batchSize
+);";
 
         using var db = Open();
         return await db.ExecuteAsync(new CommandDefinition(sql, new { now = nowIso, batchSize }, cancellationToken: ct));
