@@ -123,7 +123,7 @@ public partial class MainForm
     _actions.Location = new Point(16, 186);
     _actions.Name = "_actions";
     _actions.RememberChecked = false;
-    _actions.Size = new Size(162, 380);
+    _actions.Size = new Size(162, 417);
     _actions.TabIndex = 4;
     // 
     // _mfaPanel
