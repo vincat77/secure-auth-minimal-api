@@ -1,75 +1,81 @@
 # Guida appsettings.json (SecureAuthMinimalApi)
-Descrizione di ogni sezione/chiave, utilizzo e valori attesi.
+Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 
 ## Jwt
-- `Jwt:Issuer` — Issuer del token JWT. Valore stringa; in produzione usare un URL/URN univoco.
-- `Jwt:Audience` — Audience attesa dei token. Stringa; deve coincidere con i client che li validano.
-- `Jwt:SecretKey` — Chiave simmetrica per firmare i JWT. Min 32 caratteri; mettere in variabile d’ambiente/KeyVault in prod.
-- `Jwt:AccessTokenMinutes` — Durata (minuti) del token d’accesso. Intero >0; tipicamente 5–15 in prod.
+- `Jwt:Issuer` - Issuer dei JWT di accesso. In prod usare un URL/URN stabile.
+- `Jwt:Audience` - Audience prevista per i client che validano il token.
+- `Jwt:SecretKey` - Chiave simmetrica (>=32 caratteri). In prod tenere in variabile ambiente o KeyVault.
+- `Jwt:AccessTokenMinutes` - Durata in minuti del token di accesso. Intero >0.
 
 ## IdToken
-- `IdToken:Issuer` — Issuer dell'id_token (può differire dall'access token). Stringa/URL.
-- `IdToken:Audience` — Audience prevista per l'id_token.
-- `IdToken:SigningKeyPath` — Percorso chiave RSA/EC per firmare l'id_token (PEM/XML). Se vuoto e solo in dev, fallback HMAC (meno sicuro).
-- `IdToken:IncludeEmail` — Se true include email/username come claim opzionali. Bool.
+- `IdToken:Issuer` - Issuer dell'id_token (puo' essere diverso dall'access token).
+- `IdToken:Audience` - Audience prevista per l'id_token.
+- `IdToken:SigningKeyPath` - Percorso chiave RSA/EC per firmare l'id_token (PEM/XML). Se vuoto e solo in dev, fallback HMAC (meno sicuro).
+- `IdToken:Secret` - Chiave HMAC di fallback (dev). In prod preferire chiave RSA via `SigningKeyPath`.
+- `IdToken:IncludeEmail` - Se true include email/username come claim opzionali.
+- `IdToken:Minutes` - Durata in minuti dell'id_token. Intero >0.
 
 ## LoginThrottle
-- `LoginThrottle:MaxFailures` — Tentativi di login falliti prima del lockout. Intero ≥1.
-- `LoginThrottle:LockMinutes` — Durata lockout (minuti) dopo superamento soglia. Intero ≥1.
+- `LoginThrottle:MaxFailures` - Tentativi falliti prima del lockout. Intero >=1.
+- `LoginThrottle:LockMinutes` - Durata lockout in minuti. Intero >=1.
 
 ## Cookie
-- `Cookie:RequireSecure` — Se true, flag Secure obbligatorio per i cookie. In prod deve restare true.
+- `Cookie:RequireSecure` - Se true impone flag Secure su cookie. In prod deve restare true.
 
 ## ConnectionStrings
-- `ConnectionStrings:Sqlite` — Stringa di connessione SQLite. In prod usare percorso sicuro o altro provider.
+- `ConnectionStrings:Sqlite` - Stringa di connessione SQLite. In prod usare percorso sicuro o provider esterno.
 
 ## PasswordPolicy
-- `PasswordPolicy:MinLength` — Lunghezza minima password. Intero ≥1 (consigliato ≥12).
-- `PasswordPolicy:RequireUpper` — Richiede almeno una maiuscola. Bool.
-- `PasswordPolicy:RequireLower` — Richiede almeno una minuscola. Bool.
-- `PasswordPolicy:RequireDigit` — Richiede almeno una cifra. Bool.
-- `PasswordPolicy:RequireSymbol` — Richiede almeno un simbolo. Bool.
+- `PasswordPolicy:MinLength` - Lunghezza minima password. Intero >=1 (consigliato >=12).
+- `PasswordPolicy:RequireUpper` - Richiede almeno una maiuscola. Bool.
+- `PasswordPolicy:RequireLower` - Richiede almeno una minuscola. Bool.
+- `PasswordPolicy:RequireDigit` - Richiede almeno una cifra. Bool.
+- `PasswordPolicy:RequireSymbol` - Richiede almeno un simbolo. Bool.
 
 ## UsernamePolicy
-- `UsernamePolicy:Lowercase` — Se true, normalizza username in minuscolo per registrazione/login. Bool.
+- `UsernamePolicy:Lowercase` - Se true normalizza username in minuscolo. Bool.
 
 ## RememberMe (refresh cookie)
-- `RememberMe:Days` — Durata del refresh/remember (giorni). Intero >0.
-- `RememberMe:SameSite` — SameSite del cookie refresh (`Strict` o `Lax`). Stringa standard.
-- `RememberMe:CookieName` — Nome del cookie refresh. Stringa.
-- `RememberMe:Path` — Path del cookie refresh (es. `/refresh`). Stringa.
+- `RememberMe:Days` - Durata del refresh/remember in giorni. Intero >0.
+- `RememberMe:SameSite` - SameSite del cookie refresh (`Strict` o `Lax`).
+- `RememberMe:CookieName` - Nome del cookie refresh.
+- `RememberMe:Path` - Path del cookie refresh (es. `/refresh`).
 
 ## Mfa
-- `Mfa:ChallengeMinutes` — Validità di un challenge MFA (minuti). Intero >0.
-- `Mfa:RequireUaMatch` — Richiede match User-Agent tra login e conferma. Bool.
-- `Mfa:RequireIpMatch` — Richiede match IP (o subnet) per la conferma. Bool.
-- `Mfa:MaxAttemptsPerChallenge` — Tentativi TOTP per challenge. Intero ≥1.
+- `Mfa:ChallengeMinutes` - Validita' di un challenge MFA in minuti. Intero >0.
+- `Mfa:RequireUaMatch` - Richiede match User-Agent tra login e conferma. Bool.
+- `Mfa:RequireIpMatch` - Richiede match IP tra login e conferma. Bool.
+- `Mfa:MaxAttemptsPerChallenge` - Tentativi TOTP per challenge. Intero >=1.
 
 ## Refresh (token persistenti)
-- `Refresh:HmacKey` — Chiave HMAC (32+ caratteri) usata per hashare i refresh token prima di salvarli in DB. In prod metterla in variabile d'ambiente/KeyVault. Se assente, si può riusare `Jwt:SecretKey` ma è preferibile una chiave separata.
+- `Refresh:HmacKey` - Chiave HMAC (32+ caratteri) per hash dei refresh token. In prod separarla da `Jwt:SecretKey`.
 
 ## Device
-- `Device:CookieName` — Nome cookie device-id. Stringa.
-- `Device:SameSite` — SameSite del cookie device (`Strict`/`Lax`). Stringa.
-- `Device:RequireSecure` — Flag Secure per cookie device. Bool; true in prod.
-- `Device:PersistDays` — Durata cookie device (giorni). Intero >0.
-- `Device:ClearOnLogoutAll` — Se true, cancella cookie device su logout-all. Bool.
+- `Device:CookieName` - Nome cookie device-id.
+- `Device:SameSite` - SameSite (`Strict`/`Lax`/`None`).
+- `Device:RequireSecure` - Flag Secure per cookie device. Bool; true in prod.
+- `Device:PersistDays` - Durata cookie device in giorni. Intero >0.
+- `Device:ClearOnLogoutAll` - Se true cancella cookie device su logout-all.
 
 ## Session
-- `Session:IdleMinutes` — Timeout di inattività sessione (minuti). ≤0 per disabilitare idle timeout.
+- `Session:IdleMinutes` - Timeout di inattivita' (minuti). <=0 per disabilitare idle timeout.
+
+## Cleanup
+- `Cleanup:Enabled` - Abilita il job di pulizia record scaduti. Bool.
+- `Cleanup:IntervalSeconds` - Intervallo tra run del cleanup (secondi). Intero >0.
+- `Cleanup:BatchSize` - Numero massimo di record cancellati per batch. Intero >0.
+- `Cleanup:MaxIterationsPerRun` - Limite di batch per singolo run (opzionale); evita loop lunghi.
 
 ## Tests
-- `Tests:SkipDbInit` — Se true, salta init DB (solo test/dev). Bool.
+- `Tests:SkipDbInit` - Se true salta init DB (solo test/dev). Bool.
 
 ## Serilog
-- `Serilog:Using` — Liste di assembly sink. Array stringhe (es. `Serilog.Sinks.File`, `Serilog.Sinks.Console`).
-- `Serilog:MinimumLevel:Default` — Livello minimo generale (Verbose/Debug/Information/Warning/Error/Fatal).
-- `Serilog:MinimumLevel:Override` — Override per namespace (es. Microsoft, Microsoft.AspNetCore). Stringhe livello.
-- `Serilog:Enrich` — Enrichers (FromLogContext, WithMachineName, ecc.). Array stringhe.
-- `Serilog:WriteTo` — Sink configurati:
-  - `Name: File` con `Args.path` (es. `logs/log-.txt`), `rollingInterval` (Day), `shared`, `outputTemplate`.
-  - `Name: Console` per output console.
+- `Serilog:Using` - Lista assembly sink (es. `Serilog.Sinks.File`, `Serilog.Sinks.Console`).
+- `Serilog:MinimumLevel:Default` - Livello minimo generale.
+- `Serilog:MinimumLevel:Override` - Override per namespace (es. Microsoft, Microsoft.AspNetCore).
+- `Serilog:Enrich` - Enrichers (FromLogContext, WithMachineName, ecc.).
+- `Serilog:WriteTo` - Sink configurati (File, Console).
 
 ## Logging (ASP.NET Core)
-- `Logging:LogLevel:Default` — Livello log generico per hosting. (Trace/Debug/Information/Warning/Error/Critical/None).
-- `Logging:LogLevel:Microsoft.AspNetCore` — Override per pipeline ASP.NET Core. Stringa livello.
+- `Logging:LogLevel:Default` - Livello log generico per hosting.
+- `Logging:LogLevel:Microsoft.AspNetCore` - Override per pipeline ASP.NET Core.
