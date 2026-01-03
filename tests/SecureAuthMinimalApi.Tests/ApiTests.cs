@@ -58,6 +58,10 @@ public class ApiTests : IAsyncLifetime
                         ["Jwt:Issuer"] = "TestIssuer",
                         ["Jwt:Audience"] = "TestAudience",
                         ["Jwt:AccessTokenMinutes"] = "60",
+                        ["IdToken:Issuer"] = "TestIdIssuer",
+                        ["IdToken:Audience"] = "TestIdAudience",
+                        ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___",
+                        ["IdToken:IncludeEmail"] = "true",
                         ["UsernamePolicy:Lowercase"] = forceLowerUsername ? "true" : "false"
                     };
                     if (extraConfig is not null)
@@ -96,7 +100,11 @@ public class ApiTests : IAsyncLifetime
                         ["Jwt:SecretKey"] = "TEST_SECRET_KEY_AT_LEAST_32_CHARACTERS_LONG__",
                         ["Jwt:Issuer"] = "TestIssuer",
                         ["Jwt:Audience"] = "TestAudience",
-                        ["Jwt:AccessTokenMinutes"] = "60"
+                        ["Jwt:AccessTokenMinutes"] = "60",
+                        ["IdToken:Issuer"] = "TestIdIssuer",
+                        ["IdToken:Audience"] = "TestIdAudience",
+                        ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___",
+                        ["IdToken:IncludeEmail"] = "true"
                     };
                     configBuilder.AddInMemoryCollection(overrides);
                 });
@@ -177,6 +185,7 @@ public class ApiTests : IAsyncLifetime
         Assert.False(string.IsNullOrWhiteSpace(setCookie));
         var accessCookie = setCookie!.Split(';', 2)[0];
         var token = accessCookie.Split('=', 2)[1];
+        Assert.False(string.IsNullOrWhiteSpace(loginPayload.IdToken));
 
         await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
         {
@@ -220,7 +229,7 @@ public class ApiTests : IAsyncLifetime
     }
 
     private sealed record HealthResponse(bool Ok);
-    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId);
     private sealed record LogoutResponse(bool Ok);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
@@ -228,13 +237,20 @@ public class ApiTests : IAsyncLifetime
     private sealed record IntrospectResponse(bool Active, string? Reason, string? SessionId, string? UserId, string? ExpiresAtUtc);
     private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
     private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
-    private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId);
+    private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
     private sealed record ErrorResponse(bool? Ok, string? Error);
 
     private async Task ConfirmEmailAsync(string token)
     {
         var resp = await _client.PostAsJsonAsync("/confirm-email", new { Token = token });
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+    }
+
+    private static JwtSecurityToken ValidateIdToken(string token, TokenValidationParameters tvp)
+    {
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+        handler.ValidateToken(token, tvp, out var validated);
+        return (JwtSecurityToken)validated;
     }
 
     [Fact]
@@ -1599,6 +1615,236 @@ CREATE TABLE IF NOT EXISTS users (
         Assert.Equal(hash, tokenHashFromDb);
     }
 
+    [Fact]
+    public async Task Id_token_contains_pwd_amr_email_and_nonce_on_login()
+    {
+        LogTestStart();
+        var username = $"idpwd_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var nonce = Guid.NewGuid().ToString("N");
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, Nonce = nonce });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.False(string.IsNullOrWhiteSpace(payload!.IdToken));
+
+        var idSvc = _factory.Services.GetRequiredService<IdTokenService>();
+        var jwt = ValidateIdToken(payload.IdToken!, idSvc.GetValidationParameters());
+        Assert.Equal("TestIdIssuer", jwt.Issuer);
+        Assert.Equal("TestIdAudience", jwt.Audiences.Single());
+        var amr = jwt.Claims.Where(c => c.Type == "amr").Select(c => c.Value).ToList();
+        Assert.Contains("pwd", amr);
+        Assert.DoesNotContain("mfa", amr);
+        Assert.Equal(nonce, jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Nonce)?.Value);
+        Assert.Equal(email, jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value);
+        Assert.Equal(username, jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value);
+    }
+
+    [Fact]
+    public async Task Id_token_mfa_flow_emits_mfa_amr_and_not_in_first_step()
+    {
+        LogTestStart();
+        var username = $"idmfa_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        // Setup MFA
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        using (var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup"))
+        {
+            setupReq.Headers.Add("Cookie", accessCookie);
+            setupReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+            var setupResp = await _client.SendAsync(setupReq);
+            Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+            var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+            var secret = setupPayload!.Secret!;
+
+            // logout
+            using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+            {
+                logoutReq.Headers.Add("Cookie", accessCookie);
+                logoutReq.Headers.Add("X-CSRF-Token", loginPayload.CsrfToken);
+                var logoutResp = await _client.SendAsync(logoutReq);
+                Assert.Equal(HttpStatusCode.OK, logoutResp.StatusCode);
+            }
+
+            // Login step 1 (mfa_required, nessun id_token)
+            var loginMfa = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.Unauthorized, loginMfa.StatusCode);
+            var mfaReq = await loginMfa.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+            var loginBody = await loginMfa.Content.ReadAsStringAsync();
+            Assert.DoesNotContain("idToken", loginBody, StringComparison.OrdinalIgnoreCase);
+
+            // Confirm MFA step
+            var totp = new Totp(Base32Encoding.ToBytes(secret));
+            var code = totp.ComputeTotp();
+            var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfaReq!.ChallengeId, TotpCode = code });
+            Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+            var confirmPayload = await confirm.Content.ReadFromJsonAsync<MfaConfirmResponse>();
+            Assert.False(string.IsNullOrWhiteSpace(confirmPayload!.IdToken));
+
+            var idSvc = _factory.Services.GetRequiredService<IdTokenService>();
+            var jwt = ValidateIdToken(confirmPayload.IdToken!, idSvc.GetValidationParameters());
+            var amr = jwt.Claims.Where(c => c.Type == "amr").Select(c => c.Value).ToList();
+            Assert.Contains("mfa", amr);
+            Assert.DoesNotContain("pwd", amr); // service emette solo mfa in confirm
+        }
+    }
+
+    [Fact]
+    public async Task Login_invalid_credentials_does_not_emit_id_token()
+    {
+        LogTestStart();
+        var resp = await _client.PostAsJsonAsync("/login", new { Username = "demo", Password = "wrong" });
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+        var body = await resp.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("idToken", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Id_token_auth_time_differs_after_mfa_step_up()
+    {
+        LogTestStart();
+        var username = $"idstep_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        // Login base -> id_token pwd
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        var idSvc = _factory.Services.GetRequiredService<IdTokenService>();
+        var jwtPwd = ValidateIdToken(loginPayload!.IdToken!, idSvc.GetValidationParameters());
+        var authTimePwd = jwtPwd.Claims.First(c => c.Type == "auth_time").Value;
+        var amrPwd = jwtPwd.Claims.Where(c => c.Type == "amr").Select(c => c.Value).ToList();
+        Assert.Contains("pwd", amrPwd);
+
+        var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        // Setup MFA
+        using (var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup"))
+        {
+            setupReq.Headers.Add("Cookie", accessCookie);
+            setupReq.Headers.Add("X-CSRF-Token", loginPayload.CsrfToken);
+            var setupResp = await _client.SendAsync(setupReq);
+            Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+            var setupPayload = await setupResp.Content.ReadFromJsonAsync<MfaSetupResponse>();
+            var secret = setupPayload!.Secret!;
+
+            // Logout
+            using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+            {
+                logoutReq.Headers.Add("Cookie", accessCookie);
+                logoutReq.Headers.Add("X-CSRF-Token", loginPayload.CsrfToken);
+                var logoutResp = await _client.SendAsync(logoutReq);
+                Assert.Equal(HttpStatusCode.OK, logoutResp.StatusCode);
+            }
+
+            // Login step 1 -> mfa_required
+            var loginMfa = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.Unauthorized, loginMfa.StatusCode);
+            var mfaReq = await loginMfa.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+            var bodyStep1 = await loginMfa.Content.ReadAsStringAsync();
+            Assert.DoesNotContain("idToken", bodyStep1, StringComparison.OrdinalIgnoreCase);
+
+            // Confirm MFA -> id_token mfa
+            var totp = new Totp(Base32Encoding.ToBytes(secret));
+            var code = totp.ComputeTotp();
+            var confirm = await _client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfaReq!.ChallengeId, TotpCode = code });
+            Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+            var confirmPayload = await confirm.Content.ReadFromJsonAsync<MfaConfirmResponse>();
+            var jwtMfa = ValidateIdToken(confirmPayload!.IdToken!, idSvc.GetValidationParameters());
+            var amrMfa = jwtMfa.Claims.Where(c => c.Type == "amr").Select(c => c.Value).ToList();
+            Assert.Contains("mfa", amrMfa);
+            var authTimeMfa = jwtMfa.Claims.First(c => c.Type == "auth_time").Value;
+            Assert.True(long.Parse(authTimeMfa) >= long.Parse(authTimePwd));
+        }
+    }
+
+    [Fact]
+    public async Task Id_token_excludes_email_when_config_disabled()
+    {
+        LogTestStart();
+        var extra = new Dictionary<string, string?>
+        {
+            ["IdToken:IncludeEmail"] = "false",
+            ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: extra);
+        try
+        {
+            var username = $"noemail_{Guid.NewGuid():N}";
+            var password = "P@ssw0rd!Long";
+            var email = $"{username}@example.com";
+
+            var register = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+            await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            var idSvc = factory.Services.GetRequiredService<IdTokenService>();
+            var jwt = ValidateIdToken(payload!.IdToken!, idSvc.GetValidationParameters());
+            Assert.Null(jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email));
+            Assert.Equal(username, jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Id_token_expires_and_validates()
+    {
+        LogTestStart();
+        var extra = new Dictionary<string, string?>
+        {
+            ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___",
+            ["IdToken:Minutes"] = "5"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: extra);
+        try
+        {
+            var register = await client.PostAsJsonAsync("/register", new { Username = "expuser", Password = "P@ssw0rd!Long", Email = "exp@example.com" });
+            var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+            await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = "expuser", Password = "P@ssw0rd!Long" });
+            var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            var idSvc = factory.Services.GetRequiredService<IdTokenService>();
+
+            var jwt = ValidateIdToken(payload!.IdToken!, idSvc.GetValidationParameters());
+            Assert.True(jwt.ValidTo.ToUniversalTime() > DateTime.UtcNow);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
     [Fact]
     public async Task Full_auth_flow_with_remember_and_mfa()
     {
