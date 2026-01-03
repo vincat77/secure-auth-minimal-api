@@ -21,6 +21,7 @@ public partial class MainForm
     private SessionCard _sessionCard = null!;
     private DeviceInfoControl _deviceInfo = null!;
     private DeviceAlertControl _deviceAlert = null!;
+    private IdTokenViewerControl _idTokenViewer = null!;
     private Label _busyLabel = null!;
     private LogPanelControl _logPanel = null!;
     private System.Windows.Forms.Timer _countdownTimer = null!;
@@ -41,6 +42,7 @@ public partial class MainForm
     _sessionCard = new SessionCard();
     _deviceInfo = new DeviceInfoControl();
     _deviceAlert = new DeviceAlertControl();
+    _idTokenViewer = new IdTokenViewerControl();
     _busyLabel = new Label();
     _logPanel = new LogPanelControl();
     _countdownTimer = new System.Windows.Forms.Timer(components);
@@ -70,6 +72,7 @@ public partial class MainForm
     _rootPanel.Controls.Add(_sessionCard);
     _rootPanel.Controls.Add(_deviceInfo);
     _rootPanel.Controls.Add(_deviceAlert);
+    _rootPanel.Controls.Add(_idTokenViewer);
     _rootPanel.Controls.Add(_busyLabel);
     _rootPanel.Controls.Add(_logPanel);
     _rootPanel.Location = new Point(0, 30);
@@ -181,6 +184,13 @@ public partial class MainForm
     _deviceAlert.Padding = new Padding(8);
     _deviceAlert.Size = new Size(340, 60);
     _deviceAlert.TabIndex = 10;
+    // 
+    // _idTokenViewer
+    // 
+    _idTokenViewer.Location = new Point(858, 472);
+    _idTokenViewer.Name = "_idTokenViewer";
+    _idTokenViewer.Size = new Size(362, 163);
+    _idTokenViewer.TabIndex = 13;
     // 
     // _busyLabel
     // 

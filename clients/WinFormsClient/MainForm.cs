@@ -126,6 +126,14 @@ public sealed partial class MainForm : Form
       var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
       _csrfToken = login?.CsrfToken;
       _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
+      _idTokenViewer.SetToken(login?.IdToken);
+#if DEBUG
+      if (!string.IsNullOrWhiteSpace(login?.IdToken))
+      {
+        Append($"id_token: {login.IdToken}");
+        LogEvent("Info", "id_token ricevuto (dev)");
+      }
+#endif
       _statusInfo.SetStatus("Autenticato", login?.DeviceId, login?.DeviceId, null, _rememberText, System.Drawing.Color.SeaGreen, "Autenticato");
       _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
       _deviceAlert.SetStatus(true, "Login/Device OK");
@@ -191,6 +199,14 @@ public sealed partial class MainForm : Form
       _rememberText = confirm?.RememberIssued == true ? "Emesso" : "Non emesso";
       _deviceInfo.UpdateDevice(confirm?.DeviceId, confirm?.DeviceIssued);
       _deviceAlert.SetStatus(true, "MFA confermata");
+      _idTokenViewer.SetToken(confirm?.IdToken);
+#if DEBUG
+      if (!string.IsNullOrWhiteSpace(confirm?.IdToken))
+      {
+        Append($"id_token: {confirm.IdToken}");
+        LogEvent("Info", "id_token ricevuto (dev)");
+      }
+#endif
       if (confirm?.RefreshExpiresAtUtc is not null && DateTime.TryParse(confirm.RefreshExpiresAtUtc, out var refreshExp))
       {
         _refreshExpiresUtc = refreshExp.ToUniversalTime();
@@ -231,6 +247,7 @@ public sealed partial class MainForm : Form
       var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
       _csrfToken = login?.CsrfToken ?? _csrfToken;
       _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
+      // /refresh non restituisce id_token; manteniamo l'ultimo ricevuto
       _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
       _deviceAlert.SetStatus(true, "Refresh/Device OK");
       if (login?.RefreshExpiresAtUtc is not null && DateTime.TryParse(login.RefreshExpiresAtUtc, out var refreshExp))
@@ -409,6 +426,7 @@ public sealed partial class MainForm : Form
         _csrfToken = null;
         ResetHttpClient(); // pulisci cookie jar per evitare riuso client-side
         SetState("Non autenticato", null, null, null);
+        _idTokenViewer.SetToken(null);
         LogEvent("Info", "Logout OK");
       }
       else
@@ -487,12 +505,12 @@ public sealed partial class MainForm : Form
     }
   }
 
-  private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId);
+  private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
   private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
   private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
   private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
   private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
-  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId);
+  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
 
   private void ResetHttpClient()
   {

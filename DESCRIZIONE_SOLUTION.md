@@ -17,6 +17,7 @@ Panoramica e riferimenti rapidi alla solution .NET 8 che espone una Minimal API 
 - Sessione: `/me` restituisce dati sessione attiva; idle timeout opzionale via `Session:IdleMinutes` aggiornato dal middleware.
 - Logout: `/logout` revoca sessione e refresh associato; `/logout-all` revoca tutte le refresh dell utente, opzionalmente cancella cookie device.
 - Refresh/remember-me: `/refresh` ruota refresh token legato a cookie `device_id` (binding UA+device+scadenza) ed emette nuovo access+refresh+CSRF.
+- Id token: `/login` e `/login/confirm-mfa` restituiscono anche `idToken` (JWT identità) nel body, con claim minimi (sub, iat, auth_time, amr; nonce opzionale). Firmato con chiave dedicata `IdToken` (RSA se configurata, altrimenti HMAC dev). Validare firma/issuer/audience/scadenza lato client.
 - MFA management: `/mfa/setup` genera segreto e otpauth URI, `/mfa/disable` azzera il segreto.
 - Email: `/confirm-email` conferma usando il token registrazione.
 - Introspezione: `/introspect` legge JWT (header Bearer o cookie) e restituisce stato sessione (attiva, revocata, scaduta, non trovata).
@@ -50,6 +51,7 @@ Panoramica e riferimenti rapidi alla solution .NET 8 che espone una Minimal API 
 ## Testing
 - Progetto `tests/SecureAuthMinimalApi.Tests`: test di integrazione (xUnit) che coprono login/me/logout, cookie flags, CSRF, registrazione, throttle lockout, audit, idle timeout, refresh rotation, MFA TOTP, Serilog smoke.
 - Esecuzione: `dotnet test` dalla root oppure `dotnet test tests/SecureAuthMinimalApi.Tests/SecureAuthMinimalApi.Tests.csproj`.
+- Id token: firma valida con chiave `IdToken` (RSA se presente, HMAC in dev), claim minimi (sub, iat/auth_time, amr pwd/mfa, nonce opzionale, username; email se `IdToken:IncludeEmail=true`); validare issuer/audience/scadenza lato client.
 
 ## Client WinForms
 - `clients/WinFormsClient` (.NET 8): UI che esegue registrazione, conferma email, login con remember-me, gestione MFA (setup/confirm/disable), refresh, me, logout usando cookie HttpOnly e header `X-CSRF-Token`. Gestisce visualizzazione token, device-id, countdown sessione e log eventi.

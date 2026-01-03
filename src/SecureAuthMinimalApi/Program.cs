@@ -31,6 +31,7 @@ builder.Services.AddSingleton<TotpSecretProtector>();
 builder.Services.AddSingleton<RefreshTokenHasher>();
 builder.Services.AddSingleton<RefreshTokenRepository>();
 builder.Services.AddSingleton<MfaChallengeRepository>();
+builder.Services.AddSingleton<IdTokenService>();
 
 builder.Services.AddTransient<CookieJwtAuthMiddleware>();
 builder.Services.AddTransient<CsrfMiddleware>();
@@ -235,11 +236,12 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
 /// <summary>
 /// Login: verifica credenziali da DB, applica throttle (lockout), crea sessione server-side, emette JWT+cookie HttpOnly e CSRF token.
 /// </summary>
-app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo) =>
+app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo) =>
 {
     var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
     var username = NormalizeUsername(req?.Username, forceLowerUsername);
     var password = req?.Password ?? "";
+    var nonce = req?.Nonce;
     logger.LogInformation("Login avviato username={Username}", username);
     var inputErrors = new List<string>();
     if (string.IsNullOrWhiteSpace(username))
@@ -322,6 +324,7 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
     var csrfToken = Base64Url(RandomBytes(32));
 
     var (token, expiresUtc) = jwt.CreateAccessToken(sessionId);
+    var (idToken, _) = idTokenService.CreateIdToken(user.Id, user.Username, user.Email, mfaConfirmed: false, nonce: nonce);
 
     var nowIso = DateTime.UtcNow.ToString("O");
     var expIso = expiresUtc.ToString("O");
@@ -452,13 +455,14 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, SessionReposi
         rememberIssued = true;
     }
 
-    return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc });
+    ctx.Response.Headers.CacheControl = "no-store";
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken });
 });
 
 /// <summary>
 /// Conferma MFA: verifica challenge e TOTP, emette sessione e cookie.
 /// </summary>
-app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo) =>
+app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo) =>
 {
     var body = await ctx.Request.ReadFromJsonAsync<ConfirmMfaRequest>();
     if (string.IsNullOrWhiteSpace(body?.ChallengeId) || string.IsNullOrWhiteSpace(body.TotpCode))
@@ -531,6 +535,7 @@ app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, S
     var sessionId = Guid.NewGuid().ToString("N");
     var csrfToken = Base64Url(RandomBytes(32));
     var (token, expiresUtc) = jwt.CreateAccessToken(sessionId);
+    var (idToken, _) = idTokenService.CreateIdToken(user.Id, user.Username, user.Email, mfaConfirmed: true, nonce: body.Nonce);
     var nowIso = DateTime.UtcNow.ToString("O");
     var expIso = expiresUtc.ToString("O");
     var session = new UserSession
@@ -646,7 +651,7 @@ app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, S
         rememberIssued = true;
     }
 
-    return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc });
+    return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken });
 });
 app.MapGet("/me", (HttpContext ctx) =>
 {
@@ -1094,10 +1099,10 @@ static string? NormalizeEmail(string? email)
     return email.Trim().ToLowerInvariant();
 }
 
-public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool RememberMe);
+public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool RememberMe, string? Nonce);
 public sealed record RegisterRequest(string? Username, string? Email, string? Password);
 public sealed record ConfirmEmailRequest(string? Token);
-public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe);
+public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, string? Nonce);
 
 public static class AuthHelpers
 {
