@@ -10,6 +10,7 @@ namespace WinFormsClient
   using SkiaSharp.Extended.Svg;
   using System.Drawing;
   using System.Net.Http;
+  using SKSvg = SkiaSharp.Extended.Svg.SKSvg;
 
   public static class ImageLoader
   {
