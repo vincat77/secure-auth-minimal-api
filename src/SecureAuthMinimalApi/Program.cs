@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,7 @@ builder.Services.AddTransient<CsrfMiddleware>();
 
 var app = builder.Build();
 var isDevelopment = app.Environment.IsDevelopment();
+var pauseFlag = 0;
 
 var configuredMin = app.Configuration.GetValue<int?>("PasswordPolicy:MinLength");
 var minPasswordLength = configuredMin is null or < 1 ? 12 : configuredMin.Value;
@@ -94,6 +96,27 @@ if (!isDevelopment)
     }
 }
 
+var serverUrls = GetConfiguredUrls(app);
+LogStartupInfo(
+    app,
+    logger,
+    serverUrls,
+    cleanupEnabled,
+    cleanupInterval,
+    cleanupBatch,
+    cleanupMaxIterations,
+    minPasswordLength,
+    requireUpper,
+    requireLower,
+    requireDigit,
+    requireSymbol,
+    forceLowerUsername,
+    mfaChallengeMinutes,
+    mfaRequireUaMatch,
+    mfaRequireIpMatch,
+    mfaMaxAttempts,
+    skipDbInit);
+
 // Hardening header solo fuori da Development.
 if (!isDevelopment)
 {
@@ -126,6 +149,19 @@ app.Use(async (ctx, next) =>
         await ctx.Response.WriteAsJsonAsync(new { ok = false, error = "unauthorized" });
         logger.LogWarning("Richiesta fine 401 Non Autorizzato {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
     }
+});
+
+app.Use(async (ctx, next) =>
+{
+    if (Volatile.Read(ref pauseFlag) == 1)
+    {
+        logger.LogWarning("Richiesta respinta: applicazione in pausa {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
+        ctx.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        await ctx.Response.WriteAsJsonAsync(new { ok = false, error = "paused" });
+        return;
+    }
+
+    await next();
 });
 
 // --- MIDDLEWARE ORDER (MANDATORY) ---
@@ -1063,7 +1099,57 @@ app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRe
     });
 });
 
-app.Run();
+var shutdownCts = new CancellationTokenSource();
+var appTask = app.RunAsync(shutdownCts.Token);
+
+if (Console.IsInputRedirected)
+{
+    logger.LogWarning("Input console non disponibile: arresto con Ctrl+C/TERM. Controlli P/S disabilitati.");
+    await appTask;
+    return;
+}
+
+var consoleTask = Task.Run(async () =>
+{
+    logger.LogInformation("Controlli console: premi 'P' per pausa/ripresa, 'S' per arresto sicuro.");
+    while (!shutdownCts.IsCancellationRequested)
+    {
+        if (!Console.KeyAvailable)
+        {
+            await Task.Delay(250, shutdownCts.Token);
+            continue;
+        }
+
+        var key = Console.ReadKey(intercept: true);
+        if (key.Key == ConsoleKey.S)
+        {
+            logger.LogInformation("Arresto richiesto da console (S).");
+            shutdownCts.Cancel();
+            app.Lifetime.StopApplication();
+            break;
+        }
+
+        if (key.Key == ConsoleKey.P)
+        {
+            var newValue = Volatile.Read(ref pauseFlag) == 0 ? 1 : 0;
+            var previous = Interlocked.Exchange(ref pauseFlag, newValue);
+            var isPausedNow = previous == 0;
+            logger.LogWarning(isPausedNow ? "Applicazione messa in pausa: risposte 503 finche non viene ripresa." : "Pausa rimossa: ripresa gestione richieste.");
+        }
+    }
+}, shutdownCts.Token);
+
+await Task.WhenAny(appTask, consoleTask);
+shutdownCts.Cancel();
+
+try
+{
+    await Task.WhenAll(appTask, consoleTask);
+}
+catch (OperationCanceledException)
+{
+    // Shutdown richiesto dall'utente o dall'host.
+}
 
 static byte[] RandomBytes(int len)
 {
@@ -1108,6 +1194,107 @@ static string? NormalizeEmail(string? email)
     if (string.IsNullOrWhiteSpace(email))
         return null;
     return email.Trim().ToLowerInvariant();
+}
+
+static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)
+{
+    if (app.Urls.Any())
+        return app.Urls.ToArray();
+
+    var envUrls = app.Configuration["ASPNETCORE_URLS"];
+    if (!string.IsNullOrWhiteSpace(envUrls))
+    {
+        return envUrls.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    return new[] { "http://localhost:5000", "https://localhost:5001" };
+}
+
+static void LogStartupInfo(
+    WebApplication app,
+    Microsoft.Extensions.Logging.ILogger logger,
+    IEnumerable<string> serverUrls,
+    bool cleanupEnabled,
+    int cleanupInterval,
+    int cleanupBatch,
+    int? cleanupMaxIterations,
+    int minPasswordLength,
+    bool requireUpper,
+    bool requireLower,
+    bool requireDigit,
+    bool requireSymbol,
+    bool forceLowerUsername,
+    int mfaChallengeMinutes,
+    bool mfaRequireUaMatch,
+    bool mfaRequireIpMatch,
+    int mfaMaxAttempts,
+    bool skipDbInit)
+{
+    var startupConfig = new
+    {
+        Environment = app.Environment.EnvironmentName,
+        ContentRoot = app.Environment.ContentRootPath,
+        Urls = serverUrls,
+        Database = app.Configuration.GetConnectionString("Sqlite") ?? "<missing>",
+        Jwt = new
+        {
+            Issuer = app.Configuration["Jwt:Issuer"] ?? "<missing>",
+            Audience = app.Configuration["Jwt:Audience"] ?? "<missing>",
+            SecretLength = app.Configuration["Jwt:SecretKey"]?.Length ?? 0
+        },
+        PasswordPolicy = new
+        {
+            MinLength = minPasswordLength,
+            RequireUpper = requireUpper,
+            RequireLower = requireLower,
+            RequireDigit = requireDigit,
+            RequireSymbol = requireSymbol
+        },
+        UsernamePolicy = new { Lowercase = forceLowerUsername },
+        Mfa = new
+        {
+            ChallengeMinutes = mfaChallengeMinutes,
+            RequireUaMatch = mfaRequireUaMatch,
+            RequireIpMatch = mfaRequireIpMatch,
+            MaxAttemptsPerChallenge = mfaMaxAttempts
+        },
+        SessionIdleMinutes = app.Configuration.GetValue<int?>("Session:IdleMinutes"),
+        RememberMe = new
+        {
+            Days = app.Configuration.GetValue<int?>("RememberMe:Days"),
+            CookieName = app.Configuration["RememberMe:CookieName"],
+            Path = app.Configuration["RememberMe:Path"]
+        },
+        Device = new
+        {
+            CookieName = app.Configuration["Device:CookieName"],
+            RequireSecure = app.Configuration.GetValue<bool?>("Device:RequireSecure"),
+            PersistDays = app.Configuration.GetValue<int?>("Device:PersistDays")
+        },
+        Cleanup = new
+        {
+            Enabled = cleanupEnabled,
+            IntervalSeconds = cleanupInterval,
+            BatchSize = cleanupBatch,
+            MaxIterationsPerRun = cleanupMaxIterations
+        },
+        LoginThrottle = new
+        {
+            MaxFailures = app.Configuration.GetValue<int?>("LoginThrottle:MaxFailures"),
+            LockMinutes = app.Configuration.GetValue<int?>("LoginThrottle:LockMinutes")
+        },
+        IdToken = new
+        {
+            Issuer = app.Configuration["IdToken:Issuer"],
+            Audience = app.Configuration["IdToken:Audience"],
+            Minutes = app.Configuration.GetValue<int?>("IdToken:Minutes")
+        },
+        SkipDbInit = skipDbInit
+    };
+
+    var formatted = JsonSerializer.Serialize(startupConfig, new JsonSerializerOptions { WriteIndented = true });
+    logger.LogInformation("Avvio SecureAuthMinimalApi - configurazione attiva:\n{StartupConfig}", formatted);
+    logger.LogInformation("Console pronta: 'P' per pausa/ripresa, 'S' per arresto.");
 }
 
 public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool RememberMe, string? Nonce);

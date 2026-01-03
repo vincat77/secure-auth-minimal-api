@@ -50,6 +50,8 @@ Panoramica rapida della solution .NET 8 con Minimal API protetta da JWT in cooki
 
 ## Logging e osservabilita
 - Serilog configurato da appsettings (sink file e console); log di request/response in Program.cs con esito e path; header `X-Session-Expires-At` e `X-Session-Idle-Remaining` esposti dal middleware.
+- Log iniziale a startup con riepilogo configurazione attiva (ambiente, URL, DB, JWT, policy password/username/MFA, sessione, cleanup, throttle, remember/device) stampato in console.
+- Controlli console: `P` mette in pausa rispondendo 503, `P` di nuovo riprende; `S` esegue arresto sicuro; warning se input console non disponibile.
 
 ## Testing
 - Progetto `tests/SecureAuthMinimalApi.Tests`: test di integrazione (xUnit) che coprono login/me/logout, cookie flags, CSRF, registrazione, throttle lockout, audit, idle timeout, refresh rotation, MFA TOTP, Serilog smoke, id_token e cleanup scadenze.
