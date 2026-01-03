@@ -27,8 +27,8 @@ public sealed class UserRepository
     public async Task CreateAsync(User user, CancellationToken ct)
     {
         const string sql = @"
-INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, email, email_normalized, email_confirmed, email_confirm_token, email_confirm_expires_utc)
-VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Email, @EmailNormalized, @EmailConfirmed, @EmailConfirmToken, @EmailConfirmExpiresUtc);";
+INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, email_confirm_token, email_confirm_expires_utc, picture_url)
+VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, @EmailConfirmed, @EmailConfirmToken, @EmailConfirmExpiresUtc, @PictureUrl);";
 
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
@@ -38,11 +38,15 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Email, @Emai
             user.PasswordHash,
             user.CreatedAtUtc,
             TotpSecret = string.IsNullOrWhiteSpace(user.TotpSecret) ? null : _protector.Protect(user.TotpSecret),
+            user.Name,
+            user.GivenName,
+            user.FamilyName,
             user.Email,
             user.EmailNormalized,
             user.EmailConfirmed,
             user.EmailConfirmToken,
-            user.EmailConfirmExpiresUtc
+            user.EmailConfirmExpiresUtc,
+            user.PictureUrl
         }, cancellationToken: ct));
     }
 
@@ -50,8 +54,10 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Email, @Emai
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       picture_url AS PictureUrl
 FROM users
 WHERE username = @username OR username = @normalized
 LIMIT 1;";
@@ -64,8 +70,10 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       picture_url AS PictureUrl
 FROM users
 WHERE id = @userId
 LIMIT 1;";
@@ -79,8 +87,10 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       picture_url AS PictureUrl
 FROM users
 WHERE email_normalized = @email
 LIMIT 1;";
@@ -94,8 +104,10 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc
+       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       picture_url AS PictureUrl
 FROM users
 WHERE email_confirm_token = @token
 LIMIT 1;";
@@ -156,11 +168,15 @@ WHERE id = @userId;";
                 PasswordHash = user.PasswordHash,
                 CreatedAtUtc = user.CreatedAtUtc,
                 TotpSecret = string.IsNullOrWhiteSpace(plain) ? null : plain,
+                Name = user.Name,
+                GivenName = user.GivenName,
+                FamilyName = user.FamilyName,
                 Email = user.Email,
                 EmailNormalized = user.EmailNormalized,
                 EmailConfirmed = user.EmailConfirmed,
                 EmailConfirmToken = user.EmailConfirmToken,
-                EmailConfirmExpiresUtc = user.EmailConfirmExpiresUtc
+                EmailConfirmExpiresUtc = user.EmailConfirmExpiresUtc,
+                PictureUrl = user.PictureUrl
             };
         }
 

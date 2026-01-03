@@ -1776,7 +1776,7 @@ CREATE TABLE IF NOT EXISTS users (
     }
 
     [Fact]
-    public async Task Id_token_excludes_email_when_config_disabled()
+    public async Task Id_token_includes_profile_claims_even_if_email_flag_disabled()
     {
         LogTestStart();
         var extra = new Dictionary<string, string?>
@@ -1799,8 +1799,13 @@ CREATE TABLE IF NOT EXISTS users (
             var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
             var idSvc = factory.Services.GetRequiredService<IdTokenService>();
             var jwt = ValidateIdToken(payload!.IdToken!, idSvc.GetValidationParameters());
-            Assert.Null(jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email));
+            Assert.Equal(email, jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value);
             Assert.Equal(username, jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value);
+            Assert.Equal($"{username} User", jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Name)?.Value);
+            Assert.Equal(username, jwt.Claims.FirstOrDefault(c => c.Type == "given_name")?.Value);
+            Assert.Equal("User", jwt.Claims.FirstOrDefault(c => c.Type == "family_name")?.Value);
+            var pic = jwt.Claims.FirstOrDefault(c => c.Type == "picture")?.Value;
+            Assert.Equal($"https://example.com/avatar/{username}.png", pic);
         }
         finally
         {

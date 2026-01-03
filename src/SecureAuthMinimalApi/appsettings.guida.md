@@ -8,18 +8,13 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `Jwt:AccessTokenMinutes` - Durata in minuti del token di accesso. Intero >0.
 
 ## IdToken
-- `IdToken:Issuer` - Issuer dell'id_token (puo' essere diverso dall'access token).
+- `IdToken:Issuer` - Issuer dell'id_token (può essere diverso dall'access token).
 - `IdToken:Audience` - Audience prevista per l'id_token.
 - `IdToken:SigningKeyPath` - Percorso chiave RSA/EC per firmare l'id_token (PEM/XML). Se vuoto e solo in dev, fallback HMAC (meno sicuro).
 - `IdToken:Secret` - Chiave HMAC di fallback (dev). In prod preferire chiave RSA via `SigningKeyPath`.
-- `IdToken:IncludeEmail` - Se true include email/username come claim opzionali.
+- `IdToken:IncludeEmail` - Retaggio: l'id_token include sempre email/username se disponibili; lasciare true.
 - `IdToken:Minutes` - Durata in minuti dell'id_token. Intero >0.
-
-## IdToken
-- `IdToken:Issuer` — Issuer dell'id_token (può differire dall'access token). Stringa/URL.
-- `IdToken:Audience` — Audience prevista per l'id_token.
-- `IdToken:SigningKeyPath` — Percorso chiave RSA/EC per firmare l'id_token (PEM/XML). Se vuoto e solo in dev, fallback HMAC (meno sicuro).
-- `IdToken:IncludeEmail` — Se true include email/username come claim opzionali. Bool.
+- Claim profilo emessi quando valorizzati: `name`, `given_name`, `family_name`, `email`, `picture`, `preferred_username`.
 
 ## LoginThrottle
 - `LoginThrottle:MaxFailures` - Tentativi falliti prima del lockout. Intero >=1.
@@ -48,16 +43,13 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `RememberMe:Path` - Path del cookie refresh (es. `/refresh`).
 
 ## Mfa
-- `Mfa:ChallengeMinutes` - Validita' di un challenge MFA in minuti. Intero >0.
+- `Mfa:ChallengeMinutes` - Validità di un challenge MFA in minuti. Intero >0.
 - `Mfa:RequireUaMatch` - Richiede match User-Agent tra login e conferma. Bool.
 - `Mfa:RequireIpMatch` - Richiede match IP tra login e conferma. Bool.
 - `Mfa:MaxAttemptsPerChallenge` - Tentativi TOTP per challenge. Intero >=1.
 
 ## Refresh (token persistenti)
 - `Refresh:HmacKey` - Chiave HMAC (32+ caratteri) per hash dei refresh token. In prod separarla da `Jwt:SecretKey`.
-
-## Refresh (token persistenti)
-- `Refresh:HmacKey` — Chiave HMAC (32+ caratteri) usata per hashare i refresh token prima di salvarli in DB. In prod metterla in variabile d'ambiente/KeyVault. Se assente, si può riusare `Jwt:SecretKey` ma è preferibile una chiave separata.
 
 ## Device
 - `Device:CookieName` - Nome cookie device-id.
@@ -67,7 +59,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `Device:ClearOnLogoutAll` - Se true cancella cookie device su logout-all.
 
 ## Session
-- `Session:IdleMinutes` - Timeout di inattivita' (minuti). <=0 per disabilitare idle timeout.
+- `Session:IdleMinutes` - Timeout di inattività (minuti). <=0 per disabilitare idle timeout.
 
 ## Cleanup
 - `Cleanup:Enabled` - Abilita il job di pulizia record scaduti. Bool.

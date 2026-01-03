@@ -1,9 +1,12 @@
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace WinFormsClient.Controls;
 
 public partial class SessionCard : UserControl
 {
+    private Image? _currentAvatar;
+
     public SessionCard()
     {
         InitializeComponent();
@@ -28,5 +31,18 @@ public partial class SessionCard : UserControl
     {
         _countdown.UpdateCountdown(TimeSpan.Zero);
         _refreshCountdown.UpdateCountdown();
+    }
+
+    public void SetAvatar(Image? avatar)
+    {
+        if (!ReferenceEquals(_currentAvatar, avatar))
+        {
+            _currentAvatar?.Dispose();
+        }
+
+        _currentAvatar = avatar;
+        _avatar.Image = avatar;
+        _avatar.Visible = avatar is not null;
+        _avatar.BackColor = avatar is null ? Color.Gainsboro : Color.White;
     }
 }

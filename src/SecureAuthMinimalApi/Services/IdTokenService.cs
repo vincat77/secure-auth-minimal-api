@@ -14,7 +14,6 @@ public sealed class IdTokenService
 {
     private readonly string _issuer;
     private readonly string _audience;
-    private readonly bool _includeEmail;
     private readonly SigningCredentials _creds;
     private readonly TokenValidationParameters _validation;
 
@@ -22,7 +21,7 @@ public sealed class IdTokenService
     {
         _issuer = config["IdToken:Issuer"] ?? config["Jwt:Issuer"] ?? throw new InvalidOperationException("Missing IdToken:Issuer");
         _audience = config["IdToken:Audience"] ?? config["Jwt:Audience"] ?? throw new InvalidOperationException("Missing IdToken:Audience");
-        _includeEmail = config.GetValue<bool?>("IdToken:IncludeEmail") ?? false;
+        // Email e claim profilo sempre inclusi se disponibili (nessun scope).
 
         var signingKeyPath = config["IdToken:SigningKeyPath"];
         if (!string.IsNullOrWhiteSpace(signingKeyPath) && File.Exists(signingKeyPath))
@@ -54,7 +53,17 @@ public sealed class IdTokenService
         };
     }
 
-    public (string Token, DateTime ExpiresUtc) CreateIdToken(string userId, string username, string? email, bool mfaConfirmed, string? nonce = null, int minutes = 30)
+    public (string Token, DateTime ExpiresUtc) CreateIdToken(
+        string userId,
+        string username,
+        string? email,
+        bool mfaConfirmed,
+        string? nonce = null,
+        int minutes = 30,
+        string? name = null,
+        string? givenName = null,
+        string? familyName = null,
+        string? pictureUrl = null)
     {
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(minutes);
@@ -69,10 +78,22 @@ public sealed class IdTokenService
         if (!string.IsNullOrWhiteSpace(nonce))
             claims.Add(new Claim(JwtRegisteredClaimNames.Nonce, nonce));
 
-        if (_includeEmail && !string.IsNullOrWhiteSpace(email))
+        if (!string.IsNullOrWhiteSpace(email))
             claims.Add(new Claim(JwtRegisteredClaimNames.Email, email));
 
+        if (!string.IsNullOrWhiteSpace(name))
+            claims.Add(new Claim(JwtRegisteredClaimNames.Name, name));
+
+        if (!string.IsNullOrWhiteSpace(givenName))
+            claims.Add(new Claim("given_name", givenName));
+
+        if (!string.IsNullOrWhiteSpace(familyName))
+            claims.Add(new Claim("family_name", familyName));
+
         claims.Add(new Claim("preferred_username", username));
+
+        if (!string.IsNullOrWhiteSpace(pictureUrl))
+            claims.Add(new Claim("picture", pictureUrl));
 
         var token = new JwtSecurityToken(
             issuer: _issuer,
@@ -93,7 +114,7 @@ public sealed class IdTokenService
         try
         {
             // Try PEM first
-            using var rsa = RSA.Create();
+            var rsa = RSA.Create();
             rsa.ImportFromPem(keyText.AsSpan());
             var rsaKey = new RsaSecurityKey(rsa);
             return new SigningCredentials(rsaKey, SecurityAlgorithms.RsaSha256);
@@ -101,7 +122,7 @@ public sealed class IdTokenService
         catch
         {
             // Try XML
-            using var rsa = RSA.Create();
+            var rsa = RSA.Create();
             rsa.FromXmlString(keyText);
             var rsaKey = new RsaSecurityKey(rsa);
             return new SigningCredentials(rsaKey, SecurityAlgorithms.RsaSha256);
