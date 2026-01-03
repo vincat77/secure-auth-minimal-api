@@ -11,13 +11,13 @@ Panoramica rapida della solution .NET 8 con Minimal API protetta da JWT in cooki
 
 ## Flussi ed endpoint principali (API)
 - Salute: `/health` liveness, `/live` quick check, `/ready` readiness con verifica DB e config JWT.
-- Registrazione: `/register` crea utente con hash bcrypt e token di conferma email (24h).
+- Registrazione: `/register` crea utente con hash bcrypt, dati profilo (name/given_name/family_name/picture) e token di conferma email (24h).
 - Login: `/login` verifica credenziali, applica throttle persistente, richiede email confermata, crea sessione DB, emette cookie `access_token` HttpOnly SameSite=Strict + CSRF token in risposta.
 - MFA: se l'utente ha TOTP registrato il login risponde `mfa_required` con `challengeId`; `/login/confirm-mfa` valida il TOTP e completa la sessione.
 - Sessione: `/me` restituisce dati sessione attiva; idle timeout opzionale via `Session:IdleMinutes` aggiornato dal middleware.
 - Logout: `/logout` revoca sessione e refresh associato; `/logout-all` revoca tutte le refresh dell'utente, opzionalmente cancella cookie device.
 - Refresh/remember-me: `/refresh` ruota refresh token legato a cookie `device_id` (binding UA+device+scadenza) ed emette nuovo access+refresh+CSRF.
-- Id token: `/login` e `/login/confirm-mfa` restituiscono anche `idToken` (JWT identita') nel body, con claim minimi (sub, iat, auth_time, amr; nonce opzionale). Firmato con chiave dedicata `IdToken` (RSA se configurata, altrimenti HMAC dev). Validare firma/issuer/audience/scadenza lato client.
+- Id token: `/login` e `/login/confirm-mfa` restituiscono anche `idToken` (JWT identita') nel body, con claim profilo (`name`, `given_name`, `family_name`, `email`, `picture`, `preferred_username`) e claim minimi (sub, iat, auth_time, amr; nonce opzionale). Firmato con chiave dedicata `IdToken` (RSA se configurata, altrimenti HMAC dev). Validare firma/issuer/audience/scadenza lato client.
 - MFA management: `/mfa/setup` genera segreto e otpauth URI, `/mfa/disable` azzera il segreto.
 - Email: `/confirm-email` conferma usando il token registrazione.
 - Introspezione: `/introspect` legge JWT (header Bearer o cookie) e restituisce stato sessione (attiva, revocata, scaduta, non trovata).
@@ -33,7 +33,7 @@ Panoramica rapida della solution .NET 8 con Minimal API protetta da JWT in cooki
 - Validazioni config: secret JWT minimo 32 char, AccessTokenMinutes > 0, warning se Cookie:RequireSecure disabilitato fuori Dev.
 
 ## Schema dati (SQLite, vedi `Data/*.cs` e `DbInitializer`)
-- `users`: credenziali bcrypt, email e token conferma, segreto TOTP protetto.
+- `users`: credenziali bcrypt, profilo (name/given/family/picture), email e token conferma, segreto TOTP protetto.
 - `user_sessions`: sessioni server-side con JSON user_data, CSRF token, last_seen per idle timeout.
 - `login_throttle`: conteggio fallimenti e lock fino a timestamp.
 - `login_audit`: audit login con outcome, IP, UA, dettaglio.
@@ -56,7 +56,7 @@ Panoramica rapida della solution .NET 8 con Minimal API protetta da JWT in cooki
 ## Testing
 - Progetto `tests/SecureAuthMinimalApi.Tests`: test di integrazione (xUnit) che coprono login/me/logout, cookie flags, CSRF, registrazione, throttle lockout, audit, idle timeout, refresh rotation, MFA TOTP, Serilog smoke, id_token e cleanup scadenze.
 - Esecuzione: `dotnet test` dalla root oppure `dotnet test tests/SecureAuthMinimalApi.Tests/SecureAuthMinimalApi.Tests.csproj`.
-- Id token: firma valida con chiave `IdToken` (RSA se presente, HMAC in dev), claim minimi (sub, iat/auth_time, amr pwd/mfa, nonce opzionale, username; email se `IdToken:IncludeEmail=true`); validare issuer/audience/scadenza lato client.
+- Id token: firma valida con chiave `IdToken` (RSA se presente, HMAC in dev), claim minimi (sub, iat/auth_time, amr pwd/mfa, nonce opzionale, username) e claim profilo (name, given_name, family_name, email, picture); validare issuer/audience/scadenza lato client.
 - Cleanup: `CleanupServiceTests` verificano rimozione record scaduti, batch/disable e non cancellano record validi.
 
 ## Client WinForms

@@ -217,6 +217,11 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
     var username = NormalizeUsername(req?.Username, forceLowerUsername);
     var email = NormalizeEmail(req?.Email);
     var password = req?.Password ?? "";
+    var givenNameInput = req?.GivenName?.Trim();
+    var familyNameInput = req?.FamilyName?.Trim();
+    var nameInput = req?.Name?.Trim();
+    var pictureUrlInput = req?.Picture?.Trim();
+
     logger.LogInformation("Registrazione avviata username={Username} email={Email}", username, email);
     var inputErrors = new List<string>();
     if (string.IsNullOrWhiteSpace(username))
@@ -227,6 +232,11 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
         inputErrors.Add("email_invalid");
     if (string.IsNullOrWhiteSpace(password))
         inputErrors.Add("password_required");
+    if (!string.IsNullOrWhiteSpace(pictureUrlInput))
+    {
+        if (!Uri.TryCreate(pictureUrlInput, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            inputErrors.Add("picture_invalid");
+    }
     if (inputErrors.Any())
     {
         logger.LogWarning("Registrazione input non valido username={Username} email={Email} errors={Errors}", username, email, string.Join(",", inputErrors));
@@ -234,6 +244,10 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
     }
     var safeUsername = username!;
     var safeEmail = email!;
+    var givenName = string.IsNullOrWhiteSpace(givenNameInput) ? safeUsername : givenNameInput;
+    var familyName = string.IsNullOrWhiteSpace(familyNameInput) ? "User" : familyNameInput;
+    var fullName = string.IsNullOrWhiteSpace(nameInput) ? $"{givenName} {familyName}".Trim() : nameInput;
+    var pictureUrl = string.IsNullOrWhiteSpace(pictureUrlInput) ? $"https://example.com/avatar/{safeUsername}.png" : pictureUrlInput;
 
     var policyErrors = AuthHelpers.ValidatePassword(password, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol);
     if (policyErrors.Any())
@@ -269,11 +283,15 @@ app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
         Username = safeUsername,
         PasswordHash = PasswordHasher.Hash(password),
         CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+        Name = string.IsNullOrWhiteSpace(fullName) ? null : fullName,
+        GivenName = givenName!,
+        FamilyName = familyName!,
         Email = req!.Email!,
         EmailNormalized = safeEmail,
         EmailConfirmed = false,
         EmailConfirmToken = emailConfirmToken,
-        EmailConfirmExpiresUtc = emailConfirmExpires.ToString("O")
+        EmailConfirmExpiresUtc = emailConfirmExpires.ToString("O"),
+        PictureUrl = pictureUrl
     };
 
     await users.CreateAsync(user, ctx.RequestAborted);
@@ -372,7 +390,16 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenServic
     var csrfToken = Base64Url(RandomBytes(32));
 
     var (token, expiresUtc) = jwt.CreateAccessToken(sessionId);
-    var (idToken, _) = idTokenService.CreateIdToken(user.Id, user.Username, user.Email, mfaConfirmed: false, nonce: nonce);
+    var (idToken, _) = idTokenService.CreateIdToken(
+        user.Id,
+        user.Username,
+        user.Email,
+        mfaConfirmed: false,
+        nonce: nonce,
+        name: user.Name,
+        givenName: user.GivenName,
+        familyName: user.FamilyName,
+        pictureUrl: user.PictureUrl);
 
     var nowIso = DateTime.UtcNow.ToString("O");
     var expIso = expiresUtc.ToString("O");
@@ -384,7 +411,15 @@ app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenServic
         CreatedAtUtc = nowIso,
         ExpiresAtUtc = expIso,
         RevokedAtUtc = null,
-        UserDataJson = JsonSerializer.Serialize(new { username = user.Username }),
+        UserDataJson = JsonSerializer.Serialize(new
+        {
+            username = user.Username,
+            name = user.Name,
+            given_name = user.GivenName,
+            family_name = user.FamilyName,
+            email = user.Email,
+            picture = user.PictureUrl
+        }),
         CsrfToken = csrfToken,
         LastSeenUtc = nowIso
     };
@@ -583,7 +618,16 @@ app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, I
     var sessionId = Guid.NewGuid().ToString("N");
     var csrfToken = Base64Url(RandomBytes(32));
     var (token, expiresUtc) = jwt.CreateAccessToken(sessionId);
-    var (idToken, _) = idTokenService.CreateIdToken(user.Id, user.Username, user.Email, mfaConfirmed: true, nonce: body.Nonce);
+    var (idToken, _) = idTokenService.CreateIdToken(
+        user.Id,
+        user.Username,
+        user.Email,
+        mfaConfirmed: true,
+        nonce: body.Nonce,
+        name: user.Name,
+        givenName: user.GivenName,
+        familyName: user.FamilyName,
+        pictureUrl: user.PictureUrl);
     var nowIso = DateTime.UtcNow.ToString("O");
     var expIso = expiresUtc.ToString("O");
     var session = new UserSession
@@ -593,7 +637,15 @@ app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, I
         CreatedAtUtc = nowIso,
         ExpiresAtUtc = expIso,
         RevokedAtUtc = null,
-        UserDataJson = JsonSerializer.Serialize(new { username = user.Username }),
+        UserDataJson = JsonSerializer.Serialize(new
+        {
+            username = user.Username,
+            name = user.Name,
+            given_name = user.GivenName,
+            family_name = user.FamilyName,
+            email = user.Email,
+            picture = user.PictureUrl
+        }),
         CsrfToken = csrfToken,
         LastSeenUtc = nowIso
     };
@@ -1298,7 +1350,7 @@ static void LogStartupInfo(
 }
 
 public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool RememberMe, string? Nonce);
-public sealed record RegisterRequest(string? Username, string? Email, string? Password);
+public sealed record RegisterRequest(string? Username, string? Email, string? Password, string? Name, string? GivenName, string? FamilyName, string? Picture);
 public sealed record ConfirmEmailRequest(string? Token);
 public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, string? Nonce);
 

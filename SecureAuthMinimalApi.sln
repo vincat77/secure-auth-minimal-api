@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "clients", "clients", "{9123
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFormsClient", "clients\WinFormsClient\WinFormsClient.csproj", "{138DE077-2380-4C92-ADCD-0026667939D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFormsClient.Tests", "tests\WinFormsClient.Tests\WinFormsClient.Tests.csproj", "{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Markdown", "Markdown", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		AGENT.md = AGENT.md
@@ -68,12 +70,25 @@ Global
 		{138DE077-2380-4C92-ADCD-0026667939D6}.Release|x64.Build.0 = Release|Any CPU
 		{138DE077-2380-4C92-ADCD-0026667939D6}.Release|x86.ActiveCfg = Release|Any CPU
 		{138DE077-2380-4C92-ADCD-0026667939D6}.Release|x86.Build.0 = Release|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Debug|x64.Build.0 = Debug|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Debug|x86.Build.0 = Debug|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|x64.ActiveCfg = Release|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|x64.Build.0 = Release|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|x86.ActiveCfg = Release|Any CPU
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{138DE077-2380-4C92-ADCD-0026667939D6} = {9123F88B-E531-3118-42D7-ED8CEF4BD00E}
+		{CFA1F8A4-1CE9-4B82-93BE-46A02E68B171} = {9123F88B-E531-3118-42D7-ED8CEF4BD00E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1DE0AFA5-9884-4834-A734-6E304C199667}
