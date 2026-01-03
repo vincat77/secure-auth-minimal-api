@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   session_id TEXT NULL,
-  token TEXT NOT NULL UNIQUE,
+  token_hash TEXT NULL,
   created_at_utc TEXT NOT NULL,
   expires_at_utc TEXT NOT NULL,
   revoked_at_utc TEXT NULL,
@@ -99,15 +99,16 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
         EnsureColumn(conn, "user_sessions", "last_seen_utc");
         EnsureColumn(conn, "refresh_tokens", "device_id");
         EnsureColumn(conn, "refresh_tokens", "device_label");
+        EnsureColumn(conn, "refresh_tokens", "token_hash");
         conn.Execute("UPDATE user_sessions SET last_seen_utc = created_at_utc WHERE last_seen_utc IS NULL;");
         const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
         conn.Execute(idxEmail);
-        const string idxRefreshToken = "CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);";
+        const string idxRefreshTokenHash = "CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);";
         const string idxRefreshUser = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);";
         const string idxRefreshSession = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_session ON refresh_tokens(session_id);";
         const string idxRefreshDevice = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_device ON refresh_tokens(device_id);";
         const string idxMfaUser = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_user ON mfa_challenges(user_id);";
-        conn.Execute(idxRefreshToken);
+        conn.Execute(idxRefreshTokenHash);
         conn.Execute(idxRefreshUser);
         conn.Execute(idxRefreshSession);
         conn.Execute(idxRefreshDevice);

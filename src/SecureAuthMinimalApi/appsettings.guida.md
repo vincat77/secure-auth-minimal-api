@@ -39,6 +39,9 @@ Descrizione di ogni sezione/chiave, utilizzo e valori attesi.
 - `Mfa:RequireIpMatch` — Richiede match IP (o subnet) per la conferma. Bool.
 - `Mfa:MaxAttemptsPerChallenge` — Tentativi TOTP per challenge. Intero ≥1.
 
+## Refresh (token persistenti)
+- `Refresh:HmacKey` â€” Chiave HMAC (32+ caratteri) usata per hashare i refresh token prima di salvarli in DB. In prod metterla in variabile d'ambiente/KeyVault. Se assente, si puÃ² riusare `Jwt:SecretKey` ma Ã¨ preferibile una chiave separata.
+
 ## Device
 - `Device:CookieName` — Nome cookie device-id. Stringa.
 - `Device:SameSite` — SameSite del cookie device (`Strict`/`Lax`). Stringa.

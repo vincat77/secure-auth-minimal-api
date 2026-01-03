@@ -18,6 +18,7 @@ partial class ActionButtonsControl
     private Button _meButton = null!;
     private Button _logoutButton = null!;
     private Button _showQrButton = null!;
+    private Button _showCookiesButton = null!;
     private CheckBox _rememberCheck = null!;
 
     /// <summary>Clean up any resources being used.</summary>
@@ -42,6 +43,7 @@ partial class ActionButtonsControl
     _meButton = new Button();
     _logoutButton = new Button();
     _showQrButton = new Button();
+    _showCookiesButton = new Button();
     _rememberCheck = new CheckBox();
     SuspendLayout();
     // 
@@ -125,13 +127,21 @@ partial class ActionButtonsControl
     _showQrButton.TabIndex = 9;
     _showQrButton.Text = "Mostra QR MFA";
     // 
+    // _showCookiesButton
+    // 
+    _showCookiesButton.Location = new Point(0, 350);
+    _showCookiesButton.Name = "_showCookiesButton";
+    _showCookiesButton.Size = new Size(155, 30);
+    _showCookiesButton.TabIndex = 10;
+    _showCookiesButton.Text = "Mostra cookie";
+    // 
     // _rememberCheck
     // 
     _rememberCheck.AutoSize = true;
-    _rememberCheck.Location = new Point(0, 350);
+    _rememberCheck.Location = new Point(36, 386);
     _rememberCheck.Name = "_rememberCheck";
     _rememberCheck.Size = new Size(80, 19);
-    _rememberCheck.TabIndex = 10;
+    _rememberCheck.TabIndex = 11;
     _rememberCheck.Text = "Ricordami";
     // 
     // ActionButtonsControl
@@ -140,6 +150,7 @@ partial class ActionButtonsControl
     AutoScaleMode = AutoScaleMode.Font;
     BorderStyle = BorderStyle.FixedSingle;
     Controls.Add(_rememberCheck);
+    Controls.Add(_showCookiesButton);
     Controls.Add(_showQrButton);
     Controls.Add(_logoutButton);
     Controls.Add(_meButton);
@@ -151,7 +162,7 @@ partial class ActionButtonsControl
     Controls.Add(_confirmEmailButton);
     Controls.Add(_registerButton);
     Name = "ActionButtonsControl";
-    Size = new Size(158, 378);
+    Size = new Size(158, 462);
     ResumeLayout(false);
     PerformLayout();
   }
