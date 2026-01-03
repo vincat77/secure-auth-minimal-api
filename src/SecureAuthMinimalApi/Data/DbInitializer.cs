@@ -26,11 +26,15 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   created_at_utc TEXT NOT NULL,
   totp_secret TEXT NULL,
+  name TEXT NULL,
+  given_name TEXT NULL,
+  family_name TEXT NULL,
   email TEXT NULL,
   email_normalized TEXT NULL,
   email_confirmed INTEGER DEFAULT 0,
   email_confirm_token TEXT NULL,
-  email_confirm_expires_utc TEXT NULL
+  email_confirm_expires_utc TEXT NULL,
+  picture_url TEXT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_sessions (
@@ -91,11 +95,15 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
         // Seed utente demo/demo se non esiste (solo per ambienti di esempio).
         // Ensure new columns/indexes for existing DBs.
         EnsureColumn(conn, "users", "totp_secret");
+        EnsureColumn(conn, "users", "name");
+        EnsureColumn(conn, "users", "given_name");
+        EnsureColumn(conn, "users", "family_name");
         EnsureColumn(conn, "users", "email");
         EnsureColumn(conn, "users", "email_normalized");
         EnsureColumn(conn, "users", "email_confirmed", "INTEGER DEFAULT 0");
         EnsureColumn(conn, "users", "email_confirm_token");
         EnsureColumn(conn, "users", "email_confirm_expires_utc");
+        EnsureColumn(conn, "users", "picture_url");
         EnsureColumn(conn, "user_sessions", "last_seen_utc");
         EnsureColumn(conn, "refresh_tokens", "device_id");
         EnsureColumn(conn, "refresh_tokens", "device_label");
@@ -132,16 +140,20 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
         {
             var demoHash = Services.PasswordHasher.Hash("demo");
             const string seedInsert = @"
-INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, email, email_normalized, email_confirmed)
-VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Email, @EmailNormalized, 1);";
+INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, picture_url)
+VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, 1, @PictureUrl);";
             conn.Execute(seedInsert, new
             {
                 Id = "demo-user",
                 Username = "demo",
                 PasswordHash = demoHash,
                 CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+                Name = "Demo User",
+                GivenName = "Demo",
+                FamilyName = "User",
                 Email = "demo@example.com",
-                EmailNormalized = "demo@example.com"
+                EmailNormalized = "demo@example.com",
+                PictureUrl = "https://example.com/avatar/demo.png"
             });
         }
     }

@@ -13,6 +13,10 @@ public partial class MainForm
     private LabeledTextBoxControl _urlControl = null!;
     private LabeledTextBoxControl _userInput = null!;
     private LabeledTextBoxControl _emailInput = null!;
+    private LabeledTextBoxControl _nameInput = null!;
+    private LabeledTextBoxControl _givenNameInput = null!;
+    private LabeledTextBoxControl _familyNameInput = null!;
+    private LabeledTextBoxControl _pictureInput = null!;
     private LabeledTextBoxControl _passwordControl = null!;
     private ActionButtonsControl _actions = null!;
     private MfaPanelControl _mfaPanel = null!;
@@ -34,6 +38,10 @@ public partial class MainForm
     _urlControl = new LabeledTextBoxControl();
     _userInput = new LabeledTextBoxControl();
     _emailInput = new LabeledTextBoxControl();
+    _nameInput = new LabeledTextBoxControl();
+    _givenNameInput = new LabeledTextBoxControl();
+    _familyNameInput = new LabeledTextBoxControl();
+    _pictureInput = new LabeledTextBoxControl();
     _passwordControl = new LabeledTextBoxControl();
     _actions = new ActionButtonsControl();
     _mfaPanel = new MfaPanelControl();
@@ -64,6 +72,10 @@ public partial class MainForm
     _rootPanel.Controls.Add(_urlControl);
     _rootPanel.Controls.Add(_userInput);
     _rootPanel.Controls.Add(_emailInput);
+    _rootPanel.Controls.Add(_nameInput);
+    _rootPanel.Controls.Add(_givenNameInput);
+    _rootPanel.Controls.Add(_familyNameInput);
+    _rootPanel.Controls.Add(_pictureInput);
     _rootPanel.Controls.Add(_passwordControl);
     _rootPanel.Controls.Add(_actions);
     _rootPanel.Controls.Add(_mfaPanel);
@@ -110,24 +122,64 @@ public partial class MainForm
     _emailInput.UseSystemPasswordChar = false;
     _emailInput.ValueText = "demo@example.com";
     // 
+    // _nameInput
+    // 
+    _nameInput.LabelText = "Nome completo:";
+    _nameInput.Location = new Point(16, 136);
+    _nameInput.Name = "_nameInput";
+    _nameInput.Size = new Size(330, 30);
+    _nameInput.TabIndex = 3;
+    _nameInput.UseSystemPasswordChar = false;
+    _nameInput.ValueText = "Demo User";
+    // 
+    // _givenNameInput
+    // 
+    _givenNameInput.LabelText = "Nome:";
+    _givenNameInput.Location = new Point(16, 176);
+    _givenNameInput.Name = "_givenNameInput";
+    _givenNameInput.Size = new Size(330, 30);
+    _givenNameInput.TabIndex = 4;
+    _givenNameInput.UseSystemPasswordChar = false;
+    _givenNameInput.ValueText = "Demo";
+    // 
+    // _familyNameInput
+    // 
+    _familyNameInput.LabelText = "Cognome:";
+    _familyNameInput.Location = new Point(16, 216);
+    _familyNameInput.Name = "_familyNameInput";
+    _familyNameInput.Size = new Size(330, 30);
+    _familyNameInput.TabIndex = 5;
+    _familyNameInput.UseSystemPasswordChar = false;
+    _familyNameInput.ValueText = "User";
+    // 
+    // _pictureInput
+    // 
+    _pictureInput.LabelText = "Avatar URL (picture):";
+    _pictureInput.Location = new Point(16, 256);
+    _pictureInput.Name = "_pictureInput";
+    _pictureInput.Size = new Size(330, 30);
+    _pictureInput.TabIndex = 6;
+    _pictureInput.UseSystemPasswordChar = false;
+    _pictureInput.ValueText = "https://example.com/avatar/demo.png";
+    // 
     // _passwordControl
     // 
     _passwordControl.LabelText = "Password:";
-    _passwordControl.Location = new Point(16, 136);
+    _passwordControl.Location = new Point(16, 296);
     _passwordControl.Name = "_passwordControl";
     _passwordControl.Size = new Size(330, 30);
-    _passwordControl.TabIndex = 3;
+    _passwordControl.TabIndex = 7;
     _passwordControl.UseSystemPasswordChar = true;
     _passwordControl.ValueText = "demo";
     // 
     // _actions
     // 
     _actions.BorderStyle = BorderStyle.FixedSingle;
-    _actions.Location = new Point(16, 186);
+    _actions.Location = new Point(16, 336);
     _actions.Name = "_actions";
     _actions.RememberChecked = false;
     _actions.Size = new Size(162, 417);
-    _actions.TabIndex = 4;
+    _actions.TabIndex = 8;
     // 
     // _mfaPanel
     // 

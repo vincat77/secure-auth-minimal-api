@@ -59,7 +59,16 @@ public sealed partial class MainForm : Form
     using var busy = BeginBusy("Registrazione in corso...");
     try
     {
-      var payload = new { username = _userInput.ValueText, password = _passwordControl.ValueText, email = _emailInput.ValueText };
+      var payload = new
+      {
+        username = _userInput.ValueText,
+        password = _passwordControl.ValueText,
+        email = _emailInput.ValueText,
+        name = _nameInput.ValueText,
+        givenName = _givenNameInput.ValueText,
+        familyName = _familyNameInput.ValueText,
+        picture = _pictureInput.ValueText
+      };
       var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/register"), payload);
       var body = await response.Content.ReadAsStringAsync();
 
