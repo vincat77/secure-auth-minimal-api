@@ -6,18 +6,15 @@ using System.Threading.Tasks;
 
 namespace WinFormsClient
 {
-  using SkiaSharp;
-  using SkiaSharp.Extended.Svg;
   using System.Drawing;
   using System.Net.Http;
-  using SKSvg = SkiaSharp.Extended.Svg.SKSvg;
+  using Svg;
 
   public static class ImageLoader
   {
     private static readonly HttpClient http = new();
 
-    public static async Task<Image> LoadFromUrlAsync(
-      string url, int width, int height)
+    public static async Task<Image> LoadFromUrlAsync(string url, int width, int height)
     {
       await using var stream = await http.GetStreamAsync(url);
 
@@ -29,28 +26,9 @@ namespace WinFormsClient
 
     private static Image LoadSvg(Stream stream, int width, int height)
     {
-      var svg = new SKSvg();
-      svg.Load(stream);
-
-      var pic = svg.Picture;
-      var bounds = pic.CullRect;
-
-      using var bitmap = new SKBitmap(width, height);
-      using var canvas = new SKCanvas(bitmap);
-      canvas.Clear(SKColors.Transparent);
-
-      canvas.Scale(
-        width / bounds.Width,
-        height / bounds.Height
-      );
-
-      canvas.DrawPicture(pic);
-
-      using var image = SKImage.FromBitmap(bitmap);
-      using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-      using var ms = new MemoryStream(data.ToArray());
-
-      return Image.FromStream(ms);
+      var doc = SvgDocument.Open<SvgDocument>(stream);
+      using var bmp = doc.Draw(width, height);
+      return (Image)bmp.Clone();
     }
 
     private static Image LoadRaster(Stream stream)

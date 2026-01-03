@@ -13,12 +13,14 @@ partial class SessionCard
     private Label _exp = null!;
     private SessionCountdownControl _countdown = null!;
     private RefreshCountdownControl _refreshCountdown = null!;
+    private PictureBox _avatar = null!;
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
             components?.Dispose();
+            _currentAvatar?.Dispose();
         }
         base.Dispose(disposing);
     }
@@ -32,6 +34,7 @@ partial class SessionCard
         _exp = new Label();
         _countdown = new SessionCountdownControl();
         _refreshCountdown = new RefreshCountdownControl();
+        _avatar = new PictureBox();
         SuspendLayout();
         // 
         // _title
@@ -85,12 +88,24 @@ partial class SessionCard
         _refreshCountdown.Size = new System.Drawing.Size(220, 50);
         _refreshCountdown.TabIndex = 5;
         // 
+        // _avatar
+        // 
+        _avatar.Location = new System.Drawing.Point(260, 0);
+        _avatar.Name = "_avatar";
+        _avatar.Size = new System.Drawing.Size(72, 72);
+        _avatar.SizeMode = PictureBoxSizeMode.Zoom;
+        _avatar.TabIndex = 6;
+        _avatar.TabStop = false;
+        _avatar.BackColor = System.Drawing.Color.Gainsboro;
+        _avatar.BorderStyle = BorderStyle.FixedSingle;
+        // 
         // SessionCard
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(240, 248, 255);
         BorderStyle = BorderStyle.FixedSingle;
+        Controls.Add(_avatar);
         Controls.Add(_refreshCountdown);
         Controls.Add(_countdown);
         Controls.Add(_exp);
@@ -99,7 +114,7 @@ partial class SessionCard
         Controls.Add(_title);
         Name = "SessionCard";
         Padding = new Padding(8);
-        Size = new Size(260, 190);
+        Size = new Size(340, 190);
         ResumeLayout(false);
         PerformLayout();
     }

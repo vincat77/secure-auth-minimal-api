@@ -160,7 +160,7 @@ public partial class MainForm
     _pictureInput.Size = new Size(330, 30);
     _pictureInput.TabIndex = 6;
     _pictureInput.UseSystemPasswordChar = false;
-    _pictureInput.ValueText = "https://example.com/avatar/demo.png";
+    _pictureInput.ValueText = "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason";
     // 
     // _passwordControl
     // 
@@ -202,7 +202,7 @@ public partial class MainForm
     // 
     // _statusInfo
     // 
-    _statusInfo.Location = new Point(184, 186);
+    _statusInfo.Location = new Point(497, 202);
     _statusInfo.Name = "_statusInfo";
     _statusInfo.Size = new Size(340, 160);
     _statusInfo.TabIndex = 7;
@@ -239,6 +239,7 @@ public partial class MainForm
     // 
     // _idTokenViewer
     // 
+    _idTokenViewer.BorderStyle = BorderStyle.FixedSingle;
     _idTokenViewer.Location = new Point(858, 472);
     _idTokenViewer.Name = "_idTokenViewer";
     _idTokenViewer.Size = new Size(362, 163);

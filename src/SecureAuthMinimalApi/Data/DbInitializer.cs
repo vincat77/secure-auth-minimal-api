@@ -153,7 +153,7 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @
                 FamilyName = "User",
                 Email = "demo@example.com",
                 EmailNormalized = "demo@example.com",
-                PictureUrl = "https://example.com/avatar/demo.png"
+                PictureUrl = "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason"
             });
         }
     }

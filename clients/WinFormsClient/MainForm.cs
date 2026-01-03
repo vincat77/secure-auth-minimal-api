@@ -1,4 +1,6 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -143,6 +145,7 @@ public sealed partial class MainForm : Form
         LogEvent("Info", "id_token ricevuto (dev)");
       }
 #endif
+      await LoadProfileImageAsync(login?.IdToken);
       _statusInfo.SetStatus("Autenticato", login?.DeviceId, login?.DeviceId, null, _rememberText, System.Drawing.Color.SeaGreen, "Autenticato");
       _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
       _deviceAlert.SetStatus(true, "Login/Device OK");
@@ -216,6 +219,7 @@ public sealed partial class MainForm : Form
         LogEvent("Info", "id_token ricevuto (dev)");
       }
 #endif
+      await LoadProfileImageAsync(confirm?.IdToken);
       if (confirm?.RefreshExpiresAtUtc is not null && DateTime.TryParse(confirm.RefreshExpiresAtUtc, out var refreshExp))
       {
         _refreshExpiresUtc = refreshExp.ToUniversalTime();
@@ -540,6 +544,7 @@ public sealed partial class MainForm : Form
     _deviceAlert.ResetStatus();
     ClearMfa();
     _countdownTimer.Stop();
+    _sessionCard.SetAvatar(null);
   }
 
   private void EnsureHttpClient()
@@ -646,6 +651,42 @@ public sealed partial class MainForm : Form
     {
       _mfaPanel.SetQrImage(null);
       LogEvent("Errore", $"QR MFA non generato: {ex.Message}");
+    }
+  }
+
+  private void _actions_Load(object sender, EventArgs e)
+  {
+
+  }
+
+  private async Task LoadProfileImageAsync(string? idToken)
+  {
+    if (string.IsNullOrWhiteSpace(idToken))
+    {
+      _sessionCard.SetAvatar(null);
+      return;
+    }
+
+    try
+    {
+      var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+      var jwt = handler.ReadJwtToken(idToken);
+      var picture = jwt.Claims.FirstOrDefault(c => c.Type == "picture")?.Value;
+      if (string.IsNullOrWhiteSpace(picture))
+      {
+        _sessionCard.SetAvatar(null);
+        return;
+      }
+
+      var image = await ImageLoader.LoadFromUrlAsync(picture, 72, 72);
+      _sessionCard.SetAvatar(image);
+    }
+    catch (Exception ex)
+    {
+      _sessionCard.SetAvatar(null);
+#if DEBUG
+      Append($"Avatar non caricato: {ex.Message}");
+#endif
     }
   }
 }
