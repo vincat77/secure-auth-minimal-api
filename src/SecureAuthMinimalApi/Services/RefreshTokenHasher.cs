@@ -19,6 +19,9 @@ public sealed class RefreshTokenHasher
         _key = Encoding.UTF8.GetBytes(key);
     }
 
+    /// <summary>
+    /// Calcola l'HMAC-SHA256 del token in ingresso.
+    /// </summary>
     public string ComputeHash(string token)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(token);

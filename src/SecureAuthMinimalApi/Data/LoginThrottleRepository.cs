@@ -61,6 +61,9 @@ ON CONFLICT(username) DO UPDATE SET
         await db.ExecuteAsync(new CommandDefinition(sql, new { username }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// DTO interno per mappare la riga SQLite del throttling.
+    /// </summary>
     private sealed record ThrottleRow
     {
         public string Username { get; init; } = "";
@@ -69,4 +72,7 @@ ON CONFLICT(username) DO UPDATE SET
     }
 }
 
+/// <summary>
+/// Stato del throttling corrente per uno username.
+/// </summary>
 public sealed record ThrottleState(string Username, int Failures, DateTimeOffset LockedUntilUtc);

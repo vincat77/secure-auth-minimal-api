@@ -7,8 +7,14 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
+/// <summary>
+/// Espone l'endpoint per il cambio password dell'utente autenticato.
+/// </summary>
 public static class ChangePasswordEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint /me/password con tutta la logica di validazione e rotazione sessione.
+    /// </summary>
     public static void MapChangePassword(this WebApplication app)
     {
         app.MapPost("/me/password", async (
@@ -147,6 +153,9 @@ public static class ChangePasswordEndpoints
         });
     }
 
+    /// <summary>
+    /// Carica la policy password da configurazione applicando valori di fallback.
+    /// </summary>
     private static PasswordPolicySettings LoadPasswordPolicy(IConfiguration config)
     {
         var configuredMin = config.GetValue<int?>("PasswordPolicy:MinLength");
@@ -158,6 +167,9 @@ public static class ChangePasswordEndpoints
         return new PasswordPolicySettings(minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol);
     }
 
+    /// <summary>
+    /// Genera array di byte casuali per token e CSRF.
+    /// </summary>
     private static byte[] RandomBytes(int len)
     {
         var b = new byte[len];
@@ -165,6 +177,9 @@ public static class ChangePasswordEndpoints
         return b;
     }
 
+    /// <summary>
+    /// Converte una sequenza di byte in Base64 url-safe senza padding.
+    /// </summary>
     private static string Base64Url(byte[] bytes)
     {
         return Convert.ToBase64String(bytes)
@@ -174,4 +189,7 @@ public static class ChangePasswordEndpoints
     }
 }
 
+/// <summary>
+/// Marker vuoto utilizzato per loggatore del cambio password.
+/// </summary>
 public sealed class ChangePasswordLoggerMarker;

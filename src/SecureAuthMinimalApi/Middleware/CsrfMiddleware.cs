@@ -74,6 +74,9 @@ public sealed class CsrfMiddleware : IMiddleware
 
 public static class CsrfExtensions
 {
+    /// <summary>
+    /// Estensione per registrare il middleware CSRF (X-CSRF-Token).
+    /// </summary>
     public static IApplicationBuilder UseCsrfProtection(this IApplicationBuilder app)
         => app.UseMiddleware<CsrfMiddleware>();
 }

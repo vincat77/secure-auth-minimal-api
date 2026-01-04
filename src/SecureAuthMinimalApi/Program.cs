@@ -341,5 +341,8 @@ static void LogStartupInfo(
     logger.LogInformation("Console pronta: 'P' per pausa/ripresa, 'S' per arresto.");
 }
 
+/// <summary>
+/// Classe parziale necessaria per abilitare i test/integrazione di WebApplicationFactory.
+/// </summary>
 public partial class Program { }
 

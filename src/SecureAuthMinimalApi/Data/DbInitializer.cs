@@ -5,6 +5,9 @@ using SecureAuthMinimalApi.Services;
 
 namespace SecureAuthMinimalApi.Data;
 
+/// <summary>
+/// Utility per inizializzare lo schema SQLite usato dall'app.
+/// </summary>
 public static class DbInitializer
 {
   /// <summary>

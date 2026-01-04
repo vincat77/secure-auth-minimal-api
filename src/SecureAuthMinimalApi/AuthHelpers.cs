@@ -2,8 +2,14 @@ using SecureAuthMinimalApi.Models;
 
 namespace SecureAuthMinimalApi;
 
+/// <summary>
+/// Helper condivisi per la gestione di sessioni, token e validazioni di password.
+/// </summary>
 public static class AuthHelpers
 {
+    /// <summary>
+    /// Estrae la sessione salvata nell'HttpContext, o lancia UnauthorizedAccessException.
+    /// </summary>
     public static UserSession GetRequiredSession(this HttpContext ctx)
     {
         if (ctx.Items.TryGetValue("session", out var sObj) && sObj is UserSession s)
@@ -13,6 +19,9 @@ public static class AuthHelpers
     }
 
     // Estrae il token dal header Authorization Bearer o dal cookie access_token.
+    /// <summary>
+    /// Prova a leggere un token JWT dall'header Authorization o dal cookie di accesso.
+    /// </summary>
     public static bool TryGetToken(HttpContext ctx, out string token)
     {
         token = "";
@@ -32,6 +41,9 @@ public static class AuthHelpers
         return false;
     }
 
+    /// <summary>
+    /// Verifica i criteri della policy password e restituisce eventuali errori.
+    /// </summary>
     public static List<string> ValidatePassword(string password, int minLength, bool requireUpper, bool requireLower, bool requireDigit, bool requireSymbol)
     {
         var errors = new List<string>();
