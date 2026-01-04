@@ -60,6 +60,101 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
+    public async Task Change_password_missing_fields_returns_invalid_input()
+    {
+        var (factory, client, dbPath) = CreateFactory();
+        try
+        {
+            var (cookie, csrf) = await LoginAsync(client);
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/me/password");
+            req.Headers.Add("Cookie", cookie);
+            req.Headers.Add("X-CSRF-Token", csrf);
+            req.Content = JsonContent.Create(new { currentPassword = "", newPassword = "", confirmPassword = "" });
+
+            var resp = await client.SendAsync(req);
+            Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
+            var payload = await resp.Content.ReadFromJsonAsync<ChangePasswordResponse>();
+            Assert.NotNull(payload);
+            Assert.Equal("invalid_input", payload!.Error);
+            Assert.Contains("current_required", payload.Errors ?? Array.Empty<string>());
+        }
+        finally
+        {
+            factory.Dispose();
+            client.Dispose();
+            DeleteDb(dbPath);
+        }
+    }
+
+    [Fact]
+    public async Task Change_password_enforces_min_length_override()
+    {
+        var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?> { ["PasswordPolicy:MinLength"] = "20" });
+        try
+        {
+            var (cookie, csrf) = await LoginAsync(client);
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/me/password");
+            req.Headers.Add("Cookie", cookie);
+            req.Headers.Add("X-CSRF-Token", csrf);
+            req.Content = JsonContent.Create(new { currentPassword = DemoPassword, newPassword = "shortOne!", confirmPassword = "shortOne!" });
+
+            var resp = await client.SendAsync(req);
+            Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
+            var payload = await resp.Content.ReadFromJsonAsync<ChangePasswordResponse>();
+            Assert.NotNull(payload);
+            Assert.Equal("password_policy_failed", payload!.Error);
+            Assert.Contains("too_short", payload.Errors ?? Array.Empty<string>());
+        }
+        finally
+        {
+            factory.Dispose();
+            client.Dispose();
+            DeleteDb(dbPath);
+        }
+    }
+
+    [Fact]
+    public async Task Change_password_updates_hash_and_revokes_sessions()
+    {
+        var (factory, client, dbPath) = CreateFactory();
+        try
+        {
+            var (cookie, csrf) = await LoginAsync(client);
+            string beforeHash;
+            await using (var db = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+            {
+                await db.OpenAsync();
+                beforeHash = await db.ExecuteScalarAsync<string>("SELECT password_hash FROM users WHERE username = 'demo';");
+            }
+
+            using (var req = new HttpRequestMessage(HttpMethod.Post, "/me/password"))
+            {
+                req.Headers.Add("Cookie", cookie);
+                req.Headers.Add("X-CSRF-Token", csrf);
+                req.Content = JsonContent.Create(new { currentPassword = DemoPassword, newPassword = "HashCheckPwd!123", confirmPassword = "HashCheckPwd!123" });
+                var resp = await client.SendAsync(req);
+                Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+            }
+
+            await using (var db = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+            {
+                await db.OpenAsync();
+                var afterHash = await db.ExecuteScalarAsync<string>("SELECT password_hash FROM users WHERE username = 'demo';");
+                Assert.False(string.IsNullOrWhiteSpace(afterHash));
+                Assert.NotEqual(beforeHash, afterHash);
+                var sessions = await db.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM user_sessions WHERE revoked_at_utc IS NULL;");
+                Assert.True(sessions <= 1, "Expected at most one active session after rotation");
+            }
+        }
+        finally
+        {
+            factory.Dispose();
+            client.Dispose();
+            DeleteDb(dbPath);
+        }
+    }
+
+    [Fact]
     public async Task Change_password_mismatch_returns_400()
     {
         var (factory, client, dbPath) = CreateFactory();
