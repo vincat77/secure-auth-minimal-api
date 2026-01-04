@@ -4,6 +4,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class MeEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint /me che restituisce i dati della sessione corrente.
+    /// </summary>
     public static void MapMe(this WebApplication app)
     {
         app.MapGet("/me", (HttpContext ctx) =>

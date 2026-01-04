@@ -5,6 +5,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LogoutEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di logout che revoca la sessione corrente e pulisce i cookie.
+    /// </summary>
     public static void MapLogout(this WebApplication app, ILogger logger)
     {
         var isDevelopment = app.Environment.IsDevelopment();

@@ -4,6 +4,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class ReadyEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint /ready che verifica configurazione JWT e raggiungibilità del database.
+    /// </summary>
     public static void MapReady(this WebApplication app)
     {
         app.MapGet("/ready", async (IConfiguration config) =>

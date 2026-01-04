@@ -9,6 +9,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LoginEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di login gestendo throttle, MFA e rilascio di sessioni e cookie.
+    /// </summary>
     public static void MapLogin(
         this WebApplication app,
         ILogger logger,

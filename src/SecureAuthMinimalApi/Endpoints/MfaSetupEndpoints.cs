@@ -4,6 +4,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class MfaSetupEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di setup MFA che genera e restituisce il segreto TOTP.
+    /// </summary>
     public static void MapMfaSetup(this WebApplication app)
     {
         app.MapPost("/mfa/setup", async (HttpContext ctx, UserRepository users) =>

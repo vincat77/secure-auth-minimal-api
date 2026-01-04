@@ -9,6 +9,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class RegisterEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di registrazione utenti applicando la policy password.
+    /// </summary>
     public static void MapRegister(
         this WebApplication app,
         ILogger logger,

@@ -5,6 +5,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LogoutAllEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di logout globale che revoca refresh e sessione corrente.
+    /// </summary>
     public static void MapLogoutAll(this WebApplication app, ILogger logger)
     {
         var isDevelopment = app.Environment.IsDevelopment();

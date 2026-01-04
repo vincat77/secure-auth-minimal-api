@@ -9,6 +9,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class IntrospectEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di introspezione che restituisce lo stato della sessione associata al token.
+    /// </summary>
     public static void MapIntrospect(this WebApplication app, ILogger logger)
     {
         app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions) =>

@@ -9,6 +9,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class ConfirmMfaEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di conferma MFA che valida la challenge e rilascia una nuova sessione.
+    /// </summary>
     public static void MapConfirmMfa(
         this WebApplication app,
         ILogger logger,

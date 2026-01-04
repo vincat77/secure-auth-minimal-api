@@ -9,6 +9,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class RefreshEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di refresh che ruota il token di refresh e rilascia nuova sessione/access token.
+    /// </summary>
     public static void MapRefresh(this WebApplication app, ILogger logger)
     {
         var isDevelopment = app.Environment.IsDevelopment();

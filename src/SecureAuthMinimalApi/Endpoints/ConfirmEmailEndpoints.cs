@@ -6,6 +6,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 
 public static class ConfirmEmailEndpoints
 {
+    /// <summary>
+    /// Mappa l'endpoint di conferma email che valida il token e marca l'utente come confermato.
+    /// </summary>
     public static void MapConfirmEmail(this WebApplication app, ILogger logger)
     {
         app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
