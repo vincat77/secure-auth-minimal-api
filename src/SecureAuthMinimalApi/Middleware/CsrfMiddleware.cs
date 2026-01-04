@@ -19,14 +19,14 @@ public sealed class CsrfMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        // Synchronized Token Pattern (hardened):
-        // - token generated server-side
-        // - stored ONLY in DB (inside the session row)
-        // - client must send X-CSRF-Token header
-        // - middleware compares header token with DB token
+        // Pattern del token sincronizzato (rafforzato):
+        // - token generato esclusivamente lato server
+        // - memorizzato solo sul DB (nella riga sessione)
+        // - il client deve inviare l'header X-CSRF-Token
+        // - il middleware confronta header e token salvato
         if (UnsafeMethods.Contains(context.Request.Method))
         {
-            // Skip login/health for DX; logout and other protected endpoints will have session.
+            // Ignora login/health per migliorare l'esperienza sviluppatore; logout e altri endpoint protetti richiedono sessione.
             var path = context.Request.Path.Value ?? "";
             var isPublic = path.Equals("/login", StringComparison.OrdinalIgnoreCase)
                         || path.Equals("/health", StringComparison.OrdinalIgnoreCase)
@@ -65,7 +65,7 @@ public sealed class CsrfMiddleware : IMiddleware
 
     private static bool FixedTimeEquals(string a, string b)
     {
-        // constant time compare to reduce token oracle risk
+        // confronto in tempo costante per ridurre il rischio di oracle sui token
         var aBytes = System.Text.Encoding.UTF8.GetBytes(a);
         var bBytes = System.Text.Encoding.UTF8.GetBytes(b);
         return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(aBytes, bBytes);

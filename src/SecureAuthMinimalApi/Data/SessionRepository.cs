@@ -13,6 +13,9 @@ public sealed class SessionRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Inizializza connection string per le sessioni.
+    /// </summary>
     public SessionRepository(IConfiguration config)
     {
         _connectionString = config.GetConnectionString("Sqlite")
@@ -84,6 +87,9 @@ WHERE session_id = @sessionId;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { sessionId, lastSeenUtcIso }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Revoca tutte le sessioni attive per l'utente specificato.
+    /// </summary>
     public async Task RevokeAllForUserAsync(string userId, string revokedAtUtcIso, CancellationToken ct)
     {
         const string sql = @"
@@ -95,6 +101,9 @@ WHERE user_id = @userId AND revoked_at_utc IS NULL;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { userId, revokedAtUtcIso }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Revoca tutte le sessioni tranne quella corrente (utile per rotazione).
+    /// </summary>
     public async Task RevokeAllForUserExceptAsync(string userId, string sessionIdToKeep, string revokedAtUtcIso, CancellationToken ct)
     {
         const string sql = @"

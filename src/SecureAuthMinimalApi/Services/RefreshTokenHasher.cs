@@ -11,6 +11,9 @@ public sealed class RefreshTokenHasher
 {
     private readonly byte[] _key;
 
+    /// <summary>
+    /// Inizializza l'hash delle key HMAC dal config (o Jwt:SecretKey).
+    /// </summary>
     public RefreshTokenHasher(IConfiguration config)
     {
         var key = config["Refresh:HmacKey"] ?? config["Jwt:SecretKey"];

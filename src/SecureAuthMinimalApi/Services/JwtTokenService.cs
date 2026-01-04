@@ -16,6 +16,9 @@ public sealed class JwtTokenService
     private readonly byte[] _keyBytes;
     private readonly int _accessTokenMinutes;
 
+    /// <summary>
+    /// Inizializza issuer/audience/chiave da configurazione e valida segreti.
+    /// </summary>
     public JwtTokenService(IConfiguration config)
     {
         _issuer = config["Jwt:Issuer"] ?? throw new InvalidOperationException("Missing Jwt:Issuer in appsettings.json");

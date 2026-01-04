@@ -17,6 +17,9 @@ public sealed class ExpiredCleanupService : BackgroundService
     private readonly MfaChallengeRepository _challenges;
     private readonly ILogger<ExpiredCleanupService> _logger;
 
+    /// <summary>
+    /// Inietta dipendenze e opzioni per il cleanup periodico.
+    /// </summary>
     public ExpiredCleanupService(
         IOptions<CleanupOptions> options,
         SessionRepository sessions,

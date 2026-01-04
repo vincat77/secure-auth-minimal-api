@@ -15,6 +15,9 @@ public sealed class RefreshTokenRepository
     private readonly string _connectionString;
     private readonly RefreshTokenHasher _hasher;
 
+    /// <summary>
+    /// Inizializza repository refresh token con connection string e hasher.
+    /// </summary>
     public RefreshTokenRepository(IConfiguration config, RefreshTokenHasher hasher)
     {
         _connectionString = config.GetConnectionString("Sqlite")
@@ -24,6 +27,9 @@ public sealed class RefreshTokenRepository
 
     private IDbConnection Open() => new SqliteConnection(_connectionString);
 
+    /// <summary>
+    /// Inserisce un nuovo refresh token associato alla sessione.
+    /// </summary>
     public async Task CreateAsync(RefreshToken token, CancellationToken ct)
     {
         const string sql = @"
@@ -50,6 +56,9 @@ VALUES (@Id, @UserId, @SessionId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, @Rev
         }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Cerca un refresh token valido tramite valore in chiaro.
+    /// </summary>
     public async Task<RefreshToken?> GetByTokenAsync(string tokenValue, CancellationToken ct)
     {
         const string sql = @"
@@ -66,6 +75,9 @@ LIMIT 1;";
         return await db.QuerySingleOrDefaultAsync<RefreshToken>(new CommandDefinition(sql, new { tokenHash }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Revoca un refresh token sentito l'id specifico.
+    /// </summary>
     public async Task RevokeByIdAsync(string id, string reason, CancellationToken ct)
     {
         const string sql = @"
@@ -82,6 +94,9 @@ WHERE id = @id;";
         }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Revoca un token fornendo il valore originale (non hash).
+    /// </summary>
     public async Task RevokeByTokenAsync(string tokenValue, string reason, CancellationToken ct)
     {
         const string sql = @"
@@ -99,6 +114,9 @@ WHERE token_hash = @tokenHash;";
         }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Ruota il token esistente inserendo uno nuovo e segnando il precedente come revocato.
+    /// </summary>
     public async Task RotateAsync(string oldId, RefreshToken newToken, string reason, CancellationToken ct)
     {
         using var db = Open();
@@ -142,6 +160,9 @@ VALUES (@Id, @UserId, @SessionId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, @Rev
         tx.Commit();
     }
 
+    /// <summary>
+    /// Revoca tutti i refresh token attivi per l'utente.
+    /// </summary>
     public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken ct)
     {
         const string sql = @"
@@ -160,6 +181,9 @@ WHERE user_id = @userId AND revoked_at_utc IS NULL;";
 
     /// <summary>
     /// Elimina refresh scaduti o revocati in batch.
+    /// </summary>
+    /// <summary>
+    /// Elimina token scaduti o revocati in batch.
     /// </summary>
     public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct)
     {

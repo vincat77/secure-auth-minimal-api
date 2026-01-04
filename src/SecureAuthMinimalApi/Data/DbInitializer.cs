@@ -13,6 +13,9 @@ public static class DbInitializer
   /// <summary>
   /// Crea lo schema SQLite richiesto se assente (tabella user_sessions) e fallisce se manca la connection string.
   /// </summary>
+  /// <summary>
+  /// Assicura l'esistenza delle tabelle richieste nello schema SQLite.
+  /// </summary>
   public static void EnsureCreated(IConfiguration config)
   {
     var cs = config.GetConnectionString("Sqlite")

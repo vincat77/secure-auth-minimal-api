@@ -12,6 +12,9 @@ public sealed class LoginThrottleRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Inizializza la connessione SQLite per il throttle.
+    /// </summary>
     public LoginThrottleRepository(IConfiguration config)
     {
         _connectionString = config.GetConnectionString("Sqlite")
@@ -20,6 +23,9 @@ public sealed class LoginThrottleRepository
 
     private IDbConnection Open() => new SqliteConnection(_connectionString);
 
+    /// <summary>
+    /// Restituisce lo stato di throttle per uno username.
+    /// </summary>
     public async Task<ThrottleState> GetAsync(string username, CancellationToken ct)
     {
         const string sql = @"
@@ -36,6 +42,9 @@ WHERE username = @username;";
         return new ThrottleState(username, row.Failures, locked);
     }
 
+    /// <summary>
+    /// Persiste lo stato aggiornato di throttle nello storage.
+    /// </summary>
     public async Task SaveAsync(ThrottleState state, CancellationToken ct)
     {
         const string sql = @"
@@ -54,6 +63,9 @@ ON CONFLICT(username) DO UPDATE SET
         }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Resetta manualmente il counter di uno username.
+    /// </summary>
     public async Task ResetAsync(string username, CancellationToken ct)
     {
         const string sql = "DELETE FROM login_throttle WHERE username = @username;";

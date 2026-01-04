@@ -12,6 +12,9 @@ public sealed class DbLoginThrottle : ILoginThrottle
     private readonly int _maxFailures;
     private readonly TimeSpan _lockDuration;
 
+    /// <summary>
+    /// Inizializza il repository e la configurazione rate-limit.
+    /// </summary>
     public DbLoginThrottle(LoginThrottleRepository repo, IConfiguration config)
     {
         _repo = repo;
@@ -22,6 +25,9 @@ public sealed class DbLoginThrottle : ILoginThrottle
         _lockDuration = TimeSpan.FromMinutes(lockMinutes);
     }
 
+    /// <summary>
+    /// Ritorna true se l'username è ancora lockato.
+    /// </summary>
     public async Task<bool> IsLockedAsync(string username, CancellationToken ct)
     {
         var state = await _repo.GetAsync(username, ct);
@@ -31,6 +37,9 @@ public sealed class DbLoginThrottle : ILoginThrottle
         return false;
     }
 
+    /// <summary>
+    /// Registra un fallimento incrementando count e bloccando se necessario.
+    /// </summary>
     public async Task RegisterFailureAsync(string username, CancellationToken ct)
     {
         var now = DateTimeOffset.UtcNow;
@@ -49,6 +58,9 @@ public sealed class DbLoginThrottle : ILoginThrottle
         await _repo.SaveAsync(newState, ct);
     }
 
+    /// <summary>
+    /// Resetta il counter di throttling dopo un login valido.
+    /// </summary>
     public async Task RegisterSuccessAsync(string username, CancellationToken ct)
     {
         await _repo.ResetAsync(username, ct);

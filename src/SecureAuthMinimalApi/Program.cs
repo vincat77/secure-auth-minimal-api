@@ -29,7 +29,7 @@ logger.LogInformation(
     cleanupBatch,
     cleanupMaxIterations?.ToString() ?? "null");
 
-// Hard fail if secret is missing/too short is handled by JwtTokenService constructor.
+// L'errore di configurazione per secret mancante o troppo corto viene gestito da JwtTokenService.
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<SessionRepository>();
 builder.Services.AddSingleton<UserRepository>();
@@ -133,7 +133,7 @@ if (!isDevelopment)
     });
 }
 
-// Convert UnauthorizedAccessException to 401 (only thrown by protected endpoints helper).
+// Converte UnauthorizedAccessException in 401 (sollevata solo dagli helper degli endpoint protetti).
 app.Use(async (ctx, next) =>
 {
     try
@@ -164,14 +164,14 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-// --- MIDDLEWARE ORDER (MANDATORY) ---
-// 1) Cookie JWT auth loads session into HttpContext.Items["session"]
+// --- ORDINE DEI MIDDLEWARE (OBBLIGATORIO) ---
+// 1) Cookie JWT auth popola HttpContext.Items["session"]
 app.UseCookieJwtAuth();
 
-// 2) CSRF protection reads session from HttpContext.Items["session"]
+// 2) Protezione CSRF legge la sessione da HttpContext.Items["session"]
 app.UseCsrfProtection();
 
-// 3) Endpoints
+// 3) Endpoint
 app.MapHealth();
 app.MapLive();
 app.MapReady();
