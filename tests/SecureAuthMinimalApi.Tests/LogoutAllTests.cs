@@ -15,6 +15,7 @@ namespace SecureAuthMinimalApi.Tests;
 public class LogoutAllTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
+    private const string DemoPassword = "123456789012";
 
     public LogoutAllTests(WebApplicationFactory<Program> factory)
     {
@@ -54,7 +55,7 @@ public class LogoutAllTests : IClassFixture<WebApplicationFactory<Program>>
         try
         {
             // login con remember per ottenere refresh
-            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo", RememberMe = true });
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword, RememberMe = true });
             Assert.Equal(HttpStatusCode.OK, login.StatusCode);
             var csrf = (await login.Content.ReadFromJsonAsync<LoginResponse>())!.CsrfToken!;
             var cookies = login.Headers.GetValues("Set-Cookie").ToList();
@@ -62,7 +63,7 @@ public class LogoutAllTests : IClassFixture<WebApplicationFactory<Program>>
             var refreshCookie = cookies.First(c => c.StartsWith("refresh_token")).Split(';', 2)[0];
 
             // seconda sessione per lo stesso utente con altro refresh
-            var login2 = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo", RememberMe = true });
+            var login2 = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword, RememberMe = true });
             var refreshCookie2 = login2.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token")).Split(';', 2)[0];
 
             using var logoutAllReq = new HttpRequestMessage(HttpMethod.Post, "/logout-all");

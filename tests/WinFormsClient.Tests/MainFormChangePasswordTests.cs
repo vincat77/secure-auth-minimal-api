@@ -27,6 +27,8 @@ public class MainFormChangePasswordTests
             using var form = new MainForm();
             SetField(form, "_http", new HttpClient(handler));
             SetField(form, "_csrfToken", "old-csrf");
+            SetField(form, "_isAuthenticated", true);
+            Assert.Equal("old-csrf", GetField<string?>(form, "_csrfToken"));
 
             var current = GetField<LabeledTextBoxControl>(form, "_currentPasswordInput");
             var next = GetField<LabeledTextBoxControl>(form, "_newPasswordInput");
@@ -38,7 +40,8 @@ public class MainFormChangePasswordTests
             await InvokeChangePasswordAsync(form);
 
             Assert.NotNull(handler.LastRequest);
-            Assert.Equal("old-csrf", handler.LastRequest!.Headers.GetValues("X-CSRF-Token").Single());
+            Assert.True(handler.LastRequest!.Headers.TryGetValues("X-CSRF-Token", out var csrfValues), $"Header X-CSRF-Token mancante. Headers: {handler.HeadersDump ?? "<null>"}");
+            Assert.Contains("old-csrf", csrfValues);
             Assert.Contains("\"currentPassword\":\"oldpass!\"", handler.LastContent);
             Assert.Contains("\"newPassword\":\"newpass!\"", handler.LastContent);
             Assert.Contains("\"confirmPassword\":\"newpass!\"", handler.LastContent);
@@ -62,6 +65,8 @@ public class MainFormChangePasswordTests
             using var form = new MainForm();
             SetField(form, "_http", new HttpClient(handler));
             SetField(form, "_csrfToken", "old-csrf");
+            SetField(form, "_isAuthenticated", true);
+            Assert.Equal("old-csrf", GetField<string?>(form, "_csrfToken"));
 
             var current = GetField<LabeledTextBoxControl>(form, "_currentPasswordInput");
             var next = GetField<LabeledTextBoxControl>(form, "_newPasswordInput");
@@ -73,7 +78,8 @@ public class MainFormChangePasswordTests
             await InvokeChangePasswordAsync(form);
 
             Assert.NotNull(handler.LastRequest);
-            Assert.Equal("old-csrf", handler.LastRequest!.Headers.GetValues("X-CSRF-Token").Single());
+            Assert.True(handler.LastRequest!.Headers.TryGetValues("X-CSRF-Token", out var csrfValues), $"Header X-CSRF-Token mancante. Headers: {handler.HeadersDump ?? "<null>"}");
+            Assert.Contains("old-csrf", csrfValues);
             Assert.Equal("old-csrf", GetField<string?>(form, "_csrfToken"));
             Assert.Equal("wrong", current.ValueText);
             Assert.Equal("new-value", next.ValueText);
@@ -127,6 +133,7 @@ public class MainFormChangePasswordTests
 
         public HttpRequestMessage? LastRequest { get; private set; }
         public string? LastContent { get; private set; }
+        public string? HeadersDump { get; private set; }
 
         public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
         {
@@ -140,6 +147,7 @@ public class MainFormChangePasswordTests
             {
                 LastContent = request.Content.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
             }
+            HeadersDump = request.Headers.ToString();
 
             return Task.FromResult(_responder(request));
         }

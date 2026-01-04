@@ -29,6 +29,7 @@ public class ApiTests : IAsyncLifetime
     private WebApplicationFactory<Program> _factory = null!;
     private HttpClient _client = null!;
     private RefreshTokenHasher _hasher = null!;
+    private const string DemoPassword = "123456789012";
 
     public ApiTests(ITestOutputHelper output)
     {
@@ -171,7 +172,7 @@ public class ApiTests : IAsyncLifetime
     public async Task Login_me_logout_flow()
     {
         LogTestStart();
-        var loginResponse = await _client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+        var loginResponse = await _client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
 
         var loginPayload = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
@@ -298,7 +299,7 @@ public class ApiTests : IAsyncLifetime
         var (factory, client, dbPath) = CreateFactory(requireSecure: true);
         try
         {
-            var response = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+            var response = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             var setCookie = response.Headers.GetValues("Set-Cookie").FirstOrDefault(h => h.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
@@ -728,7 +729,7 @@ public class ApiTests : IAsyncLifetime
         var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: extra);
         try
         {
-            var response = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+            var response = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var setCookie = response.Headers.GetValues("Set-Cookie").FirstOrDefault(h => h.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
             Assert.False(string.IsNullOrWhiteSpace(setCookie));
@@ -2195,7 +2196,7 @@ CREATE TABLE IF NOT EXISTS users (
         var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: extra);
         try
         {
-            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo", RememberMe = true });
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword, RememberMe = true });
             Assert.Equal(HttpStatusCode.OK, login.StatusCode);
             var setCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
             var lower = setCookie.ToLowerInvariant();
@@ -2472,7 +2473,7 @@ CREATE TABLE IF NOT EXISTS users (
         var (factory, client, dbPath) = CreateFactory(requireSecure: false);
         try
         {
-            var response = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+            var response = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             var setCookie = response.Headers.GetValues("Set-Cookie").First();
@@ -2729,7 +2730,7 @@ CREATE TABLE IF NOT EXISTS users (
     }
 
     // Effettua login demo e restituisce cookie + token CSRF per i test.
-    private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string username = "demo", string password = "demo")
+    private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string username = "demo", string password = DemoPassword)
     {
         var loginResponse = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
         if (loginResponse.StatusCode == HttpStatusCode.Forbidden)

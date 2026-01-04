@@ -363,7 +363,15 @@ public sealed partial class MainForm : Form
       {
         Content = JsonContent.Create(payload)
       };
-      req.Headers.Add("X-CSRF-Token", _csrfToken);
+      if (!req.Headers.TryAddWithoutValidation("X-CSRF-Token", _csrfToken))
+      {
+        LogEvent("Errore", "Header CSRF non impostato nella richiesta cambio password");
+      }
+      else
+      {
+        _http.DefaultRequestHeaders.Remove("X-CSRF-Token");
+        _http.DefaultRequestHeaders.Add("X-CSRF-Token", _csrfToken);
+      }
 
       var resp = await _http.SendAsync(req);
       var body = await resp.Content.ReadAsStringAsync();

@@ -15,6 +15,7 @@ namespace SecureAuthMinimalApi.Tests;
 public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
+    private const string DemoPassword = "123456789012";
 
     public IdleTimeoutTests(WebApplicationFactory<Program> factory)
     {
@@ -51,7 +52,7 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
         try
         {
             // login
-            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
             var csrf = (await login.Content.ReadFromJsonAsync<LoginResponse>())!.CsrfToken!;
             var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token")).Split(';', 2)[0];
 
@@ -80,7 +81,7 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
         var (client, dbPath) = await CreateClientAsync();
         try
         {
-            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
             var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token")).Split(';', 2)[0];
 
             using var meReq = new HttpRequestMessage(HttpMethod.Get, "/me");
@@ -104,7 +105,7 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var factory = _factory.WithWebHostBuilder(builder => builder.UseSetting("Session:IdleMinutes", "0"));
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false, AllowAutoRedirect = false });
-        var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+        var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
     }
 
@@ -114,7 +115,7 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
         var (client, dbPath) = await CreateClientAsync();
         try
         {
-            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo" });
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
             var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token")).Split(';', 2)[0];
 
             using var meReq = new HttpRequestMessage(HttpMethod.Get, "/me");

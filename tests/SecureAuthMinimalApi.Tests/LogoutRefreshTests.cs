@@ -16,6 +16,7 @@ namespace SecureAuthMinimalApi.Tests;
 public class LogoutRefreshTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
+    private const string DemoPassword = "123456789012";
 
     public LogoutRefreshTests(WebApplicationFactory<Program> factory)
     {
@@ -54,7 +55,7 @@ public class LogoutRefreshTests : IClassFixture<WebApplicationFactory<Program>>
         var (client, dbPath) = await CreateClientAsync();
         try
         {
-            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = "demo", RememberMe = true });
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword, RememberMe = true });
             Assert.Equal(HttpStatusCode.OK, login.StatusCode);
             var csrf = (await login.Content.ReadFromJsonAsync<LoginResponse>())!.CsrfToken!;
             var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
