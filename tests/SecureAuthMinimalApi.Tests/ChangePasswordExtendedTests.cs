@@ -59,6 +59,40 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
         return (factory, client, dbPath);
     }
 
+    [Theory]
+    [MemberData(nameof(WeakPasswords))]
+    public async Task Change_password_policy_parametric_fails(string newPassword, string expectedError)
+    {
+        var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?>
+        {
+            ["PasswordPolicy:RequireUpper"] = "true",
+            ["PasswordPolicy:RequireLower"] = "true",
+            ["PasswordPolicy:RequireDigit"] = "true",
+            ["PasswordPolicy:RequireSymbol"] = "true"
+        });
+        try
+        {
+            var (cookie, csrf) = await LoginAsync(client);
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/me/password");
+            req.Headers.Add("Cookie", cookie);
+            req.Headers.Add("X-CSRF-Token", csrf);
+            req.Content = JsonContent.Create(new { currentPassword = DemoPassword, newPassword, confirmPassword = newPassword });
+
+            var resp = await client.SendAsync(req);
+            Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
+            var payload = await resp.Content.ReadFromJsonAsync<ChangePasswordResponse>();
+            Assert.NotNull(payload);
+            Assert.Equal("password_policy_failed", payload!.Error);
+            Assert.Contains(expectedError, payload.Errors ?? Array.Empty<string>());
+        }
+        finally
+        {
+            factory.Dispose();
+            client.Dispose();
+            DeleteDb(dbPath);
+        }
+    }
+
     [Fact]
     public async Task Change_password_missing_fields_returns_invalid_input()
     {
@@ -327,4 +361,12 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
 
     private sealed record ChangePasswordResponse(bool Ok, string? Error, IEnumerable<string>? Errors, string? CsrfToken);
     private sealed record LoginResponse(bool Ok, string? CsrfToken);
+
+    public static IEnumerable<object[]> WeakPasswords()
+    {
+        yield return new object[] { "loweronly", "missing_upper" };
+        yield return new object[] { "NOLOWER1!", "missing_lower" };
+        yield return new object[] { "NoDigits!", "missing_digit" };
+        yield return new object[] { "NoSymbol1", "missing_symbol" };
+    }
 }
