@@ -6,43 +6,518 @@
   },
   "item": [
     {
-      "name": "Register (nuovo utente)",
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Health restituisce 200', function () {",
+              "  pm.response.to.have.status(200); pm.expect(pm.response.json().ok).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Live",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/live",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "live"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Live restituisce 200', function () {",
+              "  pm.response.to.have.status(200); pm.expect(pm.response.json().ok).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ready",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/ready",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ready"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ready restituisce 200 e ok=true', function () {",
+              "  pm.response.to.have.status(200); pm.expect(pm.response.json().ok).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register test user",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const username = `testuser_${Date.now()}`;",
+              "const password = 'P@ssw0rd!2026';",
+              "pm.collectionVariables.set('testUser', username);",
+              "pm.collectionVariables.set('testPassword', password);",
+              "pm.collectionVariables.set('testNewPassword', 'N3wP@ssw0rd!2026');",
+              "pm.collectionVariables.set('emailConfirmToken', '');",
+              "pm.collectionVariables.set('mfaSecret', '');",
+              "pm.collectionVariables.set('mfaChallengeId', '');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Registrazione riuscita', function () { pm.response.to.have.status(201); });",
+              "const body = pm.response.json();",
+              "if (body.emailConfirmToken) { pm.collectionVariables.set('emailConfirmToken', body.emailConfirmToken); }",
+              "if (body.userId) { pm.collectionVariables.set('testUserId', body.userId); }"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "url": { "raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"] },
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
         "body": {
           "mode": "raw",
-          "raw": "{ \"username\": \"user_{{uuid}}\", \"password\": \"P@ssw0rd!Long\" }"
+          "raw": "{ \"username\": \"{{testUser}}\", \"email\": \"{{testUser}}@example.com\", \"password\": \"{{testPassword}}\", \"givenName\": \"Test\", \"familyName\": \"User\" }"
         }
       },
       "response": []
     },
     {
-      "name": "Register (duplicato atteso 409)",
+      "name": "Register missing password",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "url": { "raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"] },
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
         "body": {
           "mode": "raw",
-          "raw": "{ \"username\": \"dup_user\", \"password\": \"P@ssw0rd!Long\" }"
+          "raw": "{ \"username\": \"incomplete\", \"email\": \"incomplete@example.com\" }"
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Manca password => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "Login (demo/demo)",
+      "name": "Register missing username",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"email\": \"nouser@example.com\", \"password\": \"P@ssw0rd!2026\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Manca username => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register invalid email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"invalidemail\", \"email\": \"invalid\", \"password\": \"P@ssw0rd!2026\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Email non valida => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register invalid picture",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"badpic\", \"email\": \"badpic@example.com\", \"password\": \"P@ssw0rd!2026\", \"picture\": \"notaurl\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Picture non valida => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register password policy fail",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"weakpass\", \"email\": \"weakpass@example.com\", \"password\": \"short\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Password policy fail => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Register duplicate user",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"demo\", \"email\": \"demo@example.com\", \"password\": \"P@ssw0rd!2026\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Registrazione duplicata => 409', function () {",
+              "  pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Confirm email success",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/confirm-email",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "confirm-email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"token\": \"{{emailConfirmToken}}\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Conferma email 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Confirm email invalid token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/confirm-email",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "confirm-email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"token\": \"invalid-token\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Token invalido => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Confirm email missing token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/confirm-email",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "confirm-email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Token mancante => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login demo success",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
         "body": {
           "mode": "raw",
           "raw": "{ \"username\": \"demo\", \"password\": \"demo\" }"
@@ -55,18 +530,22 @@
           "script": {
             "type": "text/javascript",
             "exec": [
+              "pm.test('Login demo 200', function () { pm.response.to.have.status(200); });",
               "let data = {};",
               "try { data = pm.response.json(); } catch (e) {}",
               "if (data.csrfToken) {",
               "  pm.collectionVariables.set('csrfToken', data.csrfToken);",
               "}",
-              "// Se vuoi anche il JWT dal cookie, estrailo dal Cookie Jar locale (solo in app desktop).",
               "if (pm.response.headers.has('Set-Cookie')) {",
               "  const cookies = pm.response.headers.get('Set-Cookie');",
               "  const match = /access_token=([^;]+)/.exec(cookies);",
               "  if (match && match[1]) {",
               "    pm.collectionVariables.set('jwt', match[1]);",
               "  }",
+              "}",
+              "const refreshCookie = pm.cookies.get('refresh_token');",
+              "if (refreshCookie) {",
+              "  pm.collectionVariables.set('refreshToken', refreshCookie);",
               "}"
             ]
           }
@@ -74,48 +553,1558 @@
       ]
     },
     {
-      "name": "GET /me (cookie)",
+      "name": "Login demo invalid password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"demo\", \"password\": \"wrong\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login demo fallito 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login missing username",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"password\": \"demo\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login missing username => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login missing password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"demo\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login missing password => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login test user (remember)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"{{testUser}}\", \"password\": \"{{testPassword}}\", \"rememberMe\": true }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login test user remember 200', function () { pm.response.to.have.status(200); });",
+              "let data = {};",
+              "try { data = pm.response.json(); } catch (e) {}",
+              "if (data.csrfToken) {",
+              "  pm.collectionVariables.set('csrfToken', data.csrfToken);",
+              "}",
+              "if (pm.response.headers.has('Set-Cookie')) {",
+              "  const cookies = pm.response.headers.get('Set-Cookie');",
+              "  const match = /access_token=([^;]+)/.exec(cookies);",
+              "  if (match && match[1]) {",
+              "    pm.collectionVariables.set('jwt', match[1]);",
+              "  }",
+              "}",
+              "const refreshCookie = pm.cookies.get('refresh_token');",
+              "if (refreshCookie) {",
+              "  pm.collectionVariables.set('refreshToken', refreshCookie);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /me (authenticated)",
       "request": {
         "method": "GET",
-        "url": { "raw": "{{baseUrl}}/me", "host": ["{{baseUrl}}"], "path": ["me"] }
+        "url": {
+          "raw": "{{baseUrl}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Me 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /me (unauthorized)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Me senza sessione => 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /me (Bearer)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Me con bearer => 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MFA setup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/mfa/setup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mfa",
+            "setup"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('MFA setup 200', function () { pm.response.to.have.status(200); });",
+              "const data = pm.response.json();",
+              "if (data.secret) {",
+              "  pm.collectionVariables.set('mfaSecret', data.secret);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MFA setup conflict",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/mfa/setup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mfa",
+            "setup"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('MFA setup conflict => 409', function () {",
+              "  pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logout before MFA challenge",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "logout"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout 200', function () { pm.response.to.have.status(200); });",
+              "pm.collectionVariables.set('csrfToken', '');",
+              "pm.collectionVariables.set('jwt', '');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login test user (MFA challenge)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"{{testUser}}\", \"password\": \"{{testPassword}}\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login MFA challenge 401', function () { pm.response.to.have.status(401); });",
+              "const data = pm.response.json();",
+              "if (data.challengeId) { pm.collectionVariables.set('mfaChallengeId', data.challengeId); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Confirm MFA",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const secret = pm.collectionVariables.get('mfaSecret');",
+              "if (!secret) throw new Error('MFA secret mancante');",
+              "const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';",
+              "function base32ToBytes(str) {",
+              "  const cleaned = str.toUpperCase().replace(/=+$/, '').replace(/[^A-Z2-7]/g, '');",
+              "  const bytes = [];",
+              "  let bits = 0, value = 0;",
+              "  for (const char of cleaned) {",
+              "    value = (value << 5) | alphabet.indexOf(char);",
+              "    bits += 5;",
+              "    if (bits >= 8) {",
+              "      bits -= 8;",
+              "      bytes.push((value >> bits) & 0xff);",
+              "    }",
+              "  }",
+              "  return Buffer.from(bytes);",
+              "}",
+              "function generateTotp(key) {",
+              "  const step = 30;",
+              "  const counter = Math.floor(Date.now() / 1000 / step);",
+              "  const buffer = Buffer.alloc(8);",
+              "  let value = counter;",
+              "  for (let i = 7; i >= 0; i--) {",
+              "    buffer[i] = value & 0xff;",
+              "    value >>= 8;",
+              "  }",
+              "  const crypto = require('crypto');",
+              "  const hmac = crypto.createHmac('sha1', key).update(buffer).digest();",
+              "  const offset = hmac[hmac.length - 1] & 0xf;",
+              "  const code = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) | ((hmac[offset + 2] & 0xff) << 8) | (hmac[offset + 3] & 0xff);",
+              "  const otp = (code % 1000000).toString().padStart(6, '0');",
+              "  return otp;",
+              "}",
+              "const secretBytes = base32ToBytes(secret);",
+              "const totp = generateTotp(secretBytes);",
+              "pm.collectionVariables.set('mfaTotp', totp);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Confirm MFA 200', function () { pm.response.to.have.status(200); });",
+              "let data = {};",
+              "try { data = pm.response.json(); } catch (e) {}",
+              "if (data.csrfToken) {",
+              "  pm.collectionVariables.set('csrfToken', data.csrfToken);",
+              "}",
+              "if (pm.response.headers.has('Set-Cookie')) {",
+              "  const cookies = pm.response.headers.get('Set-Cookie');",
+              "  const match = /access_token=([^;]+)/.exec(cookies);",
+              "  if (match && match[1]) {",
+              "    pm.collectionVariables.set('jwt', match[1]);",
+              "  }",
+              "}",
+              "const refreshCookie = pm.cookies.get('refresh_token');",
+              "if (refreshCookie) {",
+              "  pm.collectionVariables.set('refreshToken', refreshCookie);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login/confirm-mfa",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login",
+            "confirm-mfa"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"challengeId\": \"{{mfaChallengeId}}\", \"totpCode\": \"{{mfaTotp}}\", \"rememberMe\": true }"
+        }
       },
       "response": []
+    },
+    {
+      "name": "Confirm MFA invalid challenge",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login/confirm-mfa",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login",
+            "confirm-mfa"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"challengeId\": \"invalid\", \"totpCode\": \"000000\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Confirm MFA invalid => 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MFA disable",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/mfa/disable",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mfa",
+            "disable"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('MFA disable 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MFA disable missing CSRF",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/mfa/disable",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mfa",
+            "disable"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('MFA disable senza CSRF => 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password wrong current",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"invalid\", \"newPassword\": \"{{testNewPassword}}\", \"confirmPassword\": \"{{testNewPassword}}\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password errore 400', function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json(); pm.expect(body.error).to.eql('invalid_current_password');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password mismatch confirm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"{{testPassword}}\", \"newPassword\": \"N3wP@ssw0rd!2026\", \"confirmPassword\": \"Mismatch!\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password errore 400', function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json(); pm.expect(body.error).to.eql('password_mismatch');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password reused",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"{{testPassword}}\", \"newPassword\": \"{{testPassword}}\", \"confirmPassword\": \"{{testPassword}}\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password errore 400', function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json(); pm.expect(body.error).to.eql('password_reused');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password policy fail",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"{{testPassword}}\", \"newPassword\": \"short\", \"confirmPassword\": \"short\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password errore 400', function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json(); pm.expect(body.error).to.eql('password_policy_failed');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password missing CSRF",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"{{testPassword}}\", \"newPassword\": \"{{testNewPassword}}\", \"confirmPassword\": \"{{testNewPassword}}\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password senza CSRF => 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password invalid input",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"\", \"newPassword\": \"\", \"confirmPassword\": \"\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password input invalido => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change password success",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"currentPassword\": \"{{testPassword}}\", \"newPassword\": \"{{testNewPassword}}\", \"confirmPassword\": \"{{testNewPassword}}\" }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cambio password 200', function () { pm.response.to.have.status(200); });",
+              "let data = {};",
+              "try { data = pm.response.json(); } catch (e) {}",
+              "if (data.csrfToken) {",
+              "  pm.collectionVariables.set('csrfToken', data.csrfToken);",
+              "}",
+              "if (pm.response.headers.has('Set-Cookie')) {",
+              "  const cookies = pm.response.headers.get('Set-Cookie');",
+              "  const match = /access_token=([^;]+)/.exec(cookies);",
+              "  if (match && match[1]) {",
+              "    pm.collectionVariables.set('jwt', match[1]);",
+              "  }",
+              "}",
+              "const refreshCookie = pm.cookies.get('refresh_token');",
+              "if (refreshCookie) {",
+              "  pm.collectionVariables.set('refreshToken', refreshCookie);",
+              "}",
+              "pm.collectionVariables.set('testPassword', pm.collectionVariables.get('testNewPassword'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refresh token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "refresh"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Refresh 200', function () { pm.response.to.have.status(200); });",
+              "let data = {};",
+              "try { data = pm.response.json(); } catch (e) {}",
+              "if (data.csrfToken) {",
+              "  pm.collectionVariables.set('csrfToken', data.csrfToken);",
+              "}",
+              "if (pm.response.headers.has('Set-Cookie')) {",
+              "  const cookies = pm.response.headers.get('Set-Cookie');",
+              "  const match = /access_token=([^;]+)/.exec(cookies);",
+              "  if (match && match[1]) {",
+              "    pm.collectionVariables.set('jwt', match[1]);",
+              "  }",
+              "}",
+              "const refreshCookie = pm.cookies.get('refresh_token');",
+              "if (refreshCookie) {",
+              "  pm.collectionVariables.set('refreshToken', refreshCookie);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refresh missing cookie",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": ""
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "refresh"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Refresh senza cookie => 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refresh invalid csrf",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-Token",
+            "value": "invalid"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "refresh"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Refresh con CSRF invalido => 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /me (after refresh)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "me"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Me ancora attivo', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.test('userId presente', function () { pm.expect(body.userId).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Logout (cookie + CSRF)",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
         ],
-        "url": { "raw": "{{baseUrl}}/logout", "host": ["{{baseUrl}}"], "path": ["logout"] }
+        "url": {
+          "raw": "{{baseUrl}}/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "logout"
+          ]
+        }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout restituisce 200', function () { pm.response.to.have.status(200); });",
+              "pm.collectionVariables.set('csrfToken', '');",
+              "pm.collectionVariables.set('jwt', '');"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "Introspect (cookie)",
+      "name": "Logout missing CSRF",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "logout"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout senza CSRF => 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logout all",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/logout-all",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "logout-all"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout-all restituisce 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logout all missing CSRF",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/logout-all",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "logout-all"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout-all senza CSRF => 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Introspect cookie",
       "request": {
         "method": "GET",
-        "url": { "raw": "{{baseUrl}}/introspect", "host": ["{{baseUrl}}"], "path": ["introspect"] }
+        "url": {
+          "raw": "{{baseUrl}}/introspect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "introspect"
+          ]
+        }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Introspect cookie 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "Introspect (Bearer)",
+      "name": "Introspect Bearer",
       "request": {
         "method": "GET",
         "header": [
-          { "key": "Authorization", "value": "Bearer {{jwt}}" }
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt}}"
+          }
         ],
-        "url": { "raw": "{{baseUrl}}/introspect", "host": ["{{baseUrl}}"], "path": ["introspect"] }
+        "url": {
+          "raw": "{{baseUrl}}/introspect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "introspect"
+          ]
+        }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Introspect Bearer 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Introspect invalid token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/introspect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "introspect"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Introspect invalid => 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login confirm-mfa missing input",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login/confirm-mfa",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login",
+            "confirm-mfa"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ }"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Confirm MFA input invalido => 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MFA setup without auth",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/mfa/setup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mfa",
+            "setup"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('MFA setup senza sessione => 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logout without session",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "logout"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout senza sessione => 401/200', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refresh without auth and csrf",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "refresh"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Refresh senza cookie => 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Introspect missing token",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/introspect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "introspect"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Introspect senza token => 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "https://localhost:52899" },
-    { "key": "csrfToken", "value": "" },
-    { "key": "jwt", "value": "" },
-    { "key": "uuid", "value": "123456" }
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:52899"
+    },
+    {
+      "key": "csrfToken",
+      "value": ""
+    },
+    {
+      "key": "jwt",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "testUser",
+      "value": ""
+    },
+    {
+      "key": "testPassword",
+      "value": "P@ssw0rd!2026"
+    },
+    {
+      "key": "testNewPassword",
+      "value": "N3wP@ssw0rd!2026"
+    },
+    {
+      "key": "emailConfirmToken",
+      "value": ""
+    },
+    {
+      "key": "mfaSecret",
+      "value": ""
+    },
+    {
+      "key": "mfaChallengeId",
+      "value": ""
+    },
+    {
+      "key": "mfaTotp",
+      "value": ""
+    }
   ]
 }
