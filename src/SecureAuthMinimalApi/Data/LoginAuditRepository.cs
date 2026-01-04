@@ -13,6 +13,9 @@ public sealed class LoginAuditRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Recupera connection string per il repository audit.
+    /// </summary>
     public LoginAuditRepository(IConfiguration config)
     {
         _connectionString = config.GetConnectionString("Sqlite")
@@ -21,6 +24,9 @@ public sealed class LoginAuditRepository
 
     private IDbConnection Open() => new SqliteConnection(_connectionString);
 
+    /// <summary>
+    /// Inserisce un evento di audit nel DB.
+    /// </summary>
     public async Task CreateAsync(LoginAudit audit, CancellationToken ct)
     {
         const string sql = @"

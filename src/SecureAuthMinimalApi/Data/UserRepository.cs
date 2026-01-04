@@ -15,6 +15,9 @@ public sealed class UserRepository
     private readonly string _connectionString;
     private readonly TotpSecretProtector _protector;
 
+    /// <summary>
+    /// Inizializza repository utenti con connection string e protezione TOTP.
+    /// </summary>
     public UserRepository(IConfiguration config, TotpSecretProtector protector)
     {
         _connectionString = config.GetConnectionString("Sqlite")
@@ -24,6 +27,9 @@ public sealed class UserRepository
 
     private IDbConnection Open() => new SqliteConnection(_connectionString);
 
+    /// <summary>
+    /// Inserisce un nuovo utente e salva il segreto TOTP crittografato.
+    /// </summary>
     public async Task CreateAsync(User user, CancellationToken ct)
     {
         const string sql = @"
@@ -50,6 +56,9 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Name, @Given
         }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Recupera l'utente corrispondente allo username (case insensitive).
+    /// </summary>
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)
     {
         const string sql = @"
@@ -66,6 +75,9 @@ LIMIT 1;";
         var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { username, normalized = username.ToLowerInvariant() }, cancellationToken: ct));
         return DecryptTotp(row);
     }
+    /// <summary>
+    /// Legge l'utente tramite l'identificativo primario.
+    /// </summary>
     public async Task<User?> GetByIdAsync(string userId, CancellationToken ct)
     {
         const string sql = @"
@@ -83,6 +95,9 @@ LIMIT 1;";
         return DecryptTotp(row);
     }
 
+    /// <summary>
+    /// Cerca l'utente tramite email normalizzata.
+    /// </summary>
     public async Task<User?> GetByEmailAsync(string emailNormalized, CancellationToken ct)
     {
         const string sql = @"
@@ -100,6 +115,9 @@ LIMIT 1;";
         return DecryptTotp(row);
     }
 
+    /// <summary>
+    /// Recupera l'utente in base al token di conferma email.
+    /// </summary>
     public async Task<User?> GetByEmailTokenAsync(string token, CancellationToken ct)
     {
         const string sql = @"
@@ -117,6 +135,9 @@ LIMIT 1;";
         return DecryptTotp(row);
     }
 
+    /// <summary>
+    /// Marca l'email come confermata cancellando token e scadenza.
+    /// </summary>
     public async Task ConfirmEmailAsync(string userId, CancellationToken ct)
     {
         const string sql = @"
@@ -130,6 +151,9 @@ WHERE id = @userId;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { userId }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Salva il segreto TOTP criptato per l'utente.
+    /// </summary>
     public async Task SetTotpSecretAsync(string userId, string secret, CancellationToken ct)
     {
         const string sql = @"
@@ -142,6 +166,9 @@ WHERE id = @userId;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { userId, secret = cipher }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Rimuove il segreto TOTP, disabilitando MFA.
+    /// </summary>
     public async Task ClearTotpSecretAsync(string userId, CancellationToken ct)
     {
         const string sql = @"
@@ -151,6 +178,20 @@ WHERE id = @userId;";
 
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new { userId }, cancellationToken: ct));
+    }
+
+    /// <summary>
+    /// Aggiorna l'hash della password per l'utente.
+    /// </summary>
+    public async Task UpdatePasswordAsync(string userId, string passwordHash, CancellationToken ct)
+    {
+        const string sql = @"
+UPDATE users
+SET password_hash = @passwordHash
+WHERE id = @userId;";
+
+        using var db = Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, passwordHash }, cancellationToken: ct));
     }
 
     private User? DecryptTotp(User? user)

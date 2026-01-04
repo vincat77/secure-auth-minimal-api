@@ -13,6 +13,9 @@ public sealed class MfaChallengeRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Inizializza repository MFA con la connection string SQLite.
+    /// </summary>
     public MfaChallengeRepository(IConfiguration config)
     {
         _connectionString = config.GetConnectionString("Sqlite")
@@ -21,6 +24,9 @@ public sealed class MfaChallengeRepository
 
     private IDbConnection Open() => new SqliteConnection(_connectionString);
 
+    /// <summary>
+    /// Inserisce un nuovo challenge MFA.
+    /// </summary>
     public async Task CreateAsync(MfaChallenge challenge, CancellationToken ct)
     {
         const string sql = @"
@@ -41,6 +47,9 @@ VALUES (@Id, @UserId, @CreatedAtUtc, @ExpiresAtUtc, @UsedAtUtc, @UserAgent, @Cli
         }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Recupera un challenge via id univoco.
+    /// </summary>
     public async Task<MfaChallenge?> GetByIdAsync(string id, CancellationToken ct)
     {
         const string sql = @"
@@ -54,6 +63,9 @@ LIMIT 1;";
         return await db.QuerySingleOrDefaultAsync<MfaChallenge>(new CommandDefinition(sql, new { id }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Imposta il flag UsedAtUtc quando la challenge viene usata.
+    /// </summary>
     public async Task MarkUsedAsync(string id, CancellationToken ct)
     {
         const string sql = @"UPDATE mfa_challenges SET used_at_utc = @usedAt WHERE id = @id;";
@@ -61,6 +73,9 @@ LIMIT 1;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { id, usedAt = DateTime.UtcNow.ToString("O") }, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Incrementa il contatore dei tentativi falliti per la challenge.
+    /// </summary>
     public async Task IncrementAttemptAsync(string id, CancellationToken ct)
     {
         const string sql = @"UPDATE mfa_challenges SET attempt_count = attempt_count + 1 WHERE id = @id;";

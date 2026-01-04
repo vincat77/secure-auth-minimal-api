@@ -1,4 +1,5 @@
 # VS / VS Code / .NET ignore
+logs/
 bin/
 obj/
 /.vs/

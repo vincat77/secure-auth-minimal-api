@@ -16,6 +16,7 @@ partial class ActionButtonsControl
     private Button _setupMfaButton = null!;
     private Button _disableMfaButton = null!;
     private Button _meButton = null!;
+    private Button _changePasswordButton = null!;
     private Button _logoutButton = null!;
     private Button _showQrButton = null!;
     private Button _showCookiesButton = null!;
@@ -41,6 +42,7 @@ partial class ActionButtonsControl
     _setupMfaButton = new Button();
     _disableMfaButton = new Button();
     _meButton = new Button();
+    _changePasswordButton = new Button();
     _logoutButton = new Button();
     _showQrButton = new Button();
     _showCookiesButton = new Button();
@@ -111,37 +113,45 @@ partial class ActionButtonsControl
     _meButton.TabIndex = 7;
     _meButton.Text = "Mostra profilo";
     // 
+    // _changePasswordButton
+    // 
+    _changePasswordButton.Location = new Point(0, 280);
+    _changePasswordButton.Name = "_changePasswordButton";
+    _changePasswordButton.Size = new Size(155, 30);
+    _changePasswordButton.TabIndex = 8;
+    _changePasswordButton.Text = "Cambia password";
+    // 
     // _logoutButton
     // 
-    _logoutButton.Location = new Point(0, 280);
+    _logoutButton.Location = new Point(0, 315);
     _logoutButton.Name = "_logoutButton";
     _logoutButton.Size = new Size(155, 30);
-    _logoutButton.TabIndex = 8;
+    _logoutButton.TabIndex = 9;
     _logoutButton.Text = "Logout";
     // 
     // _showQrButton
     // 
-    _showQrButton.Location = new Point(0, 315);
+    _showQrButton.Location = new Point(0, 350);
     _showQrButton.Name = "_showQrButton";
     _showQrButton.Size = new Size(155, 30);
-    _showQrButton.TabIndex = 9;
+    _showQrButton.TabIndex = 10;
     _showQrButton.Text = "Mostra QR MFA";
     // 
     // _showCookiesButton
     // 
-    _showCookiesButton.Location = new Point(0, 350);
+    _showCookiesButton.Location = new Point(0, 385);
     _showCookiesButton.Name = "_showCookiesButton";
     _showCookiesButton.Size = new Size(155, 30);
-    _showCookiesButton.TabIndex = 10;
+    _showCookiesButton.TabIndex = 11;
     _showCookiesButton.Text = "Mostra cookie";
     // 
     // _rememberCheck
     // 
     _rememberCheck.AutoSize = true;
-    _rememberCheck.Location = new Point(36, 386);
+    _rememberCheck.Location = new Point(36, 421);
     _rememberCheck.Name = "_rememberCheck";
     _rememberCheck.Size = new Size(80, 19);
-    _rememberCheck.TabIndex = 11;
+    _rememberCheck.TabIndex = 12;
     _rememberCheck.Text = "Ricordami";
     // 
     // ActionButtonsControl
@@ -149,6 +159,7 @@ partial class ActionButtonsControl
     AutoScaleDimensions = new SizeF(7F, 15F);
     AutoScaleMode = AutoScaleMode.Font;
     BorderStyle = BorderStyle.FixedSingle;
+    Controls.Add(_changePasswordButton);
     Controls.Add(_rememberCheck);
     Controls.Add(_showCookiesButton);
     Controls.Add(_showQrButton);
@@ -162,7 +173,7 @@ partial class ActionButtonsControl
     Controls.Add(_confirmEmailButton);
     Controls.Add(_registerButton);
     Name = "ActionButtonsControl";
-    Size = new Size(158, 462);
+    Size = new Size(158, 492);
     ResumeLayout(false);
     PerformLayout();
   }

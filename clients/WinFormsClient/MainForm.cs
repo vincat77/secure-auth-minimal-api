@@ -26,6 +26,7 @@ public sealed partial class MainForm : Form
   private CookieContainer _cookies = null!;
   private string? _csrfToken;
   private string _rememberText = "-";
+  private bool _isAuthenticated;
 
   public MainForm()
   {
@@ -40,6 +41,7 @@ public sealed partial class MainForm : Form
     _actions.SetupMfaClicked += async (_, _) => await SetupMfaAsync();
     _actions.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
     _actions.MeClicked += async (_, _) => await MeAsync();
+    _actions.ChangePasswordClicked += async (_, _) => await ChangePasswordAsync();
     _actions.LogoutClicked += async (_, _) => await LogoutAsync();
     _actions.ShowQrClicked += (_, _) => RenderQr();
     _actions.ShowCookiesClicked += (_, _) => DumpCookies();
@@ -48,6 +50,7 @@ public sealed partial class MainForm : Form
     _mfaPanel.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
     _mfaPanel.ShowQrClicked += (_, _) => RenderQr();
     _countdownTimer.Tick += (_, _) => _sessionCard.TickCountdown();
+    ApplyChangePasswordEnabled(false);
   }
 
   private Uri BaseUri => new(_urlControl.ValueText.TrimEnd('/'));
@@ -334,6 +337,75 @@ public sealed partial class MainForm : Form
   }
 
   /// <summary>
+  /// Cambia la password dell'utente loggato e ruota la sessione.
+  /// </summary>
+  private async Task ChangePasswordAsync()
+  {
+    EnsureHttpClient();
+    using var busy = BeginBusy("Cambio password in corso...");
+    try
+    {
+      if (string.IsNullOrWhiteSpace(_csrfToken))
+      {
+        Append("CSRF token non disponibile: effettua il login prima di cambiare password.");
+        LogEvent("Errore", "Cambio password senza CSRF");
+        return;
+      }
+
+      var payload = new
+      {
+        currentPassword = _currentPasswordInput.ValueText,
+        newPassword = _newPasswordInput.ValueText,
+        confirmPassword = _confirmPasswordInput.ValueText
+      };
+
+      var req = new HttpRequestMessage(HttpMethod.Post, new Uri(BaseUri, "/me/password"))
+      {
+        Content = JsonContent.Create(payload)
+      };
+      if (!req.Headers.TryAddWithoutValidation("X-CSRF-Token", _csrfToken))
+      {
+        LogEvent("Errore", "Header CSRF non impostato nella richiesta cambio password");
+      }
+      else
+      {
+        _http.DefaultRequestHeaders.Remove("X-CSRF-Token");
+        _http.DefaultRequestHeaders.Add("X-CSRF-Token", _csrfToken);
+      }
+
+      var resp = await _http.SendAsync(req);
+      var body = await resp.Content.ReadAsStringAsync();
+      Append($"POST /me/password -> {(int)resp.StatusCode}\n{body}");
+
+      if (!resp.IsSuccessStatusCode)
+      {
+        try
+        {
+          var error = JsonSerializer.Deserialize<ChangePasswordResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+          var extra = error?.Errors is { } errs && errs.Any() ? $" ({string.Join(",", errs)})" : "";
+          LogEvent("Errore", $"Cambio password fallito: {error?.Error}{extra}");
+        }
+        catch
+        {
+          LogEvent("Errore", $"Cambio password fallito status={(int)resp.StatusCode}");
+        }
+        return;
+      }
+
+      var result = JsonSerializer.Deserialize<ChangePasswordResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      _csrfToken = result?.CsrfToken ?? _csrfToken;
+      ResetChangePasswordForm();
+      LogEvent("Info", "Password cambiata e sessione ruotata");
+      await RefreshSessionInfoAsync();
+    }
+    catch (Exception ex)
+    {
+      Append($"Errore cambio password: {ex.Message}");
+      LogEvent("Errore", $"Cambio password eccezione: {ex.Message}");
+    }
+  }
+
+  /// <summary>
   /// Chiama /mfa/setup e mostra il segreto per l'app TOTP.
   /// </summary>
   private async Task SetupMfaAsync()
@@ -480,6 +552,7 @@ public sealed partial class MainForm : Form
     _actions.SetEnabled(enabled);
     _actions.SetMfaEnabled(enabled && !string.IsNullOrWhiteSpace(_challengeId));
     _actions.SetQrEnabled(enabled && !string.IsNullOrWhiteSpace(_otpauthUri));
+    ApplyChangePasswordEnabled(enabled && _isAuthenticated);
   }
 
   private void DumpCookies()
@@ -524,6 +597,7 @@ public sealed partial class MainForm : Form
   private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
   private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
   private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
+  private sealed record ChangePasswordResponse(bool Ok, string? Error, IEnumerable<string>? Errors, string? CsrfToken);
 
   private void ResetHttpClient()
   {
@@ -587,6 +661,7 @@ public sealed partial class MainForm : Form
 
   private void SetState(string state, string? userId, string? sessionId, string? expiresAtUtc, string? createdAtUtc = null)
   {
+    _isAuthenticated = string.Equals(state, "Autenticato", StringComparison.OrdinalIgnoreCase);
     _sessionCard.UpdateInfo(userId, sessionId, expiresAtUtc, createdAtUtc, _refreshExpiresUtc);
 
     string badgeText;
@@ -612,6 +687,9 @@ public sealed partial class MainForm : Form
 
     _statusInfo.SetStatus(state, userId, sessionId, expiresAtUtc, _rememberText, badgeColor, badgeText);
     _banner.UpdateState(state, userId);
+    ApplyChangePasswordEnabled(_isAuthenticated);
+    if (!_isAuthenticated)
+      ResetChangePasswordForm();
   }
 
   private void ClearMfa()
@@ -625,6 +703,21 @@ public sealed partial class MainForm : Form
   private void SetMfaState(string message)
   {
     _statusInfo.SetMfa(message);
+  }
+
+  private void ApplyChangePasswordEnabled(bool enabled)
+  {
+    _currentPasswordInput.Enabled = enabled;
+    _newPasswordInput.Enabled = enabled;
+    _confirmPasswordInput.Enabled = enabled;
+    _actions.SetChangePasswordEnabled(enabled);
+  }
+
+  private void ResetChangePasswordForm()
+  {
+    _currentPasswordInput.ValueText = "";
+    _newPasswordInput.ValueText = "";
+    _confirmPasswordInput.ValueText = "";
   }
 
   private void RenderQr()

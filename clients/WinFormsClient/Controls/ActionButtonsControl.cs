@@ -18,6 +18,7 @@ public sealed partial class ActionButtonsControl : UserControl
     public event EventHandler? SetupMfaClicked;
     public event EventHandler? DisableMfaClicked;
     public event EventHandler? MeClicked;
+    public event EventHandler? ChangePasswordClicked;
     public event EventHandler? LogoutClicked;
     public event EventHandler? ShowQrClicked;
     public event EventHandler? ShowCookiesClicked;
@@ -33,6 +34,7 @@ public sealed partial class ActionButtonsControl : UserControl
         _setupMfaButton.Click += (s, _) => SetupMfaClicked?.Invoke(this, EventArgs.Empty);
         _disableMfaButton.Click += (s, _) => DisableMfaClicked?.Invoke(this, EventArgs.Empty);
         _meButton.Click += (s, _) => MeClicked?.Invoke(this, EventArgs.Empty);
+        _changePasswordButton.Click += (s, _) => ChangePasswordClicked?.Invoke(this, EventArgs.Empty);
         _logoutButton.Click += (s, _) => LogoutClicked?.Invoke(this, EventArgs.Empty);
         _showQrButton.Click += (s, _) => ShowQrClicked?.Invoke(this, EventArgs.Empty);
         _showCookiesButton.Click += (s, _) => ShowCookiesClicked?.Invoke(this, EventArgs.Empty);
@@ -54,4 +56,5 @@ public sealed partial class ActionButtonsControl : UserControl
 
     public void SetMfaEnabled(bool enabled) => _confirmMfaButton.Enabled = enabled;
     public void SetQrEnabled(bool enabled) => _showQrButton.Enabled = enabled;
+    public void SetChangePasswordEnabled(bool enabled) => _changePasswordButton.Enabled = enabled;
 }

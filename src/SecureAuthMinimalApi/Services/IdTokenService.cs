@@ -53,6 +53,9 @@ public sealed class IdTokenService
         };
     }
 
+    /// <summary>
+    /// Costruisce e firma un id_token JWT con claims standard e profilo dell'utente.
+    /// </summary>
     public (string Token, DateTime ExpiresUtc) CreateIdToken(
         string userId,
         string username,
