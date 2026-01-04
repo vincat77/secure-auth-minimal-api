@@ -87,6 +87,56 @@ public class MainFormChangePasswordTests
         });
     }
 
+    [Fact]
+    public async Task ChangePasswordAsync_handles_network_error_without_reset()
+    {
+        await RunStaAsync(async () =>
+        {
+            var handler = new StubHandler(_ => throw new HttpRequestException("network fail"));
+
+            using var form = new MainForm();
+            SetField(form, "_http", new HttpClient(handler));
+            SetField(form, "_csrfToken", "old-csrf");
+            SetField(form, "_isAuthenticated", true);
+
+            var current = GetField<LabeledTextBoxControl>(form, "_currentPasswordInput");
+            var next = GetField<LabeledTextBoxControl>(form, "_newPasswordInput");
+            var confirm = GetField<LabeledTextBoxControl>(form, "_confirmPasswordInput");
+            current.ValueText = "old";
+            next.ValueText = "new";
+            confirm.ValueText = "new";
+
+            await InvokeChangePasswordAsync(form);
+
+            Assert.Equal("old", current.ValueText);
+            Assert.Equal("new", next.ValueText);
+            Assert.Equal("new", confirm.ValueText);
+            Assert.Equal("old-csrf", GetField<string?>(form, "_csrfToken"));
+        });
+    }
+
+    [Fact]
+    public async Task ChangePassword_controls_enabled_only_when_authenticated()
+    {
+        await RunStaAsync(async () =>
+        {
+            using var form = new MainForm();
+            var current = GetField<LabeledTextBoxControl>(form, "_currentPasswordInput");
+            var next = GetField<LabeledTextBoxControl>(form, "_newPasswordInput");
+            var confirm = GetField<LabeledTextBoxControl>(form, "_confirmPasswordInput");
+
+            // default non autenticato
+            Assert.False(current.Enabled);
+            Assert.False(next.Enabled);
+            Assert.False(confirm.Enabled);
+
+            InvokePrivate(form, "ApplyChangePasswordEnabled", true);
+            Assert.True(current.Enabled);
+            Assert.True(next.Enabled);
+            Assert.True(confirm.Enabled);
+        });
+    }
+
     private static Task InvokeChangePasswordAsync(MainForm form)
     {
         var method = typeof(MainForm).GetMethod("ChangePasswordAsync", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -105,6 +155,13 @@ public class MainFormChangePasswordTests
         var field = target.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
         if (field is null) throw new InvalidOperationException($"Field {name} not found");
         field.SetValue(target, value);
+    }
+
+    private static void InvokePrivate(object target, string name, params object[] args)
+    {
+        var method = target.GetType().GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance);
+        if (method is null) throw new InvalidOperationException($"Method {name} not found");
+        method.Invoke(target, args);
     }
 
     private static Task RunStaAsync(Func<Task> action)
