@@ -30,3 +30,9 @@ Permettere di rendere opzionale la verifica email durante la registrazione/login
 - Registrazione fallita (password policy): con policy severa e password debole, `/register` deve restituire 400 `password_policy_failed` con lista errori.
 - TOTP flow: setup/confirm MFA e poi login deve richiedere MFA e accettare il codice corretto; verificare id_token/sessione coerenti (se già previsto).
 - RememberMe disabilitato: con `RememberMe:Days=0` (o simile), login con `RememberMe=true` non deve emettere refresh/device (`rememberIssued=false`).
+- Email richiesta + MFA attiva: dopo conferma email, login deve comunque rispondere `mfa_required` e, dopo conferma TOTP, tornare 200.
+- Email non richiesta + remember disabilitato: anche se il client invia `RememberMe=true`, con `RememberMe:Days=0` non devono essere emessi refresh/device e `rememberIssued` resta false.
+- Email non richiesta + password errata: deve restare 401 senza cookie/idToken/refresh.
+- Email non richiesta + token conferma scaduto: login ok, ma POST /confirm-email con token scaduto deve dare 410 e non marcare confermato.
+- Email richiesta + token scaduto: login 403 email_not_confirmed, conferma 410; rigenerare token (nuova registrazione o reset) sblocca.
+- Logout/LogoutAll con email non confermata: deve funzionare e rimuovere sessioni/refresh se presenti.
