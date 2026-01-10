@@ -53,6 +53,7 @@ builder.Services.AddSingleton<RefreshTokenRepository>();
 builder.Services.AddSingleton<MfaChallengeRepository>();
 builder.Services.AddSingleton<PasswordResetRepository>();
 builder.Services.AddSingleton<IdTokenService>();
+builder.Services.AddSingleton<IEmailService, NoopEmailService>();
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();

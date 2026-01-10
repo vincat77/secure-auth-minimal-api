@@ -15,7 +15,7 @@ public static class PasswordResetEndpoints
 {
     public static void MapPasswordReset(this WebApplication app, ILogger logger, bool requireConfirmed, int expirationMinutes, bool includeTokenInResponseForTesting)
     {
-        app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets) =>
+        app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
             if (string.IsNullOrWhiteSpace(req?.Email))
@@ -65,6 +65,15 @@ public static class PasswordResetEndpoints
             if (includeTokenInResponseForTesting)
             {
                 return Results.Ok(new { ok = true, resetToken = token });
+            }
+
+            try
+            {
+                await emailService.SendPasswordResetEmailAsync(user.Email, token, reset.ExpiresAtUtc);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Errore durante l'invio email reset password userId={UserId}", user.Id);
             }
 
             return Results.Ok(new { ok = true });
