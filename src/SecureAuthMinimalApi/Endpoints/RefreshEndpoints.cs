@@ -15,6 +15,7 @@ public static class RefreshEndpoints
     public static void MapRefresh(this WebApplication app, ILogger logger)
     {
         var isDevelopment = app.Environment.IsDevelopment();
+        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<SecureAuthMinimalApi.Services.RefreshOptions>>().Value;
 
         app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users) =>
         {
@@ -43,7 +44,7 @@ public static class RefreshEndpoints
                 return Results.Unauthorized();
 
             var ua = ctx.Request.Headers["User-Agent"].ToString();
-            if (!string.Equals(ua, stored.UserAgent, StringComparison.Ordinal))
+            if (refreshOptions.RequireUserAgentMatch && !string.Equals(ua, stored.UserAgent, StringComparison.Ordinal))
                 return Results.Unauthorized();
 
             var user = await users.GetByIdAsync(stored.UserId, ctx.RequestAborted);

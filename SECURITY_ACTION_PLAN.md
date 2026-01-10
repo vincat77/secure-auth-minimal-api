@@ -16,12 +16,12 @@ Correggere criticità (DoS/log leak/seed demo) e rendere più affidabili configu
 
 3) Seed utente demo sicuro  
    - File: `Data/DbInitializer.cs`.  
-   - Azione: creare utente demo solo se `IHostEnvironment.IsDevelopment()` oppure `Seed:Enabled=true` (default false). Password demo solo in dev/doc.  
+   - Azione: creare utente demo solo se `IHostEnvironment.IsDevelopment()` oppure `Seed:Enabled=true` (default false). Password demo solo in dev/doc. Punto da toccare: blocco seed in fondo a `DbInitializer` (seedCheck/seedInsert per username 'demo').  
    - Verifica: avvio in prod non crea demo; in dev con flag on sì.
 
 ## Priorità Media
 4) Refresh UA binding configurabile  
-   - File: endpoint refresh.  
+   - File: endpoint refresh (`Endpoints/RefreshEndpoints.cs`, controllo UA vs stored.UserAgent).  
    - Azione: introdurre `Refresh:RequireUserAgentMatch` (default false). Se false, non bloccare per UA mismatch; device cookie resta binding primario.  
    - Verifica: test refresh con UA diverso passano quando flag=false.
 

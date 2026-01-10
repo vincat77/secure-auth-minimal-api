@@ -500,6 +500,7 @@ RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.
 RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public RefreshCountdownControl()$/;"	m	class:RefreshCountdownControl
 RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^public partial class RefreshCountdownControl : UserControl$/;"	c
 RefreshEndpoints	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^public static class RefreshEndpoints$/;"	c
+RefreshOptions	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^public sealed class RefreshOptions$/;"	c
 RefreshSessionInfoAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task RefreshSessionInfoAsync()$/;"	m	class:MainForm	file:
 RefreshToken	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^public sealed class RefreshToken$/;"	c
 RefreshTokenHasher	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^    public RefreshTokenHasher(IConfiguration config)$/;"	m	class:RefreshTokenHasher
@@ -543,6 +544,7 @@ Register_with_short_password_returns_bad_request	tests/SecureAuthMinimalApi.Test
 RememberChecked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public bool RememberChecked$/;"	p	class:ActionButtonsControl
 RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	class:MainForm	file:
 RequireConfirmed	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetConfig
+RequireUserAgentMatch	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^    public bool RequireUserAgentMatch { get; set; } = false;$/;"	p	class:RefreshOptions
 ResetAsync	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public async Task ResetAsync(string username, CancellationToken ct)$/;"	m	class:LoginThrottleRepository
 ResetChangePasswordForm	clients/WinFormsClient/MainForm.cs	/^  private void ResetChangePasswordForm()$/;"	m	class:MainForm	file:
 ResetHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void ResetHttpClient()$/;"	m	class:MainForm	file:

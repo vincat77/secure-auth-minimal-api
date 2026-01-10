@@ -53,6 +53,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 
 ## Refresh (token persistenti)
 - `Refresh:HmacKey` - Chiave HMAC (32+ caratteri) per hash dei refresh token. In prod separarla da `Jwt:SecretKey`.
+- `Refresh:RequireUserAgentMatch` - Se true richiede match esatto dell'header User-Agent sul refresh (default false; binding principale via device cookie).
 
 ## Device
 - `Device:CookieName` - Nome cookie device-id.
