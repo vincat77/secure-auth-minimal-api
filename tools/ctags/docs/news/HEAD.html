@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Changes in 6.1.0 &#8212; Universal Ctags 0.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
+    
+    <script src="../_static/documentation_options.js?v=e259d695"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Changes in 6.0.0" href="6-0-0.html" />
+    <link rel="prev" title="NEWS" href="../news.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="6-0-0.html" title="Changes in 6.0.0"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../news.html" title="NEWS"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Universal Ctags 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../news.html" accesskey="U">NEWS</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Changes in 6.1.0</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="changes-in-6-1-0">
+<h1>Changes in 6.1.0<a class="headerlink" href="#changes-in-6-1-0" title="Link to this heading">¶</a></h1>
+<p>This page lists only the most significant changes as remembered.  Use
+git-log to review changes not enumerated here, especially in language
+parsers.</p>
+<section id="new-and-extended-options-and-their-flags">
+<h2>New and extended options and their flags<a class="headerlink" href="#new-and-extended-options-and-their-flags" title="Link to this heading">¶</a></h2>
+<section id="regex-lang-option">
+<h3><code class="docutils literal notranslate"><span class="pre">--regex-&lt;LANG&gt;</span></code> option<a class="headerlink" href="#regex-lang-option" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{postrun}</span></code> and <code class="docutils literal notranslate"><span class="pre">{intervaltab}</span></code> flags are added.
+See <span class="xref std std-ref">ctags-optlib(1)</span>.</p></li>
+</ul>
+</section>
+</section>
+<section id="incompatible-changes">
+<h2>Incompatible changes<a class="headerlink" href="#incompatible-changes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><cite>section</cite> kind is deleted from Asm parser.</p></li>
+</ul>
+</section>
+<section id="parser-related-changes">
+<h2>Parser related changes<a class="headerlink" href="#parser-related-changes" title="Link to this heading">¶</a></h2>
+<section id="new-parsers">
+<h3>New parsers<a class="headerlink" href="#new-parsers" title="Link to this heading">¶</a></h3>
+<p>The following parsers have been added:</p>
+<ul class="simple">
+<li><p>BibLaTeX <em>BibTeX based subparser</em> by masatake · Pull Request #3822</p></li>
+<li><p>Forth <em>optlib</em> by farvardin · Pull Request #3812</p></li>
+<li><p>Quarto: new parser by masatake · Pull Request #3677</p>
+<ul>
+<li><p>Quarto by Anish Shah · Pull Request #3643</p></li>
+</ul>
+</li>
+<li><p>V: new parser by Tim Marston · Pull Request #3871, #3870</p></li>
+<li><p>Terraform: new parser by masatake · Pull Request #3684</p>
+<ul>
+<li><p>Terraform (HCL) (<a href="#id1"><span class="problematic" id="id2">*</span></a>.tf): new parser by  Matt Mrowiec · Pull Request #3683</p></li>
+<li><p>Terraform (HCL) (<a href="#id3"><span class="problematic" id="id4">*</span></a>.tf): new parser by Antony Southworth · Pull Request #2952</p></li>
+</ul>
+</li>
+<li><p>TerraformVariables <em>optlib</em> by masatake · Pull Request #3684</p></li>
+<li><p>PkgConfig <em>optlib</em>: new parser · Pull Request #3891</p></li>
+<li><p>I18nRubyGem <em>YAML based subparser</em> · Close #3533</p></li>
+<li><p>XRC <em>libxml</em>: new parser · Pull Request #3897</p></li>
+</ul>
+</section>
+<section id="changes-about-parser-specific-kinds-roles-fields-and-extras">
+<h3>Changes about parser specific kinds, roles, fields, and extras<a class="headerlink" href="#changes-about-parser-specific-kinds-roles-fields-and-extras" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Asm</p>
+<ul>
+<li><p><cite>section</cite> kind is deleted.</p></li>
+</ul>
+</li>
+<li><p>AutoIt</p>
+<ul>
+<li><p>Drop <cite>$</cite> from tags for variables names.</p></li>
+</ul>
+</li>
+<li><p>Automake</p>
+<ul>
+<li><p>New extra <cite>canonicalizedName</cite></p></li>
+<li><p>New kind <cite>pseudodir</cite></p></li>
+</ul>
+</li>
+<li><p>C</p>
+<ul>
+<li><p>New role <cite>foreigndecl</cite> for <cite>function</cite> kind</p></li>
+<li><p>New role <cite>foreigndecl</cite> for <cite>struct</cite> kind</p></li>
+<li><p>New filed <cite>section</cite></p></li>
+<li><p>New field <cite>alias</cite></p></li>
+</ul>
+</li>
+<li><p>C++</p>
+<ul>
+<li><p>New filed <cite>section</cite></p></li>
+<li><p>New field <cite>alias</cite></p></li>
+</ul>
+</li>
+<li><p>CUDA</p>
+<ul>
+<li><p>New field <cite>section</cite></p></li>
+<li><p>New field <cite>alias</cite></p></li>
+</ul>
+</li>
+<li><p>Fortran</p>
+<ul>
+<li><p>New extra <cite>linkName</cite>.</p></li>
+</ul>
+</li>
+<li><p>JavaScript</p>
+<ul>
+<li><p>New role <cite>foreigndecl</cite> for <cite>function</cite> kind</p></li>
+</ul>
+</li>
+<li><p>Kconfig</p>
+<ul>
+<li><p>New kind <cite>variable</cite></p></li>
+</ul>
+</li>
+<li><p>LdScript</p>
+<ul>
+<li><p>New role <cite>destination</cite> for <cite>inputSection</cite> kind</p></li>
+<li><p>New role <cite>aliased</cite> for <cite>symbol</cite> kind</p></li>
+</ul>
+</li>
+<li><p>Markdown</p>
+<ul>
+<li><p>New kind  <cite>hashtag</cite></p></li>
+</ul>
+</li>
+<li><p>SystemTap</p>
+<ul>
+<li><p>New role <cite>attached</cite> for <cite>probe</cite> kind</p></li>
+</ul>
+</li>
+<li><p>SystemVerilog</p>
+<ul>
+<li><p>New kind <cite>define</cite></p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="readtags">
+<h2>Readtags<a class="headerlink" href="#readtags" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Enhancement: add <cite>-P, --with-psuedo-tags</cite> option.</p></li>
+<li><p>Enhancement: add <cite>-A, --absolute-input</cite> and <cite>-C, --canonicalize-input</cite> options.
+See <a class="reference internal" href="../man/readtags.1.html#readtags-1"><span class="std std-ref">readtags(1)</span></a>. for more details.</p></li>
+<li><p>Enhancement: add <cite>-d, --debug</cite>  option for debugging purpose.</p></li>
+<li><p>Bugfix: make <cite>--formatter</cite> options works.</p></li>
+</ul>
+</section>
+<section id="merged-pull-requests">
+<h2>Merged pull requests<a class="headerlink" href="#merged-pull-requests" title="Link to this heading">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This list is imperfect. masatake cleaned up some pull requests before
+merging. Though his names is used in “… by …”, his is not the
+primary contributor of the pull requests. See git log for more
+defatils.</p>
+</div>
+<ul class="simple">
+<li><p>Pull in the latest subtrees by masatake · Pull Request #3902</p></li>
+<li><p>readtags: add --with-psuedo-tags option by masatake · Pull Request #3901</p></li>
+<li><p>I18nRubyGem: add a new kind, “locale” by masatake · Pull Request #3899</p></li>
+<li><p>Ruby: improve the way of parsing <cite>Class.new(SuperClass)</cite> by masatake · Pull Request #3898</p></li>
+<li><p>XML Based Resource System (XRC): new parser by masatake · Pull Request #3897</p></li>
+<li><p>I18nRubyGem: new parser by masatake · Pull Request #3895</p></li>
+<li><p>docs(man): write about guest parsers by masatake · Pull Request #3892</p></li>
+<li><p>Revise the release process by masatake · Pull Request #3894</p></li>
+<li><p>PkgConfig: new parser by masatake · Pull Request #3891</p></li>
+<li><p>rpmMacros: process areas surrounded by pairs of curly bracket by masatake · Pull Request #3890</p></li>
+<li><p>Vera: revise the dataflow of cppGetc -&gt; vStringPut by masatake · Pull Request #3886</p></li>
+<li><p>nestlevel: Fix user data alignment by b4n · Pull Request #3883</p></li>
+<li><p>Cxx: extract section information from __attribute__((section(“SECTION”))) by masatake · Pull Request #3614</p></li>
+<li><p>NEWS: merge README.rst and README.md by masatake · Pull Request #3875</p></li>
+<li><p>builds-sys/test: enhance  check-genfile target by masatake · Pull Request #3882</p></li>
+<li><p>various minor fixes by masatake · Pull Request #3880</p></li>
+<li><p>GitHub Actions: disable BSD workflows again by masatake · Pull Request #3879</p></li>
+<li><p>circleci: use fedora39 by masatake · Pull Request #3878</p></li>
+<li><p>misc/news.bash: generalize the script by masatake · Pull Request #3877</p></li>
+<li><p>docs(web): manage versions of NEWS by masatake · Pull Request #3872</p></li>
+<li><p>main: use the interval tree for filling scope field by masatake · Pull Request #3678</p></li>
+<li><p>V for merging by masatake · Pull Request #3871</p></li>
+<li><p>YACC: fix a typo in the pattern for skipping C strings by masatake · Pull Request #3869</p></li>
+<li><p>Revise: the way of accessing the optVm’s appData by masatake · Pull Request #3868</p></li>
+<li><p>dsl: extend #/../ operator to be able to extract a matched group in the pattern by masatake · Pull Request #3768</p></li>
+<li><p>Docs: minor fixes by masatake · Pull Request #3867</p></li>
+<li><p>misc/units.py: fix invalid escape sequences in regex patterns by masatake · Pull Request #3866</p></li>
+<li><p>build-sys: don’t use libxml-2 if its CRLF handling is broken by masatake · Pull Request #3858</p></li>
+<li><p>SQL: extract views in “create view if not exists VIEW …” by masatake · Pull Request #3850</p></li>
+<li><p>JavaScript: handle spread syntax by masatake · Pull Request #3846</p></li>
+<li><p>GitHub Actions: temporarily disable BSD workflows by leleliu008 · Pull Request #3848</p></li>
+<li><p>README.md: update the URL for the badge of CircleCI Build Status by masatake · Pull Request #3844</p></li>
+<li><p>Yaml: revise Ypath API by masatake · Pull Request #3842</p></li>
+<li><p>docs(web): add .readthedocs.yaml file by masatake · Pull Request #3843</p></li>
+<li><p>Update kotlin parser by dolik-rce · Pull Request #3841</p></li>
+<li><p>Various warnings fixes by b4n · Pull Request #3840</p></li>
+<li><p>main,tlib: fix wording by masatake · Pull Request #3838</p></li>
+<li><p>ReStructuredText: run guest parsers on code blocks by masatake · Pull Request #3839</p></li>
+<li><p>README.md: adjust wording of the configure command by rhythm16 · Pull Request #3835</p></li>
+<li><p>Revert “main,tlib: fix wording” by masatake · Pull Request #3837</p></li>
+<li><p>M4,Autoconf: allow to run a subparser inside quoted area by masatake · Pull Request #3833</p></li>
+<li><p>main,tlib: fix wording by masatake · Pull Request #3834</p></li>
+<li><p>Automake:  various updates by masatake · Pull Request #3828</p></li>
+<li><p>Doc: update docs/windows.rst by leleliu008 · Pull Request #3825</p></li>
+<li><p>AppVeyor: use Visual Studio 2019 image by leleliu008 · Pull Request #3815</p></li>
+<li><p>BibTeX: accept “.” and “/” as parts of a bib entry by masatake · Pull Request #3824</p></li>
+<li><p>BibLaTeX: new subparser based on BibTeX by masatake · Pull Request #3822</p></li>
+<li><p>using %zu for printing size_t values by leleliu008 · Pull Request #3821</p></li>
+<li><p>Forth: new parser by farvardin · Pull Request #3812</p></li>
+<li><p>build(deps): bump actions/checkout from 3 to 4 by dependabot[bot] · Pull Request #3814</p></li>
+<li><p>GitHub Actions: Create dependabot.yml by k-takata · Pull Request #3813</p></li>
+<li><p>c-based: fix to handle edge case by jafl · Pull Request #3796</p></li>
+<li><p>C-based:  put markers to signature by masatake · Pull Request #3804</p></li>
+<li><p>Appveyor: run nmake with defining DEBUG by masatake · Pull Request #3801</p></li>
+<li><p>main,debug: don’t use __func__ directly by masatake · Pull Request #3800</p></li>
+<li><p>input-validate: add CATEGORIES make variable by hirooih · Pull Request #3793</p></li>
+<li><p>Verilog validator by hirooih · Pull Request #3791</p></li>
+<li><p>update Mac installation instructions by euclio · Pull Request #3790</p></li>
+<li><p>CircleCI: run validate-input target on Fedora 38 instead of Fedora 30 by masatake · Pull Request #3792</p></li>
+<li><p>ReStructuredText: skip prefixed whitespaces when parsing markup lines by masatake · Pull Request #3789</p></li>
+<li><p>main: report the guessed reason if system(“sort”) is failed by masatake · Pull Request #3788</p></li>
+<li><p>Verilog,unit: lint-check unit tests by hirooih · Pull Request #3787</p></li>
+<li><p>Verilog: fix for continuous assignment delays by hirooih · Pull Request #3786</p></li>
+<li><p>RpmSpec: added references by masatake · Pull Request #3784</p></li>
+<li><p>Protobuf: reduce calling cppGetLastCharOrStringContents by masatake · Pull Request #3783</p></li>
+<li><p>LdScript: reject “ and ‘ as a part of an identifier by masatake · Pull Request #3782</p></li>
+<li><p>Cxx: ignore alignas by masatake · Pull Request #3781</p></li>
+<li><p>main: reserve errno in external sorting by masatake · Pull Request #3779</p></li>
+<li><p>Tmain: add a case for testing the Perl/Perl6 selector by masatake · Pull Request #3778</p></li>
+<li><p>MatLab: return appropriate tags for set get methods + unit  by portalgun · Pull Request #3773</p></li>
+<li><p>build-sys: release note for 6.1 by masatake · Pull Request #3774</p></li>
+<li><p>Ruby: don’t make a scope for “Class.new…”  with no block by masatake · Pull Request #3733</p></li>
+<li><p>Fix typo in asm.c by eltociear · Pull Request #3757</p></li>
+<li><p>Javascript: multiple prototype assignments by jafl · Pull Request #3770</p></li>
+<li><p>dsl: use strtol instead of es_read_from_string by masatake · Pull Request #3769</p></li>
+<li><p>JavaScript: additional fix for get &amp; set, when specified in prototype by jafl · Pull Request #3765</p></li>
+<li><p>Fix compiler warnings by jafl · Pull Request #3764</p></li>
+<li><p>JavaScript: treat “get” and “set” as function names… by jafl · Pull Request #3761</p></li>
+<li><p>JavaScript: allow array index after ‘this’ keyword by jafl · Pull Request #3762</p></li>
+<li><p>JavaScript: report object fields specified via shortcut syntax by jafl · Pull Request #3763</p></li>
+<li><p>JavaScript: move unit test from review-needed to parser-javascript by jafl · Pull Request #3760</p></li>
+<li><p>main: make --version and --help options work even if a broken .ctags is given by masatake · Pull Request #3756</p></li>
+<li><p>docs(web),cosmetic: update optlib.rst typo removed by artemnovichenko · Pull Request #3753</p></li>
+<li><p>Markdown: set the parser-version 1.1 by masatake · Pull Request #3752</p></li>
+<li><p>Misc fix by masatake · Pull Request #3751</p></li>
+<li><p>Markdown: add hashtags functionality by jiangyinzuo · Pull Request #3747</p></li>
+<li><p>Markdown: accept sections in the line started from spaces by masatake · Pull Request #3750</p></li>
+<li><p>Various minor fixes by masatake · Pull Request #3742</p></li>
+<li><p>LdScript: support SORT keyword by masatake · Pull Request #3743</p></li>
+<li><p>libreadtags: pull the latest version by masatake · Pull Request #3735</p></li>
+<li><p>Fix many calls to ctype functions by b4n · Pull Request #3734</p></li>
+<li><p>vstring: Avoid int -&gt; char truncation warnings by b4n · Pull Request #3690</p></li>
+<li><p>lregex: optimize substitute() by masatake · Pull Request #3728</p></li>
+<li><p>Misc fix by masatake · Pull Request #3731</p></li>
+<li><p>erlang: Fix crash parsing directives longer than 31 characters by b4n · Pull Request #3726</p></li>
+<li><p>Misc fix by masatake · Pull Request #3724</p></li>
+<li><p>verilog: treat a text-macro as an identifier by hirooih · Pull Request #3722</p></li>
+<li><p>readtags: fix a bug compiling a formatter wrongly if giving --formatter long option by masatake · Pull Request #3723</p></li>
+<li><p>Verilog: support virtual interface variables by hirooih · Pull Request #3720</p></li>
+<li><p>units.py: don’t use color if NO_COLOR is specified by masatake · Pull Request #3721</p></li>
+<li><p>Suppress warning by masatake · Pull Request #3714</p></li>
+<li><p>GDScript : mark xtag bit for implicitClass xtags by masatake · Pull Request #3717</p></li>
+<li><p>Fortran: fix wrongly specified xtag type by masatake · Pull Request #3718</p></li>
+<li><p>docs(web): sphinx minor fixes by masatake · Pull Request #3719</p></li>
+<li><p>D: parse template instance types by ntrel · Pull Request #3716</p></li>
+<li><p>D: fix parsing parameter with pointer by ntrel · Pull Request #3715</p></li>
+<li><p>Misc fix by masatake · Pull Request #3713</p></li>
+<li><p>D: set template members parent name by ntrel · Pull Request #3707</p></li>
+<li><p>D: remove <cite>overload</cite>, not a keyword by ntrel · Pull Request #3710</p></li>
+<li><p>D: parse contract expressions by ntrel · Pull Request #3708</p></li>
+<li><p>D: parse const(T), immutable, inout and shared type qualifiers by ntrel · Pull Request #3709</p></li>
+<li><p>readtags: canonicalize the input file name based on CWD ptag by masatake · Pull Request #3304</p></li>
+<li><p>C-based parsers,style: adjust placements of “{” after if by masatake · Pull Request #3706</p></li>
+<li><p>D: parse user-defined attributes by ntrel · Pull Request #3701</p></li>
+<li><p>Circleci: add  fedora 38 by masatake · Pull Request #3705</p></li>
+<li><p>main: add missing const modifiers by masatake · Pull Request #3699</p></li>
+<li><p>autoit: Drop $ from variable names by techee · Pull Request #3697</p></li>
+<li><p>C++: accept prototypes starting from :: operator by masatake · Pull Request #3694</p></li>
+<li><p>main: revise bit fields in tagEntryInfo by masatake · Pull Request #3695</p></li>
+<li><p>Misc fix by masatake · Pull Request #3691</p></li>
+<li><p>AutoIt: Slightly optimize parsing #region by b4n · Pull Request #3689</p></li>
+<li><p>main,refactor: delete ‘inCorkQueue’ parameter from attachParserField() by masatake · Pull Request #3687</p></li>
+<li><p>Optscript: add _foreignreftag operator by masatake · Pull Request #3686</p></li>
+<li><p>Misc fix by masatake · Pull Request #3685</p></li>
+<li><p>Terraform: new parser by masatake · Pull Request #3684</p></li>
+<li><p>main: Don’t strdup the inputFileName when storing a tag to the corkQueue by masatake · Pull Request #3682</p></li>
+<li><p>Misc fix by masatake · Pull Request #3681</p></li>
+<li><p>Quarto: new parser by masatake · Pull Request #3677</p></li>
+<li><p>Misc fix by masatake · Pull Request #3679</p></li>
+<li><p>Ruby: skip if __DATA__ is found by masatake · Pull Request #3676</p></li>
+<li><p>SQL: handle “DATABASE” and “SCHEMA” keywords specially only when they come after “CREATE” by masatake · Pull Request #3674</p></li>
+<li><p>docs(web): add ctags-lang-kconfig.7.rst by masatake · Pull Request #3673</p></li>
+<li><p>SQL: Skip PL/SQL selection directives and add sanity check for inquiry directive size by techee · Pull Request #3654</p></li>
+<li><p>misc/review: add “accept” command to the Tmain inspector by masatake · Pull Request #3672</p></li>
+<li><p>Fortran: add “linkName” extra by masatake · Pull Request #3671</p></li>
+<li><p>Cxx: scan the cork queue instead of the symtab to fill nth fields by masatake · Pull Request #3642</p></li>
+<li><p>main: add quick path for looking up too long strings in the keyword table by techee · Pull Request #3664</p></li>
+<li><p>main,cosmetic: fix misspelling by jafl · Pull Request #3667</p></li>
+<li><p>Powershell: fix string escape issue by iaalm · Pull Request #3661</p></li>
+<li><p>Verilog: all text macro map to new kindDefinition:define  by my2817 · Pull Request #3653</p></li>
+<li><p>Fix typo in conditional in C++ parser by al42and · Pull Request #3646</p></li>
+<li><p>Tcl: don’t include ‘”’ char as a part of identifiers by masatake · Pull Request #3639</p></li>
+<li><p>GitHubActions: fix testing-openbsd.yml automake version broken issue by leleliu008 · Pull Request #3640</p></li>
+<li><p>Ruby:  handle curly bracket by masatake · Pull Request #3633</p></li>
+<li><p>Kconfig: support the  macro language by masatake · Pull Request #3632</p></li>
+<li><p>Ldscript:  improve tagging versions in VERSION commands by masatake · Pull Request #3631</p></li>
+<li><p>CPreProcessor:  don’t include the newline after a backslash in string or char literals by masatake · Pull Request #3629</p></li>
+<li><p>C,Asm,LdScript: minor fixes by masatake · Pull Request #3623</p></li>
+<li><p>Markdown: fix the condition to detect code blocks by masatake · Pull Request #3626</p></li>
+<li><p>C++,ObjectiveC,C,main: fix  the broken selector for .h by masatake · Pull Request #3622</p></li>
+<li><p>Cxx: support typeof and __typeof__ keywords of the gcc extension by masatake · Pull Request #3621</p></li>
+<li><p>Various preparations by masatake · Pull Request #3617</p></li>
+<li><p>readtags: unescape input field (a.k.a {tagfile}) only if TAG_OUTPUT_MODE is u-ctags and TAG_OUTPUT_FILESEP is slash by masatake · Pull Request #3599</p></li>
+<li><p>main: introduce --_paramdef-&lt;LANG&gt;=&lt;NAME&gt;,&lt;DESCRIPTION&gt; option by masatake · Pull Request #3613</p></li>
+<li><p>Perl: skip string literals when collecting heredoc markers by masatake · Pull Request #3592</p></li>
+<li><p>Org:  optimize by masatake · Pull Request #3611</p></li>
+<li><p>GitHub Actions: fix testing-mac.yml Homebrew upgrade <a class="reference external" href="mailto:python&#37;&#52;&#48;3&#46;10">python<span>&#64;</span>3<span>&#46;</span>10</a> and <a class="reference external" href="mailto:python&#37;&#52;&#48;3&#46;11">python<span>&#64;</span>3<span>&#46;</span>11</a> failed problem by leleliu008 · Pull Request #3610</p></li>
+<li><p>Systemtap: add new role “attached” for “probe” kind , and run CPreProcessor as a guest parser  by masatake · Pull Request #3607</p></li>
+<li><p>C++,C: record consteval, constinit, thread_local, and __thread to properties: field by masatake · Pull Request #3602</p></li>
+<li><p>HTML: introduce a specialized tokenizer for script areas by masatake · Pull Request #3598</p></li>
+</ul>
+</section>
+<section id="issues-close-or-partially-closed-via-above-pull-requests">
+<h2>Issues close or partially closed via above pull requests<a class="headerlink" href="#issues-close-or-partially-closed-via-above-pull-requests" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>YAML: extract keys (with scope) for I18n Ruby Gem · Issue #3523</p></li>
+<li><p>docs(man): write about using multiple parsers for single input file · Issue #3888</p></li>
+<li><p>Write about kind collisions to ctags-faq(7) · Issue #3007</p></li>
+<li><p>create annotation tags instead of lightweight tag · Issue #3767</p></li>
+<li><p>CPreProcessor: Assertion <a href="#id5"><span class="problematic" id="id6">`</span></a>c &gt;= 0 &amp;&amp; c &lt;= 0xff’ failed · Issue #3771</p></li>
+<li><p>Convert NEWS.md to NEWS.rst · Issue #3874</p></li>
+<li><p>[Question] Defining new regex-based tags with scope defined by built-in <cite>ctags</cite> kinds · Issue #3637</p></li>
+<li><p>Warning reported when running make units · Issue #3865</p></li>
+<li><p>Wording · Issue #3830</p></li>
+<li><p>BibTeX: “.” in label · Issue #3823</p></li>
+<li><p>Bibtex - include types defined on biblatex package · Issue #3802</p></li>
+<li><p>AIX compiling from source is failing · Issue #3807</p></li>
+<li><p>LdScript: using cppGetc() in wrong ways · Issue #3449</p></li>
+<li><p>Cxx: the way of handling alignas · Issue #3780</p></li>
+<li><p>main: ctags option processing fails if “Language already defined”, including ctags --help · Issue #2935</p></li>
+<li><p>Markdown: tagging a chapter unexpectedly · Issue #3748</p></li>
+<li><p>units.py: support NO_COLOR (<a class="reference external" href="https://no-color.org/">https://no-color.org/</a>) · Issue #3688</p></li>
+<li><p>Request: filename related functions in readtags expressions · Issue #3168</p></li>
+<li><p>C++: fully qualified return type breaks parsing prototypes · Issue #3693</p></li>
+<li><p>SQL:  Warning: ignoring null tag in … /src/test/regress/sql/collate.icu.utf8.sql(line: 412) · Issue #3636</p></li>
+<li><p>Fortran: Improve handling of case insensitivity · Issue #3668</p></li>
+<li><p>C/C++: Endless parse large file · Issue #3634</p></li>
+<li><p>Tcl parser - Ctags can not generating tags for some proc · Issue #3638</p></li>
+<li><p>Markdown: comments within shell code of markdown files are recognized as chapters · Issue #3625</p></li>
+<li><p>C: support typeof gcc extension · Issue #3620</p></li>
+<li><p>main: use escape sequences when printing pseudo tags as explained in tags(5) · Issue #3577</p></li>
+<li><p>readtags: improper handling of escape sequences in input field · Issue #3559</p></li>
+<li><p>Perl: Incorrectly sees &lt;&lt; inside a string as start of a heredoc · Issue #3588</p></li>
+<li><p>C++: Output information on <cite>constexpr</cite> and <cite>consteval</cite> functions · Issue #3539</p></li>
+<li><p>html: apostrophe in JavaScript comment breaks guest parser · Issue #3581</p></li>
+<li><p>HTML: HTML comment starter in JavaScript area · Issue #3597</p></li>
+<li><p>html: apostrophe in JavaScript comment breaks guest parser · Issue #3581</p></li>
+<li><p>HTML: HTML comment starter in JavaScript area · Issue #3597</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Changes in 6.1.0</a><ul>
+<li><a class="reference internal" href="#new-and-extended-options-and-their-flags">New and extended options and their flags</a><ul>
+<li><a class="reference internal" href="#regex-lang-option"><code class="docutils literal notranslate"><span class="pre">--regex-&lt;LANG&gt;</span></code> option</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#incompatible-changes">Incompatible changes</a></li>
+<li><a class="reference internal" href="#parser-related-changes">Parser related changes</a><ul>
+<li><a class="reference internal" href="#new-parsers">New parsers</a></li>
+<li><a class="reference internal" href="#changes-about-parser-specific-kinds-roles-fields-and-extras">Changes about parser specific kinds, roles, fields, and extras</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#readtags">Readtags</a></li>
+<li><a class="reference internal" href="#merged-pull-requests">Merged pull requests</a></li>
+<li><a class="reference internal" href="#issues-close-or-partially-closed-via-above-pull-requests">Issues close or partially closed via above pull requests</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../news.html"
+                          title="previous chapter">NEWS</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6-0-0.html"
+                          title="next chapter">Changes in 6.0.0</a></p>
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="6-0-0.html" title="Changes in 6.0.0"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../news.html" title="NEWS"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Universal Ctags 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../news.html" >NEWS</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Changes in 6.1.0</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2015-2022, Universal Ctags Team.
+      Last updated on 29 Dec 2023.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    </div>
+  </body>
+</html>

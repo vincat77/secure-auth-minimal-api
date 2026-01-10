@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The V parser &#8212; Universal Ctags 0.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
+    
+    <script src="_static/documentation_options.js?v=e259d695"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Vim parser" href="parser-vim.html" />
+    <link rel="prev" title="The new Tcl parser" href="parser-tcl.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parser-vim.html" title="The Vim parser"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parser-tcl.html" title="The new Tcl parser"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Universal Ctags 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="parsers.html" accesskey="U">Parsers</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The V parser</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="the-v-parser">
+<span id="v"></span><h1>The V parser<a class="headerlink" href="#the-v-parser" title="Link to this heading">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Maintainer<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tim Marston &lt;<a class="reference external" href="mailto:tim&#37;&#52;&#48;ed&#46;am">tim<span>&#64;</span>ed<span>&#46;</span>am</a>&gt;</p>
+</dd>
+</dl>
+<section id="development">
+<h2>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h2>
+<p>The V parser can emit warnings when it encounters code which does not parse.
+Normally, this would indicate a problem with the code being parsed.  But for
+development, it is useful to run the parser against a ton of known-good code
+(e.g., the V sources) to check the parser.  To emit unexpected token warnings,
+run ctags with <cite>-d 16</cite>.  (Note: this requires ctags to have been built with
+<cite>--enable-debugging</cite>).</p>
+<p>A useful terminal command to run the V parser against the whole V source code
+and list the names of any files that fail to parser is:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>vlib
+<span class="gp">$ </span>find<span class="w"> </span>.<span class="w"> </span>-name<span class="w"> </span><span class="s1">&#39;*test*&#39;</span><span class="w"> </span>-prune<span class="w"> </span>-o<span class="w"> </span>-name<span class="w"> </span><span class="s1">&#39;*.v&#39;</span><span class="w"> </span>-print0<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>xargs<span class="w"> </span>-0<span class="w"> </span>ctags<span class="w"> </span>-d<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">&#39;s/^UNEXPECTED.*at \([^:]*\):.*$/\1/p&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>uniq
+</pre></div>
+</div>
+<section id="debugging">
+<h3>Debugging<a class="headerlink" href="#debugging" title="Link to this heading">¶</a></h3>
+<p>The V parser can also emit a dump of its operation by running ctags with <cite>-d 8</cite>.
+(Note: like the parser warnings, this also requires ctags to have been built
+with <cite>--enable-debugging</cite>.)</p>
+<p>The dump is extremely useful for debugging the parser and shows:</p>
+<ul class="simple">
+<li><p>individual grammar parsers starting ({foo:) and ending (:foo})</p></li>
+<li><p>lexer reading tokens (UPPERCASE)
+- tokens read in non-primary token buffer appear in square brackets</p></li>
+<li><p>tokens being “unread” (˄)</p></li>
+<li><p>unread tokens being replayed (˅)</p></li>
+<li><p>emitted tags (#)</p></li>
+</ul>
+</section>
+</section>
+<section id="shortcomings">
+<h2>Shortcomings<a class="headerlink" href="#shortcomings" title="Link to this heading">¶</a></h2>
+<p>The V parser currently has no support for</p>
+<ul class="simple">
+<li><p>cross references (except modules)</p></li>
+<li><p>function arguments</p></li>
+<li><p>closure arguments</p></li>
+<li><p>variable types</p></li>
+</ul>
+</section>
+<section id="design">
+<h2>Design<a class="headerlink" href="#design" title="Link to this heading">¶</a></h2>
+<p>The V Parser reads tokens and parses V grammar in parallel (i.e., it does not
+build an AST).</p>
+<p>The individual grammar parsers all follow these simple rules:</p>
+<ul class="simple">
+<li><p>when called, <cite>token</cite> argument already holds the first token which an
+individual grammar parser should recognise</p></li>
+<li><p>on return, individual parser functions read only the tokens they recognises
+and no additional tokens are read (i.e., they do not “over read”)</p></li>
+<li><p>these rules are enforced by <cite>Assert</cite> statements at the start of each parser
+function</p></li>
+</ul>
+<p>The lexer allows you to “unread” up to <cite>MAX_REPLAYS</cite> tokens.  But unreading a
+token only stores it (to be replayed when <cite>getToken()</cite> is next called) and it
+does not reset the <cite>token</cite> to hold its previous value.  Where it is necessary to
+read ahead and retain the value of a tokens, additional token buffers can be
+used (<cite>newToken()</cite>) or the primary token buffer can be duplicated (<cite>dupToken()</cite>)
+so that it can continue to be used for reading.  Generally, the primary token
+buffer is used where it can be, so that the debug dump accurately shows where
+additional buffers are used.  This helps to diagnose situations where unreading
+a token does not reset its previous value.</p>
+<p>Use of <cite>expectToken()</cite>, rather than <cite>isToken()</cite>, is encouraged where applicable
+so that the parser can be run against as much known-good V code as possible and
+checked to ensure that is not caught out by uncommon grammar.</p>
+<section id="fully-qualified-identifiers-and-external-symbols">
+<h3>Fully-qualified Identifiers and External Symbols<a class="headerlink" href="#fully-qualified-identifiers-and-external-symbols" title="Link to this heading">¶</a></h3>
+<p>The following tokens represent identifiers:
+- <cite>IDENT</cite> is a V variable/function/field name (e.g., <cite>foo</cite>)
+- <cite>TYPE</cite> is a V struct/interface/alias/union name (e.g., <cite>Foo</cite>)
+- <cite>EXTERN</cite> is never emitted by the lexer and represents an external symbol</p>
+<p>When the lexer returns an <cite>IDENT</cite> or <cite>TYPE</cite> and <cite>parseFullyQualified()</cite> is
+subsequently called to consume any additional tokens which may make-up a
+fully-qualified identifier, the provided <cite>token</cite> is also updated to reflect the
+final, fully-qualified identifier, so that:</p>
+<ul class="simple">
+<li><p>token-&gt;string is the whole, fully-qualified name of the identifier (e.g.,
+<cite>user.id</cite>)</p></li>
+<li><p>token-&gt;type is updated to <cite>IDENT</cite> or <cite>TYPE</cite> to reflect the last part of the
+fully-qualified identifier (e.g., <cite>Foo.bar</cite> is an <cite>IDENT</cite> and <cite>foo.Bar</cite> is a
+<cite>TYPE</cite>), or to <cite>EXTERN</cite> where the fully-qualified identifier is an external
+symbol (e.g., <cite>C.foo</cite> or <cite>JS.Foo</cite>) and the type can not be determined further</p></li>
+<li><p>the token is also marked as being fully-qualified, so that subsequent attempts
+to fully-qualify it (e.g., after it is unread and replayed) have no effect</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">The V parser</a><ul>
+<li><a class="reference internal" href="#development">Development</a><ul>
+<li><a class="reference internal" href="#debugging">Debugging</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#shortcomings">Shortcomings</a></li>
+<li><a class="reference internal" href="#design">Design</a><ul>
+<li><a class="reference internal" href="#fully-qualified-identifiers-and-external-symbols">Fully-qualified Identifiers and External Symbols</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="parser-tcl.html"
+                          title="previous chapter">The new Tcl parser</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="parser-vim.html"
+                          title="next chapter">The Vim parser</a></p>
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parser-vim.html" title="The Vim parser"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parser-tcl.html" title="The new Tcl parser"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Universal Ctags 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="parsers.html" >Parsers</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The V parser</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2015-2022, Universal Ctags Team.
+      Last updated on 29 Dec 2023.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ctags-lang-i18nrubgem &#8212; Universal Ctags 0.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
+    
+    <script src="../_static/documentation_options.js?v=e259d695"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ctags-lang-iPythonCell" href="ctags-lang-iPythonCell.7.html" />
+    <link rel="prev" title="ctags-lang-gdscript" href="ctags-lang-gdscript.7.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ctags-lang-iPythonCell.7.html" title="ctags-lang-iPythonCell"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ctags-lang-gdscript.7.html" title="ctags-lang-gdscript"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Universal Ctags 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man-pages.html" accesskey="U">Man pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ctags-lang-i18nrubgem</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="ctags-lang-i18nrubgem">
+<span id="ctags-lang-i18nrubgem-7"></span><h1>ctags-lang-i18nrubgem<a class="headerlink" href="#ctags-lang-i18nrubgem" title="Link to this heading">¶</a></h1>
+<p>Random notes about tagging input for I18n Ruby Gem with Universal Ctags</p>
+<dl class="field-list simple">
+<dt class="field-odd">Version<span class="colon">:</span></dt>
+<dd class="field-odd"><p>6.1.0</p>
+</dd>
+<dt class="field-even">Manual group<span class="colon">:</span></dt>
+<dd class="field-even"><p>Universal Ctags</p>
+</dd>
+<dt class="field-odd">Manual section<span class="colon">:</span></dt>
+<dd class="field-odd"><p>7</p>
+</dd>
+</dl>
+<section id="synopsis">
+<h2>SYNOPSIS<a class="headerlink" href="#synopsis" title="Link to this heading">¶</a></h2>
+<div class="line-block">
+<div class="line"><strong>ctags</strong> … --extras=+s --languages=+I18nRubyGem …</div>
+<div class="line"><strong>ctags</strong> … --extras=+s --language-force=I18nRubyGem …</div>
+<div class="line"><strong>ctags</strong> … --extras=+s --map-I18nRubyGem=+.yaml …</div>
+<div class="line"><strong>ctags</strong> … --extras=+s --map-I18nRubyGem=+.yml …</div>
+</div>
+</section>
+<section id="description">
+<h2>DESCRIPTION<a class="headerlink" href="#description" title="Link to this heading">¶</a></h2>
+<p>This man page gathers random notes about tagging input for I18n Ruby
+Gem <a class="reference internal" href="#rubyi18n" id="id1"><span>[RUBYI18N]</span></a>. I18nRubyGem is a subparser running on Yaml parser. If a
+top-level scalar token of a given Yaml source input is a local name <a class="reference internal" href="#isocodes" id="id2"><span>[ISOCODES]</span></a>,
+I18nRubyGem activates itself. If not, I18nRubyGem does nothing.</p>
+<p>“input.yaml”</p>
+<div class="highlight-YAML notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="nt">ja</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">msg</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">error</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">エラー</span>
+<span class="w">    </span><span class="nt">function</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">関数</span>
+</pre></div>
+</div>
+<p>“output.tags”
+with “--options=NONE -o - --fields=+E input.yaml”</p>
+<div class="highlight-tags notranslate"><div class="highlight"><pre><span></span>error   input.yaml      /^    error: エラー$/;&quot;    k       keyInMiddle:ja.msg      extras:subparser
+function        input.yaml      /^    function: 関数$/;&quot;  k       keyInMiddle:ja.msg      extras:subparser
+ja.msg.error    input.yaml      /^    error: エラー$/;&quot;    k       keyInMiddle:ja.msg      extras:subparser,localeful
+ja.msg.function input.yaml      /^    function: 関数$/;&quot;  k       keyInMiddle:ja.msg      extras:subparser,localeful
+msg.error       input.yaml      /^    error: エラー$/;&quot;    k       locale:ja       extras:subparser,localeless
+msg.function    input.yaml      /^    function: 関数$/;&quot;  k       locale:ja       extras:subparser,localeless
+</pre></div>
+</div>
+<p>With the options, the parser emits three tag entries for a key:
+“error”, “js.msg.error”, and “msg.error” for the key “error”, The
+parser emits “error” at the first line always.</p>
+<p>To emit “ja.msg.error”, a <code class="docutils literal notranslate"><span class="pre">localeful</span></code> extra tag, at the fifth line
+always. If you specify <code class="docutils literal notranslate"><span class="pre">--extra=+q</span></code> or <code class="docutils literal notranslate"><span class="pre">--extra=+{qualified}</span></code>,
+ctags emits the same tag twice: a <code class="docutils literal notranslate"><span class="pre">localeful</span></code> tag, and a <code class="docutils literal notranslate"><span class="pre">qualified</span></code> tag.
+You can suppress the <code class="docutils literal notranslate"><span class="pre">localeful</span></code> extra tags., specify
+<code class="docutils literal notranslate"><span class="pre">--extras-I18nRubyGem=-{localeful}</span></code>.</p>
+<p>To emit “msg.error”, a <code class="docutils literal notranslate"><span class="pre">localeless</span></code> extra tag, at the fifth line
+always. The parser creates a <code class="docutils literal notranslate"><span class="pre">localeless</span></code> extra tag by truncating
+the first component (e.g. “ja.”) from the associated full qualified
+extra tag (e.g. “ja.msg.error”).  <code class="docutils literal notranslate"><span class="pre">localeless</span></code> extra is enabled by
+default. If you don’t need <code class="docutils literal notranslate"><span class="pre">localeless</span></code> extra tags, specify
+<code class="docutils literal notranslate"><span class="pre">--extras-I18nRubyGem=-{localeless}</span></code>.</p>
+<p>The parser doesn’t make tag entries for top-level and mid-level components like
+<code class="docutils literal notranslate"><span class="pre">ja</span></code> and <code class="docutils literal notranslate"><span class="pre">msg</span></code> by default. If you need them, specify
+<code class="docutils literal notranslate"><span class="pre">--kinds-I18nRubyGem=+{locale}</span></code> and/or
+<code class="docutils literal notranslate"><span class="pre">--kinds-I18nRubyGem=+{keyInMiddle}</span></code>.</p>
+</section>
+<section id="known-bugs">
+<h2>KNOWN BUGS<a class="headerlink" href="#known-bugs" title="Link to this heading">¶</a></h2>
+<p>The mechanism activating I18nRubyGem subparser doesn’t work well for YAML
+source input containing multiple documents.</p>
+</section>
+<section id="see-also">
+<h2>SEE ALSO<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="ctags.1.html#ctags-1"><span class="std std-ref">ctags(1)</span></a></p>
+</section>
+<section id="references">
+<h2>REFERENCES<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="rubyi18n" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">RUBYI18N</a><span class="fn-bracket">]</span></span>
+<p>Ruby I18n, <a class="reference external" href="https://github.com/ruby-i18n/i18n">https://github.com/ruby-i18n/i18n</a></p>
+</div>
+<div class="citation" id="isocodes" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">ISOCODES</a><span class="fn-bracket">]</span></span>
+<p>iso-codes, <a class="reference external" href="https://salsa.debian.org/iso-codes-team/iso-codes">https://salsa.debian.org/iso-codes-team/iso-codes</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">ctags-lang-i18nrubgem</a><ul>
+<li><a class="reference internal" href="#synopsis">SYNOPSIS</a></li>
+<li><a class="reference internal" href="#description">DESCRIPTION</a></li>
+<li><a class="reference internal" href="#known-bugs">KNOWN BUGS</a></li>
+<li><a class="reference internal" href="#see-also">SEE ALSO</a></li>
+<li><a class="reference internal" href="#references">REFERENCES</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="ctags-lang-gdscript.7.html"
+                          title="previous chapter">ctags-lang-gdscript</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ctags-lang-iPythonCell.7.html"
+                          title="next chapter">ctags-lang-iPythonCell</a></p>
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ctags-lang-iPythonCell.7.html" title="ctags-lang-iPythonCell"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ctags-lang-gdscript.7.html" title="ctags-lang-gdscript"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Universal Ctags 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man-pages.html" >Man pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ctags-lang-i18nrubgem</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2015-2022, Universal Ctags Team.
+      Last updated on 29 Dec 2023.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    </div>
+  </body>
+</html>
