@@ -480,6 +480,63 @@ public class ApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Login_allows_when_email_confirmation_not_required()
+    {
+        // Scenario: configurazione EmailConfirmation:Required=false, l'utente registra senza confermare e può fare login; il token di conferma resta in DB finché non viene usato.
+        // Risultato atteso: login 200 senza conferma, flag EmailConfirmed=0 e token/exp presenti; dopo /confirm-email EmailConfirmed=1 e token/exp null.
+        LogTestStart();
+        var username = $"no_confirm_{Guid.NewGuid():N}";
+        var email = $"{username}@example.com";
+        var password = "P@ssw0rd!Long";
+        var overrides = new Dictionary<string, string?> { ["EmailConfirmation:Required"] = "false" };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+            var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+            Assert.NotNull(regPayload);
+            var token = regPayload!.EmailConfirmToken!;
+            var exp = regPayload.EmailConfirmExpiresUtc;
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            var loginBody = await login.Content.ReadAsStringAsync();
+            _output.WriteLine($"Login status {login.StatusCode}, body: {loginBody}");
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+            await using (var db = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+            {
+                await db.OpenAsync();
+                var flags = await db.QuerySingleAsync<(long Confirmed, string? Token, string? Exp)>("SELECT email_confirmed, email_confirm_token, email_confirm_expires_utc FROM users WHERE username = @u", new { u = username });
+                Assert.Equal(0, flags.Confirmed);
+                Assert.Equal(token, flags.Token);
+                Assert.Equal(exp, flags.Exp);
+            }
+
+            var confirm = await client.PostAsJsonAsync("/confirm-email", new { Token = token });
+            Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+
+            await using (var db2 = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+            {
+                await db2.OpenAsync();
+                var flags = await db2.QuerySingleAsync<(long Confirmed, string? Token, string? Exp)>("SELECT email_confirmed, email_confirm_token, email_confirm_expires_utc FROM users WHERE username = @u", new { u = username });
+                Assert.Equal(1, flags.Confirmed);
+                Assert.Null(flags.Token);
+                Assert.Null(flags.Exp);
+            }
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
+    [Fact]
     public async Task Confirm_email_with_valid_token_marks_confirmed()
     {
         // Scenario: registra un utente, prende il token di conferma e lo invia a POST /confirm-email per attivare l'account.

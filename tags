@@ -323,6 +323,7 @@ LoginResponse	tests/SecureAuthMinimalApi.Tests/LogoutAllTests.cs	/^    private r
 LoginResponse	tests/SecureAuthMinimalApi.Tests/LogoutRefreshTests.cs	/^    private record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued);$/;"	m	class:LogoutRefreshTests	file:
 LoginThrottleRepository	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public LoginThrottleRepository(IConfiguration config)$/;"	m	class:LoginThrottleRepository
 LoginThrottleRepository	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^public sealed class LoginThrottleRepository$/;"	c
+Login_allows_when_email_confirmation_not_required	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_allows_when_email_confirmation_not_required()$/;"	m	class:ApiTests
 Login_audit_records_success_and_failure	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_audit_records_success_and_failure()$/;"	m	class:ApiTests
 Login_audit_stores_outcome_and_no_password_in_detail	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_audit_stores_outcome_and_no_password_in_detail()$/;"	m	class:ApiTests
 Login_blocks_when_email_not_confirmed	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_blocks_when_email_not_confirmed()$/;"	m	class:ApiTests
