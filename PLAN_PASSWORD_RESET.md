@@ -34,7 +34,7 @@ Aggiungere un flusso di reset password per utenti non autenticati: richiesta tok
    - POST `/password-reset/confirm`
      * Input `PasswordResetConfirmRequest { string? Token, string? NewPassword, string? ConfirmPassword }`
      * Valida token non vuoto → se vuoto 400 invalid_input.
-     * Carica reset via token hash, verifica non scaduto/unused, else 400 `invalid_token` (uniforme; 410 opzionale ma evitare 401).
+     * Carica reset via token hash, verifica non scaduto/unused, else 400 `invalid_token` (uniforme, no 401/410).
      * Valida password con `AuthHelpers.ValidatePassword` usando config corrente.
      * Transazione: update password, revoca sessioni/refresh (RevokeAllForUserAsync), mark used.
      * Risposta 200 `{ ok = true }`.
@@ -64,9 +64,10 @@ Aggiungere un flusso di reset password per utenti non autenticati: richiesta tok
    - Account locked/deleted: request 200 ma nessun token creato; conferma dopo delete → 400 invalid_token; se locked tra request/confirm → 400 account_locked.
    - Input validation: email vuota/null → 400; token vuoto/malformed → 400 invalid_token; mismatch password → 400 invalid_input.
    - Race condition: due conferme simultanee sullo stesso token → una 200, una 400 invalid_token; password cambiata una sola volta.
-   - Revoca sessioni/refresh: dopo reset, tutte le sessioni e i refresh attivi devono risultare revocati; vecchi access/refresh non validi.
-   - Audit logging minimo: verifica che eventi base (request trovata/non trovata, blocked_unconfirmed/locked, completed, failed) vengano loggati.
+   - Revoca sessioni/refresh: dopo reset, tutte le sessioni (`user_sessions`) e i refresh attivi devono risultare revocati; vecchi access/refresh non validi.
+   - Audit logging strutturato: da valutare più avanti; al momento solo Serilog, i test su eventi possono essere messi da parte o coperti con logger finto.
    - Cascade delete: cancellazione utente elimina i reset associati (FK ON DELETE CASCADE).
+   - Token uniqueness stress test (100 utenti simultanei): opzionale, non indispensabile per l'MVP.
 
 5) Documentazione:
    - Aggiornare `appsettings.guida.md` con sezione PasswordReset e opzioni.
