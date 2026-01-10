@@ -1029,6 +1029,61 @@ public class ApiTests : IAsyncLifetime
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Login_remember_sets_secure_device_cookie_in_non_dev(bool emailRequired)
+    {
+        // Scenario: ambiente non-Development con Device:RequireSecure=true; RememberMe deve emettere device_id con flag Secure e funzionare sia con email richiesta che no.
+        // Risultato atteso: rememberIssued=true, cookie device_id presente con "secure" e refresh_token emesso.
+        LogTestStart();
+        var username = $"device_secure_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = emailRequired ? "true" : "false",
+            ["Environment"] = "Production",
+            ["Device:RequireSecure"] = "true",
+            ["Cookie:RequireSecure"] = "true"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: true, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+            var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+            Assert.NotNull(regPayload);
+            if (emailRequired)
+            {
+                var confirm = await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+                Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+            }
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            Assert.True(payload!.Ok);
+            Assert.True(payload.RememberIssued);
+
+            var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+            var deviceCookie = cookies.FirstOrDefault(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase));
+            Assert.False(string.IsNullOrWhiteSpace(deviceCookie));
+            Assert.Contains("secure", deviceCookie!.ToLowerInvariant());
+            var refreshCookie = cookies.FirstOrDefault(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+            Assert.False(string.IsNullOrWhiteSpace(refreshCookie));
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
     [Fact]
     public async Task Logout_and_logout_all_work_when_email_not_confirmed()
     {
