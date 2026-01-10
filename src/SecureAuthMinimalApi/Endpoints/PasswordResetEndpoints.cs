@@ -9,19 +9,22 @@ using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
-/// <summary>
-/// Endpoint MVP per richiesta/conferma reset password (solo logica base, token restituito solo in dev/test se configurato).
-/// </summary>
-public static class PasswordResetEndpoints
-{
-    public static void MapPasswordReset(this WebApplication app, ILogger logger)
+    /// <summary>
+    /// Endpoint MVP per richiesta/conferma reset password (solo logica base, token restituito solo in dev/test se configurato).
+    /// </summary>
+    public static class PasswordResetEndpoints
     {
-        var resetConfig = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordResetConfig>>().Value;
-        app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
+        public static void MapPasswordReset(this WebApplication app, ILogger logger)
         {
-            var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
-            if (string.IsNullOrWhiteSpace(req?.Email))
+            var resetConfig = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordResetConfig>>().Value;
+            var env = app.Services.GetRequiredService<IHostEnvironment>();
+            var includeTokenInResponse = resetConfig.IncludeTokenInResponseForTesting && env.IsDevelopment();
+
+            app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
             {
+                var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
+                if (string.IsNullOrWhiteSpace(req?.Email))
+                {
                 return Results.BadRequest(new { ok = false, error = "invalid_input" });
             }
 
@@ -65,7 +68,7 @@ public static class PasswordResetEndpoints
             await resets.CreateAsync(reset, ctx.RequestAborted);
             logger.LogInformation("Password reset creato userId={UserId} exp={Exp}", user.Id, reset.ExpiresAtUtc);
 
-            if (resetConfig.IncludeTokenInResponseForTesting)
+            if (includeTokenInResponse)
             {
                 return Results.Ok(new { ok = true, resetToken = token });
             }
