@@ -3199,6 +3199,81 @@ CREATE TABLE IF NOT EXISTS users (
     }
 
     [Fact]
+    public async Task Login_remember_in_production_blocks_samesite_none_by_default()
+    {
+        // Scenario: Prod senza AllowSameSiteNone → refresh/device non possono avere SameSite=None.
+        // Risultato atteso: cookie refresh/device con SameSite Strict/Lax e Secure=true.
+        LogTestStart();
+        var overrides = new Dictionary<string, string?>
+        {
+            ["Environment"] = "Production",
+            ["RememberMe:SameSite"] = "None",
+            ["Device:SameSite"] = "None"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: true, forceLowerUsername: false, extraConfig: overrides);
+        try
+        {
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword, RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+            var refreshCookie = cookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).ToLowerInvariant();
+            var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).ToLowerInvariant();
+            Assert.DoesNotContain("samesite=none", refreshCookie);
+            Assert.DoesNotContain("samesite=none", deviceCookie);
+            Assert.Contains("secure", refreshCookie);
+            Assert.Contains("secure", deviceCookie);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Login_remember_in_production_allows_samesite_none_when_explicit_flag()
+    {
+        // Scenario: Prod con AllowSameSiteNone esplicito → SameSite=None permesso, Secure obbligatorio.
+        // Risultato atteso: cookie refresh/device con SameSite=None e Secure=true.
+        LogTestStart();
+        var overrides = new Dictionary<string, string?>
+        {
+            ["Environment"] = "Production",
+            ["RememberMe:SameSite"] = "None",
+            ["RememberMe:AllowSameSiteNone"] = "true",
+            ["Device:SameSite"] = "None",
+            ["Device:AllowSameSiteNone"] = "true",
+            ["Cookie:RequireSecure"] = "true"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: true, forceLowerUsername: false, extraConfig: overrides);
+        try
+        {
+            var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword, RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+            var refreshCookie = cookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).ToLowerInvariant();
+            var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).ToLowerInvariant();
+            Assert.Contains("samesite=none", refreshCookie);
+            Assert.Contains("samesite=none", deviceCookie);
+            Assert.Contains("secure", refreshCookie);
+            Assert.Contains("secure", deviceCookie);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
     public async Task Refresh_with_different_user_agent_succeeds_when_match_disabled()
     {
         // Scenario: RequireUserAgentMatch=false, il refresh funziona anche con UA diverso.

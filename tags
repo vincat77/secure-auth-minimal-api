@@ -368,6 +368,8 @@ Login_me_logout_flow	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public a
 Login_mfa_challenge_expired_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_mfa_challenge_expired_returns_unauthorized(bool emailRequired)$/;"	m	class:ApiTests
 Login_missing_fields_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_missing_fields_returns_bad_request()$/;"	m	class:ApiTests
 Login_remember_false_with_email_not_required_emits_no_refresh	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_false_with_email_not_required_emits_no_refresh()$/;"	m	class:ApiTests
+Login_remember_in_production_allows_samesite_none_when_explicit_flag	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_in_production_allows_samesite_none_when_explicit_flag()$/;"	m	class:ApiTests
+Login_remember_in_production_blocks_samesite_none_by_default	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_in_production_blocks_samesite_none_by_default()$/;"	m	class:ApiTests
 Login_remember_respects_configured_days_for_maxage	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_respects_configured_days_for_maxage()$/;"	m	class:ApiTests
 Login_remember_sets_device_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_sets_device_cookie()$/;"	m	class:ApiTests
 Login_remember_sets_secure_device_cookie_in_non_dev	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_sets_secure_device_cookie_in_non_dev(bool emailRequired)$/;"	m	class:ApiTests

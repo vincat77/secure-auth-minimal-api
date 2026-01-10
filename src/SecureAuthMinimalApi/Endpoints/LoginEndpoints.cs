@@ -173,6 +173,8 @@ public static class LoginEndpoints
             var rememberSameSite = SameSiteMode.Strict;
             if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
                 rememberSameSite = SameSiteMode.Lax;
+            else if (rememberSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+                rememberSameSite = SameSiteMode.None;
             else if (!rememberSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
                 logger.LogWarning("RememberMe:SameSite non valido ({SameSite}), fallback a Strict", rememberSameSiteString);
             var allowRememberNone = app.Configuration.GetValue<bool?>("RememberMe:AllowSameSiteNone") ?? false;
