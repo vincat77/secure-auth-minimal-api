@@ -70,6 +70,8 @@ public sealed class CsrfMiddleware : IMiddleware
         // confronto in tempo costante per ridurre il rischio di oracle sui token
         var aBytes = System.Text.Encoding.UTF8.GetBytes(a);
         var bBytes = System.Text.Encoding.UTF8.GetBytes(b);
+        if (aBytes.Length != bBytes.Length)
+            return false;
         return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 }

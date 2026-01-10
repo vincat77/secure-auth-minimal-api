@@ -10,8 +10,8 @@ Correggere criticità (DoS/log leak/seed demo) e rendere più affidabili configu
    - Verifica: grep `code=` non deve restituire log; test MFA invariati.
 
 2) CSRF FixedTimeEquals safe  
-   - File: `Middleware/CsrfMiddleware.cs`.  
-   - Azione: se lunghezze diverse, ritorna `false` prima di `CryptographicOperations.FixedTimeEquals` per evitare `ArgumentException`.  
+   - File: `Middleware/CsrfMiddleware.cs` (FixedTimeEquals a riga ~68).  
+   - Azione: se lunghezze diverse, ritorna `false` prima di `CryptographicOperations.FixedTimeEquals` per evitare `ArgumentException` su input malformati.  
    - Verifica: test CSRF esistenti; simulare header corto non genera 500.
 
 3) Seed utente demo sicuro  
