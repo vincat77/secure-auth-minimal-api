@@ -286,6 +286,89 @@ public class PasswordResetTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PasswordReset_CascadeDelete_RemovesResets()
+    {
+        // Scenario: utente cancellato (delete row) elimina anche i reset associati.
+        // Risultato atteso: dopo delete user, nessun record in password_resets per user.
+        var (userId, email, _, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        Assert.Equal(HttpStatusCode.OK, request.StatusCode);
+
+        await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+        {
+            await db.OpenAsync();
+            var before = await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM password_resets WHERE user_id = @u", new { u = userId });
+            Assert.Equal(1, before);
+            await db.ExecuteAsync("DELETE FROM users WHERE id = @u", new { u = userId });
+            var after = await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM password_resets WHERE user_id = @u", new { u = userId });
+            Assert.Equal(0, after);
+        }
+    }
+
+    [Fact]
+    public async Task PasswordReset_HashStored_NotPlain()
+    {
+        // Scenario: verificare che solo l'hash sia salvato in DB.
+        // Risultato atteso: token non presente in chiaro, hash = SHA256(token).
+        var (_, email, _, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+        var expectedHash = HashToken(token);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        var dbHash = await db.ExecuteScalarAsync<string>("SELECT token_hash FROM password_resets WHERE user_id = (SELECT id FROM users WHERE email_normalized = @e)", new { e = email.ToLowerInvariant() });
+        Assert.Equal(expectedHash, dbHash);
+        Assert.NotEqual(token, dbHash);
+    }
+
+    [Fact]
+    public async Task PasswordReset_Cleanup_RemovesExpiredAndUsed()
+    {
+        // Scenario: cleanup di token scaduti/usati oltre retention.
+        // Risultato atteso: DeleteExpiredAsync elimina token scaduti/used vecchi.
+        var (userId, email, _, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+        var hash = HashToken(token);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.ExecuteAsync("UPDATE password_resets SET expires_at_utc = datetime('now', '-10 days'), used_at_utc = datetime('now', '-9 days') WHERE token_hash = @h", new { h = hash });
+        var repo = _factory.Services.GetRequiredService<SecureAuthMinimalApi.Data.PasswordResetRepository>();
+        var cutoff = DateTime.UtcNow.AddDays(-7).ToString("O");
+        var deleted = await repo.DeleteExpiredAsync(cutoff, 1000, CancellationToken.None);
+        Assert.True(deleted >= 1);
+    }
+
+    [Fact]
+    public async Task PasswordReset_TokenUniqueness_StressOptional()
+    {
+        // Scenario: 5 richieste parallele generano token unici (stress opzionale, rispettando il rate limit di default 5/15 min).
+        // Risultato atteso: nessun duplicato di token_hash e nessun 429.
+        var (userId, email, _, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+
+        var tasks = Enumerable.Range(0, 5).Select(_ => _client.PostAsJsonAsync("/password-reset/request", new { Email = email })).ToArray();
+        await Task.WhenAll(tasks);
+        var responses = tasks.Select(t => t.Result).ToList();
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+
+        var tokens = new List<string>();
+        foreach (var resp in responses)
+        {
+            var payload = await resp.Content.ReadFromJsonAsync<ResetRequestResponse>();
+            if (!string.IsNullOrWhiteSpace(payload?.ResetToken))
+            {
+                tokens.Add(payload.ResetToken!);
+            }
+        }
+        var hashes = tokens.Select(HashToken).ToList();
+        Assert.Equal(hashes.Count, hashes.Distinct().Count());
+    }
+
+    [Fact]
     public async Task PasswordReset_MalformedToken_ReturnsInvalidToken()
     {
         // Scenario: conferma con token malformato/lunghezza errata.
