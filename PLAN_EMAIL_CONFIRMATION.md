@@ -36,3 +36,8 @@ Permettere di rendere opzionale la verifica email durante la registrazione/login
 - Email non richiesta + token conferma scaduto: login ok, ma POST /confirm-email con token scaduto deve dare 410 e non marcare confermato.
 - Email richiesta + token scaduto: login 403 email_not_confirmed, conferma 410; rigenerare token (nuova registrazione o reset) sblocca.
 - Logout/LogoutAll con email non confermata: deve funzionare e rimuovere sessioni/refresh se presenti.
+- Registrazione email duplicata con EmailConfirmation off: deve restare 409.
+- Login utente demo bypass: conferma email non richiesta anche con Required=true.
+- MFA con challenge scaduta: login mfa_required, conferma dopo scadenza deve fallire (410/401) senza sessione attiva.
+- RememberMe con Device:RequireSecure=true in non-dev: cookie device deve restare Secure e flow remember deve funzionare con email on/off.
+- Config errata EmailConfirmation:Required non bool: fallback al default (true) e log di warning (eventuale check).
