@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
@@ -20,6 +21,9 @@ public static class ConfirmMfaEndpoints
         int mfaMaxAttempts)
     {
         var isDevelopment = app.Environment.IsDevelopment();
+        var rememberOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
+        var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
+        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<SecureAuthMinimalApi.Services.RefreshOptions>>().Value;
 
         app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo) =>
         {
@@ -151,17 +155,15 @@ public static class ConfirmMfaEndpoints
 
             if (body.RememberMe)
             {
-                var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
-                var rememberSameSiteString = app.Configuration["RememberMe:SameSite"] ?? "Strict";
-                var rememberSameSite = SameSiteMode.Strict;
-                if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
-                    rememberSameSite = SameSiteMode.Lax;
-                var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
+                var rememberConfigDays = rememberOptions.Days <= 0 ? 14 : rememberOptions.Days;
+                var refreshSameSiteValue = string.IsNullOrWhiteSpace(refreshOptions.SameSite) ? rememberOptions.SameSite : refreshOptions.SameSite;
+                var rememberSameSite = ParseSameSite(refreshSameSiteValue, refreshOptions.AllowSameSiteNone || rememberOptions.AllowSameSiteNone, isDevelopment, logger, "Refresh");
+                var rememberPath = refreshOptions.Path ?? rememberOptions.Path ?? "/refresh";
                 var refreshToken = Base64Url(RandomBytes(32));
                 var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
                 var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
 
-                var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
+                var deviceCookieName = deviceOptions.CookieName ?? "device_id";
                 if (!ctx.Request.Cookies.TryGetValue(deviceCookieName, out var existingDeviceId) || string.IsNullOrWhiteSpace(existingDeviceId))
                 {
                     deviceId = Base64Url(RandomBytes(32));
@@ -192,8 +194,13 @@ public static class ConfirmMfaEndpoints
                 await refreshRepo.CreateAsync(rt, ctx.RequestAborted);
                 refreshExpiresUtc = refreshExpires.ToString("O");
 
-                var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
-                var rememberSecure = isDevelopment ? requireSecureConfig : true;
+                var rememberCookieName = refreshOptions.CookieName ?? rememberOptions.CookieName ?? "refresh_token";
+                var rememberSecure = isDevelopment ? refreshOptions.RequireSecure : true;
+                if (!isDevelopment && !refreshOptions.RequireSecure)
+                {
+                    logger.LogWarning("Refresh:RequireSecure=false in ambiente non Development: forzato a true");
+                    rememberSecure = true;
+                }
                 ctx.Response.Cookies.Append(
                     rememberCookieName,
                     refreshToken,
@@ -206,17 +213,14 @@ public static class ConfirmMfaEndpoints
                         MaxAge = refreshExpires - DateTime.UtcNow
                     });
 
-                var deviceSameSiteString = app.Configuration["Device:SameSite"] ?? "Strict";
-                var deviceSameSite = SameSiteMode.Strict;
-                if (deviceSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
-                    deviceSameSite = SameSiteMode.Lax;
+                var deviceSameSite = ParseSameSite(deviceOptions.SameSite, deviceOptions.AllowSameSiteNone, isDevelopment, logger, "Device");
                 ctx.Response.Cookies.Append(
                     deviceCookieName,
                     deviceId!,
                     new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = app.Configuration.GetValue<bool?>("Device:RequireSecure") ?? requireSecure,
+                        Secure = isDevelopment ? deviceOptions.RequireSecure : true,
                         SameSite = deviceSameSite,
                         Path = "/",
                         MaxAge = refreshExpires - DateTime.UtcNow
@@ -227,5 +231,25 @@ public static class ConfirmMfaEndpoints
 
             return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken });
         });
+    }
+
+    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, ILogger logger, string context)
+    {
+        var sameSiteString = string.IsNullOrWhiteSpace(value) ? "Strict" : value;
+        var sameSite = SameSiteMode.Strict;
+        if (sameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+            sameSite = SameSiteMode.Lax;
+        else if (sameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+            sameSite = SameSiteMode.None;
+        else if (!sameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
+            logger.LogWarning("{Context}:SameSite non valido ({SameSite}), fallback a Strict", context, sameSiteString);
+
+        if (!isDevelopment && sameSite == SameSiteMode.None && !allowNone)
+        {
+            logger.LogWarning("{Context}:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita {Context}:AllowSameSiteNone per override esplicito)", context, sameSiteString);
+            sameSite = SameSiteMode.Strict;
+        }
+
+        return sameSite;
     }
 }

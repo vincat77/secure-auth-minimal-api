@@ -1,30 +1,31 @@
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Services;
 
-/// <summary>
-/// Calcola l'HMAC dei refresh token per evitare storage in chiaro.
-/// </summary>
-public sealed class RefreshTokenHasher
-{
-    private readonly byte[] _key;
-
     /// <summary>
-    /// Inizializza l'hash delle key HMAC dal config (o Jwt:SecretKey).
+    /// Calcola l'HMAC dei refresh token per evitare storage in chiaro.
     /// </summary>
-    public RefreshTokenHasher(IConfiguration config)
+    public sealed class RefreshTokenHasher
     {
-        var key = config["Refresh:HmacKey"] ?? config["Jwt:SecretKey"];
-        if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
-            throw new InvalidOperationException("Refresh:HmacKey (o Jwt:SecretKey) deve essere presente e di almeno 32 caratteri");
-        _key = Encoding.UTF8.GetBytes(key);
-    }
+        private readonly byte[] _key;
 
-    /// <summary>
-    /// Calcola l'HMAC-SHA256 del token in ingresso.
-    /// </summary>
+        /// <summary>
+        /// Inizializza l'hash delle key HMAC dal config (o Jwt:SecretKey).
+        /// </summary>
+        public RefreshTokenHasher(IOptions<RefreshOptions> refreshOptions, IOptions<JwtOptions> jwtOptions)
+        {
+            var key = refreshOptions.Value.HmacKey ?? jwtOptions.Value.SecretKey;
+            if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
+                throw new InvalidOperationException("Refresh:HmacKey (o Jwt:SecretKey) deve essere presente e di almeno 32 caratteri");
+            _key = Encoding.UTF8.GetBytes(key);
+        }
+
+        /// <summary>
+        /// Calcola l'HMAC-SHA256 del token in ingresso.
+        /// </summary>
     public string ComputeHash(string token)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(token);

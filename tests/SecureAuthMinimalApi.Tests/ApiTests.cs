@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Dapper;
 using Xunit;
 using Xunit.Abstractions;
@@ -16,6 +17,7 @@ using System.Text;
 using System.Text.Json;
 using OtpNet;
 using SecureAuthMinimalApi.Data;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Tests;
 
@@ -121,7 +123,9 @@ public class ApiTests : IAsyncLifetime
             HandleCookies = false,
             AllowAutoRedirect = false
         });
-        _hasher = new RefreshTokenHasher(_factory.Services.GetRequiredService<IConfiguration>());
+        var refreshOpts = _factory.Services.GetRequiredService<IOptions<SecureAuthMinimalApi.Services.RefreshOptions>>();
+        var jwtOpts = _factory.Services.GetRequiredService<IOptions<JwtOptions>>();
+        _hasher = new RefreshTokenHasher(refreshOpts, jwtOpts);
 
         return Task.CompletedTask;
     }
@@ -1331,17 +1335,15 @@ public class ApiTests : IAsyncLifetime
         // Risultato atteso: eccezione di configurazione per secret insufficiente.
         LogTestStart();
         // Act
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:Issuer"] = "i",
-                ["Jwt:Audience"] = "a",
-                ["Jwt:SecretKey"] = "short", // < 32 chars
-                ["Jwt:AccessTokenMinutes"] = "30"
-            })
-            .Build();
+        var opts = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        {
+            Issuer = "i",
+            Audience = "a",
+            SecretKey = "short",
+            AccessTokenMinutes = 30
+        });
 
-        var ex = Assert.Throws<InvalidOperationException>(() => new JwtTokenService(config));
+        var ex = Assert.Throws<InvalidOperationException>(() => new JwtTokenService(opts));
         Assert.Contains("SecretKey must be at least 32", ex.Message);
     }
 
@@ -1352,14 +1354,12 @@ public class ApiTests : IAsyncLifetime
         // Risultato atteso: eccezione che impedisce l'avvio per secret mancante.
         LogTestStart();
         // Act
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:Issuer"] = "i",
-                ["Jwt:Audience"] = "a",
-                ["Jwt:SecretKey"] = ""
-            })
-            .Build();
+        var config = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        {
+            Issuer = "i",
+            Audience = "a",
+            SecretKey = ""
+        });
 
         var ex = Assert.Throws<InvalidOperationException>(() => new JwtTokenService(config));
         Assert.Contains("Missing Jwt:SecretKey", ex.Message);
@@ -1372,25 +1372,19 @@ public class ApiTests : IAsyncLifetime
         // Risultato atteso: eccezione per issuer/audience mancanti.
         LogTestStart();
         // Act
-        var configMissingIssuer = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                // issuer mancante
-                ["Jwt:Audience"] = "a",
-                ["Jwt:SecretKey"] = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN"
-            })
-            .Build();
+        var configMissingIssuer = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        {
+            Audience = "a",
+            SecretKey = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN"
+        });
         var ex1 = Assert.Throws<InvalidOperationException>(() => new JwtTokenService(configMissingIssuer));
         Assert.Contains("Missing Jwt:Issuer", ex1.Message);
 
-        var configMissingAudience = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:Issuer"] = "i",
-                // audience mancante
-                ["Jwt:SecretKey"] = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN"
-            })
-            .Build();
+        var configMissingAudience = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        {
+            Issuer = "i",
+            SecretKey = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN"
+        });
         var ex2 = Assert.Throws<InvalidOperationException>(() => new JwtTokenService(configMissingAudience));
         Assert.Contains("Missing Jwt:Audience", ex2.Message);
     }
@@ -1677,15 +1671,13 @@ public class ApiTests : IAsyncLifetime
         // Risultato atteso: eccezione di validazione per durata non positiva.
         LogTestStart();
         // Act
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:Issuer"] = "i",
-                ["Jwt:Audience"] = "a",
-                ["Jwt:SecretKey"] = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN",
-                ["Jwt:AccessTokenMinutes"] = "0"
-            })
-            .Build();
+        var config = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        {
+            Issuer = "i",
+            Audience = "a",
+            SecretKey = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN",
+            AccessTokenMinutes = 0
+        });
 
         var ex = Assert.Throws<InvalidOperationException>(() => new JwtTokenService(config));
         Assert.Contains("AccessTokenMinutes must be > 0", ex.Message);

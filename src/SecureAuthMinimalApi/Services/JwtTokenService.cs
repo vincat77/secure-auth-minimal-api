@@ -1,8 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Services;
 
@@ -19,19 +20,24 @@ public sealed class JwtTokenService
     /// <summary>
     /// Inizializza issuer/audience/chiave da configurazione e valida segreti.
     /// </summary>
-    public JwtTokenService(IConfiguration config)
+    public JwtTokenService(IOptions<JwtOptions> jwtOptions)
     {
-        _issuer = config["Jwt:Issuer"] ?? throw new InvalidOperationException("Missing Jwt:Issuer in appsettings.json");
-        _audience = config["Jwt:Audience"] ?? throw new InvalidOperationException("Missing Jwt:Audience in appsettings.json");
+        var options = jwtOptions.Value;
+        _issuer = string.IsNullOrWhiteSpace(options.Issuer)
+            ? throw new InvalidOperationException("Missing Jwt:Issuer in appsettings.json")
+            : options.Issuer;
+        _audience = string.IsNullOrWhiteSpace(options.Audience)
+            ? throw new InvalidOperationException("Missing Jwt:Audience in appsettings.json")
+            : options.Audience;
 
-        var secret = config["Jwt:SecretKey"];
+        var secret = options.SecretKey;
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("Missing Jwt:SecretKey in appsettings.json");
         if (secret.Trim().Length < 32)
             throw new InvalidOperationException("Jwt:SecretKey must be at least 32 characters");
 
         _keyBytes = Encoding.UTF8.GetBytes(secret);
-        _accessTokenMinutes = int.TryParse(config["Jwt:AccessTokenMinutes"], out var mins) ? mins : 30;
+        _accessTokenMinutes = options.AccessTokenMinutes;
         if (_accessTokenMinutes <= 0)
             throw new InvalidOperationException("Jwt:AccessTokenMinutes must be > 0");
     }

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -20,7 +21,10 @@ public static class LogoutAllEndpoints
             await sessions.RevokeAsync(session.SessionId, DateTime.UtcNow.ToString("O"), ctx.RequestAborted);
             logger.LogInformation("Logout-all eseguito userId={UserId} sessionId={SessionId}", session.UserId, session.SessionId);
 
-            var requireSecure = isDevelopment ? app.Configuration.GetValue<bool>("Cookie:RequireSecure") : true;
+            var rememberOptions = ctx.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
+            var deviceOptions = ctx.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
+
+            var requireSecure = isDevelopment ? rememberOptions.RequireSecure : true;
             ctx.Response.Cookies.Append("access_token", "", new CookieOptions
             {
                 Expires = DateTimeOffset.UnixEpoch,
@@ -29,28 +33,24 @@ public static class LogoutAllEndpoints
                 SameSite = SameSiteMode.Strict,
                 Path = "/"
             });
-            ctx.Response.Cookies.Append(app.Configuration["RememberMe:CookieName"] ?? "refresh_token", "", new CookieOptions
+            ctx.Response.Cookies.Append(rememberOptions.CookieName ?? "refresh_token", "", new CookieOptions
             {
                 Expires = DateTimeOffset.UnixEpoch,
                 HttpOnly = true,
                 Secure = requireSecure,
                 SameSite = SameSiteMode.Strict,
-                Path = app.Configuration["RememberMe:Path"] ?? "/refresh"
+                Path = rememberOptions.Path ?? "/refresh"
             });
-            var clearDevice = app.Configuration.GetValue<bool?>("Device:ClearOnLogoutAll") ?? false;
+            var clearDevice = deviceOptions.ClearOnLogoutAll;
             if (clearDevice)
             {
-                var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
-                var deviceSameSiteString = app.Configuration["Device:SameSite"] ?? "Strict";
+                var deviceCookieName = deviceOptions.CookieName ?? "device_id";
                 var deviceSameSite = SameSiteMode.Strict;
-                if (deviceSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+                if ((deviceOptions.SameSite ?? "Strict").Equals("Lax", StringComparison.OrdinalIgnoreCase))
                     deviceSameSite = SameSiteMode.Lax;
-                else if (deviceSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+                else if ((deviceOptions.SameSite ?? "Strict").Equals("None", StringComparison.OrdinalIgnoreCase))
                     deviceSameSite = SameSiteMode.None;
-                var deviceRequireSecureConfig = app.Configuration.GetValue<bool?>("Device:RequireSecure");
-                var deviceRequireSecure = isDevelopment
-                    ? (deviceRequireSecureConfig ?? (app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? false))
-                    : true;
+                var deviceRequireSecure = isDevelopment ? deviceOptions.RequireSecure : true;
 
                 ctx.Response.Cookies.Append(deviceCookieName, "", new CookieOptions
                 {

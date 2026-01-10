@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
@@ -23,6 +24,9 @@ public static class LoginEndpoints
         int mfaMaxAttempts)
     {
         var isDevelopment = app.Environment.IsDevelopment();
+        var rememberOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
+        var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
+        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<SecureAuthMinimalApi.Services.RefreshOptions>>().Value;
 
         app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo) =>
         {
@@ -168,43 +172,34 @@ public static class LoginEndpoints
                     MaxAge = expiresUtc - DateTime.UtcNow
                 });
 
-            var rememberConfigDays = app.Configuration.GetValue<int?>("RememberMe:Days") ?? 14;
-            var rememberSameSiteString = app.Configuration["RememberMe:SameSite"] ?? "Strict";
-            var rememberSameSite = SameSiteMode.Strict;
-            if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
-                rememberSameSite = SameSiteMode.Lax;
-            else if (rememberSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
-                rememberSameSite = SameSiteMode.None;
-            else if (!rememberSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
-                logger.LogWarning("RememberMe:SameSite non valido ({SameSite}), fallback a Strict", rememberSameSiteString);
-            var allowRememberNone = app.Configuration.GetValue<bool?>("RememberMe:AllowSameSiteNone") ?? false;
-            if (!isDevelopment && rememberSameSite == SameSiteMode.None && !allowRememberNone)
+            var rememberSameSite = ParseSameSite(rememberOptions.SameSite, rememberOptions.AllowSameSiteNone, isDevelopment, logger, "RememberMe");
+            var rememberCookieName = rememberOptions.CookieName ?? "refresh_token";
+            var rememberPath = rememberOptions.Path ?? "/refresh";
+            var rememberConfigDays = rememberOptions.Days <= 0 ? 14 : rememberOptions.Days;
+            var rememberRequireSecure = isDevelopment ? rememberOptions.RequireSecure : true;
+            if (!isDevelopment && !rememberOptions.RequireSecure)
             {
-                logger.LogWarning("RememberMe:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita RememberMe:AllowSameSiteNone per override esplicito)");
-                rememberSameSite = SameSiteMode.Strict;
+                logger.LogWarning("RememberMe:RequireSecure=false in ambiente non Development: forzato a true");
             }
-            var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
-            var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
-            var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
-            var deviceSameSiteString = app.Configuration["Device:SameSite"] ?? "Strict";
-            var deviceSameSite = SameSiteMode.Strict;
-            if (deviceSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
-                deviceSameSite = SameSiteMode.Lax;
-            else if (deviceSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
-                deviceSameSite = SameSiteMode.None;
-            else if (!deviceSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
-                logger.LogWarning("Device:SameSite non valido ({SameSite}), fallback a Strict", deviceSameSiteString);
-            var allowDeviceNone = app.Configuration.GetValue<bool?>("Device:AllowSameSiteNone") ?? false;
-            if (!isDevelopment && deviceSameSite == SameSiteMode.None && !allowDeviceNone)
+
+            var refreshSameSiteValue = string.IsNullOrWhiteSpace(refreshOptions.SameSite) ? rememberOptions.SameSite : refreshOptions.SameSite;
+            var refreshSameSite = ParseSameSite(refreshSameSiteValue, refreshOptions.AllowSameSiteNone || rememberOptions.AllowSameSiteNone, isDevelopment, logger, "Refresh");
+            var refreshCookieName = refreshOptions.CookieName ?? rememberCookieName;
+            var refreshPath = refreshOptions.Path ?? rememberPath;
+            var refreshRequireSecure = isDevelopment ? refreshOptions.RequireSecure : true;
+            if (!isDevelopment && !refreshOptions.RequireSecure)
             {
-                logger.LogWarning("Device:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita Device:AllowSameSiteNone per override esplicito)");
-                deviceSameSite = SameSiteMode.Strict;
+                logger.LogWarning("Refresh:RequireSecure=false in ambiente non Development: forzato a true");
             }
-            var deviceRequireSecureConfig = app.Configuration.GetValue<bool?>("Device:RequireSecure");
-            var deviceRequireSecure = isDevelopment
-                ? (deviceRequireSecureConfig ?? (app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? false))
-                : true;
-            var devicePersistDays = app.Configuration.GetValue<int?>("Device:PersistDays") ?? rememberConfigDays;
+
+            var deviceCookieName = deviceOptions.CookieName ?? "device_id";
+            var deviceSameSite = ParseSameSite(deviceOptions.SameSite, deviceOptions.AllowSameSiteNone, isDevelopment, logger, "Device");
+            var deviceRequireSecure = isDevelopment ? deviceOptions.RequireSecure : true;
+            if (!isDevelopment && !deviceOptions.RequireSecure)
+            {
+                logger.LogWarning("Device:RequireSecure=false in ambiente non Development: forzato a true");
+            }
+            var devicePersistDays = deviceOptions.PersistDays <= 0 ? rememberConfigDays : deviceOptions.PersistDays;
             var rememberIssued = false;
             var deviceIssued = false;
             string? deviceId = null;
@@ -246,14 +241,14 @@ public static class LoginEndpoints
                 refreshExpiresUtc = refreshExpires.ToString("O");
 
                 ctx.Response.Cookies.Append(
-                    rememberCookieName,
+                    refreshCookieName,
                     refreshToken,
                     new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = requireSecure,
-                        SameSite = rememberSameSite,
-                        Path = rememberPath,
+                        Secure = refreshRequireSecure,
+                        SameSite = refreshSameSite,
+                        Path = refreshPath,
                         MaxAge = refreshExpires - DateTime.UtcNow
                     });
                 ctx.Response.Cookies.Append(
@@ -273,5 +268,25 @@ public static class LoginEndpoints
             ctx.Response.Headers.CacheControl = "no-store";
             return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken });
         });
+    }
+
+    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, ILogger logger, string context)
+    {
+        var sameSiteString = string.IsNullOrWhiteSpace(value) ? "Strict" : value;
+        var sameSite = SameSiteMode.Strict;
+        if (sameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+            sameSite = SameSiteMode.Lax;
+        else if (sameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+            sameSite = SameSiteMode.None;
+        else if (!sameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
+            logger.LogWarning("{Context}:SameSite non valido ({SameSite}), fallback a Strict", context, sameSiteString);
+
+        if (!isDevelopment && sameSite == SameSiteMode.None && !allowNone)
+        {
+            logger.LogWarning("{Context}:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita {Context}:AllowSameSiteNone per override esplicito)", context, sameSiteString);
+            sameSite = SameSiteMode.Strict;
+        }
+
+        return sameSite;
     }
 }

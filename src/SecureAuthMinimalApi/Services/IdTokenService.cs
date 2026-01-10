@@ -2,8 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Services;
 
@@ -17,13 +18,17 @@ public sealed class IdTokenService
     private readonly SigningCredentials _creds;
     private readonly TokenValidationParameters _validation;
 
-    public IdTokenService(IConfiguration config)
+    public IdTokenService(IOptions<IdTokenOptions> idTokenOptions, IOptions<JwtOptions> jwtOptions)
     {
-        _issuer = config["IdToken:Issuer"] ?? config["Jwt:Issuer"] ?? throw new InvalidOperationException("Missing IdToken:Issuer");
-        _audience = config["IdToken:Audience"] ?? config["Jwt:Audience"] ?? throw new InvalidOperationException("Missing IdToken:Audience");
+        var idOptions = idTokenOptions.Value;
+        var jwt = jwtOptions.Value;
+        _issuer = !string.IsNullOrWhiteSpace(idOptions.Issuer) ? idOptions.Issuer :
+            (!string.IsNullOrWhiteSpace(jwt.Issuer) ? jwt.Issuer : throw new InvalidOperationException("Missing IdToken:Issuer"));
+        _audience = !string.IsNullOrWhiteSpace(idOptions.Audience) ? idOptions.Audience :
+            (!string.IsNullOrWhiteSpace(jwt.Audience) ? jwt.Audience : throw new InvalidOperationException("Missing IdToken:Audience"));
         // Email e claim profilo sempre inclusi se disponibili (nessun scope).
 
-        var signingKeyPath = config["IdToken:SigningKeyPath"];
+        var signingKeyPath = idOptions.SigningKeyPath;
         if (!string.IsNullOrWhiteSpace(signingKeyPath) && File.Exists(signingKeyPath))
         {
             var keyText = File.ReadAllText(signingKeyPath);
@@ -32,7 +37,7 @@ public sealed class IdTokenService
         else
         {
             // Fallback HMAC (solo dev). Usa chiave separata se presente, altrimenti riusa Jwt:SecretKey.
-            var secret = config["IdToken:Secret"] ?? config["Jwt:SecretKey"]
+            var secret = idOptions.Secret ?? jwt.SecretKey
                 ?? throw new InvalidOperationException("Missing IdToken:SigningKeyPath and IdToken:Secret/Jwt:SecretKey");
             if (secret.Length < 32)
                 throw new InvalidOperationException("IdToken secret must be at least 32 characters");

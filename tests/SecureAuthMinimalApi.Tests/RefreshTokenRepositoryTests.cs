@@ -1,8 +1,10 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using Xunit;
 
@@ -30,7 +32,9 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
             .Build();
 
         DbInitializer.EnsureCreated(_config);
-        _hasher = new RefreshTokenHasher(_config);
+        var refreshOpts = Microsoft.Extensions.Options.Options.Create(new RefreshOptions { HmacKey = _config["Refresh:HmacKey"] });
+        var jwtOpts = Microsoft.Extensions.Options.Options.Create(new JwtOptions { SecretKey = _config["Refresh:HmacKey"] ?? "TEST_REFRESH_HMAC_KEY_32_CHARS_MIN_LEN__" });
+        _hasher = new RefreshTokenHasher(refreshOpts, jwtOpts);
         _repo = new RefreshTokenRepository(_config, _hasher);
         return Task.CompletedTask;
     }

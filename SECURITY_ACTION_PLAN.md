@@ -37,8 +37,15 @@ Correggere criticità (DoS/log leak/seed demo) e rendere più affidabili configu
 
 ## Priorità Bassa / Miglioramenti
 7) Centralizzare config in Options  
-   - Azione: spostare policy (password, remember/device/cookie, refresh UA) da IConfiguration a IOptions<T> con validazione all’avvio, riducendo divergenze tra endpoint/test.  
-   - Verifica: meno duplicazioni, default documentati.
+   - Azione: spostare policy (password, remember/device/cookie, refresh UA) da `IConfiguration` a `IOptions<T>` con validazione all’avvio, riducendo divergenze tra endpoint/test.  
+   - Punti da toccare (ricerca puntuale):  
+     * **Password policy**: letta via `IConfiguration.GetValue` in `Endpoints/ChangePasswordEndpoints.cs` (`LoadPasswordPolicy`) e `Endpoints/PasswordResetEndpoints.cs` (blocchi `PasswordPolicy:*`); binding mancante in `Program.cs`.  
+     * **Cookie remember/device**: `app.Configuration[...]` per `RememberMe:*` e `Device:*` in `Endpoints/LoginEndpoints.cs` (emissione cookie), `Endpoints/ConfirmMfaEndpoints.cs` (refresh/device dopo MFA), `Endpoints/RefreshEndpoints.cs` (SameSite/Path/CookieName), `Endpoints/LogoutEndpoints.cs`, `Endpoints/LogoutAllEndpoints.cs`; servono `RememberMeOptions` / `DeviceOptions` validati (SameSite/AllowSameSiteNone/RequireSecure/Path/CookieName).  
+     * **Refresh UA e cookie**: `RefreshEndpoints.cs` usa `RefreshOptions` solo per UA match ma continua a leggere cookie name/path/SameSite da config raw; spostare tutto in `RefreshOptions` (cookie name/path/SameSite/AllowSameSiteNone/RequireSecure).  
+     * **Auth token/JWT**: `CookieJwtAuthMiddleware`, `JwtTokenService`, `IdTokenService`, `RefreshTokenHasher` leggono secret/issuer/audience dal config; valutare `JwtOptions`/`TokenOptions` dedicati e injection via options.  
+     * **Test**: `tests/SecureAuthMinimalApi.Tests/ApiTests.cs`, `IdleTimeoutTests.cs`, `LogoutAllTests.cs`, `LogoutRefreshTests.cs` recuperano `IConfiguration` per cookie names/paths e hashing; riallinearli a `IOptions<...>` per evitare divergenze.  
+     * **Repositories/servizi**: `MfaChallengeRepository`, `LoginThrottleRepository`, `UserRepository`, `SessionRepository`, `RefreshTokenRepository`, `LoginAuditRepository`, `PasswordResetRepository`, `DbInitializer` leggono connection string/config via `IConfiguration`; decide se lasciare così o introdurre `DatabaseOptions` separato (fuori scope cookie/policy).  
+   - Verifica: meno duplicazioni, default documentati; endpoint/test consumano gli stessi `Options`.
 
 8) Date storage  
    - Azione: valutare DateTimeOffset o epoch (long) per scadenze/revoke/last_seen; oggi TEXT “O”.  

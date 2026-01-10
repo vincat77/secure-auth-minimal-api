@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Options;
+using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -172,13 +174,9 @@ namespace SecureAuthMinimalApi.Endpoints;
                 return Results.BadRequest(new { ok = false, error = "account_locked" });
             }
 
-            var cfg = ctx.RequestServices.GetRequiredService<IConfiguration>();
-            var minLength = cfg.GetValue<int?>("PasswordPolicy:MinLength") ?? 12;
-            var requireUpper = cfg.GetValue<bool?>("PasswordPolicy:RequireUpper") ?? false;
-            var requireLower = cfg.GetValue<bool?>("PasswordPolicy:RequireLower") ?? false;
-            var requireDigit = cfg.GetValue<bool?>("PasswordPolicy:RequireDigit") ?? false;
-            var requireSymbol = cfg.GetValue<bool?>("PasswordPolicy:RequireSymbol") ?? false;
-            var policyErrors = AuthHelpers.ValidatePassword(req.NewPassword!, minLength, requireUpper, requireLower, requireDigit, requireSymbol);
+            var passwordOptions = ctx.RequestServices.GetRequiredService<IOptions<PasswordPolicyOptions>>().Value;
+            var minLength = passwordOptions.MinLength < 1 ? 12 : passwordOptions.MinLength;
+            var policyErrors = AuthHelpers.ValidatePassword(req.NewPassword!, minLength, passwordOptions.RequireUpper, passwordOptions.RequireLower, passwordOptions.RequireDigit, passwordOptions.RequireSymbol);
             if (policyErrors.Any())
             {
                 return Results.BadRequest(new { ok = false, error = "password_policy_failed", errors = policyErrors });

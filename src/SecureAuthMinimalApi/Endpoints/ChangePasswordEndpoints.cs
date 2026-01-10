@@ -2,8 +2,8 @@ using System.Text.Json;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using SecureAuthMinimalApi.Options;
+using Microsoft.Extensions.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -23,11 +23,12 @@ public static class ChangePasswordEndpoints
             SessionRepository sessions,
             UserRepository users,
             RefreshTokenRepository refreshRepo,
-            IConfiguration config,
+            Microsoft.Extensions.Options.IOptions<PasswordPolicyOptions> passwordPolicyOptions,
+            Microsoft.Extensions.Options.IOptions<RememberMeOptions> rememberOptions,
             IWebHostEnvironment env,
             ILogger<ChangePasswordLoggerMarker> logger) =>
         {
-            var policy = LoadPasswordPolicy(config);
+            var policy = LoadPasswordPolicy(passwordPolicyOptions.Value);
             var body = await ctx.Request.ReadFromJsonAsync<ChangePasswordRequest>();
             var current = body?.CurrentPassword ?? "";
             var newPassword = body?.NewPassword ?? "";
@@ -111,7 +112,7 @@ public static class ChangePasswordEndpoints
             await sessions.CreateAsync(newSession, ctx.RequestAborted);
             logger.LogInformation("Cambio password OK: sessione ruotata userId={UserId} nuovaSessione={SessionId}", user.Id, sessionId);
 
-            var requireSecureConfig = config.GetValue<bool>("Cookie:RequireSecure");
+            var requireSecureConfig = rememberOptions.Value.RequireSecure;
             var requireSecure = env.IsDevelopment() ? requireSecureConfig : true;
             if (!env.IsDevelopment() && !requireSecureConfig)
             {
@@ -131,14 +132,9 @@ public static class ChangePasswordEndpoints
                 });
 
             // Invalida eventuale refresh token esistente sul client.
-            var refreshCookieName = config["RememberMe:CookieName"] ?? "refresh_token";
-            var refreshPath = config["RememberMe:Path"] ?? "/refresh";
-            var rememberSameSiteString = config["RememberMe:SameSite"] ?? "Strict";
-            var rememberSameSite = SameSiteMode.Strict;
-            if (rememberSameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
-                rememberSameSite = SameSiteMode.Lax;
-            else if (rememberSameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
-                rememberSameSite = SameSiteMode.None;
+            var refreshCookieName = rememberOptions.Value.CookieName ?? "refresh_token";
+            var refreshPath = rememberOptions.Value.Path ?? "/refresh";
+            var rememberSameSite = ParseSameSite(rememberOptions.Value.SameSite, rememberOptions.Value.AllowSameSiteNone, env.IsDevelopment(), logger, "RememberMe");
             ctx.Response.Cookies.Append(refreshCookieName, "", new CookieOptions
             {
                 Expires = DateTimeOffset.UnixEpoch,
@@ -153,18 +149,10 @@ public static class ChangePasswordEndpoints
         });
     }
 
-    /// <summary>
-    /// Carica la policy password da configurazione applicando valori di fallback.
-    /// </summary>
-    private static PasswordPolicySettings LoadPasswordPolicy(IConfiguration config)
+    private static PasswordPolicySettings LoadPasswordPolicy(PasswordPolicyOptions options)
     {
-        var configuredMin = config.GetValue<int?>("PasswordPolicy:MinLength");
-        var minPasswordLength = configuredMin is null or < 1 ? 12 : configuredMin.Value;
-        var requireUpper = config.GetValue<bool?>("PasswordPolicy:RequireUpper") ?? false;
-        var requireLower = config.GetValue<bool?>("PasswordPolicy:RequireLower") ?? false;
-        var requireDigit = config.GetValue<bool?>("PasswordPolicy:RequireDigit") ?? false;
-        var requireSymbol = config.GetValue<bool?>("PasswordPolicy:RequireSymbol") ?? false;
-        return new PasswordPolicySettings(minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol);
+        var minPasswordLength = options.MinLength < 1 ? 12 : options.MinLength;
+        return new PasswordPolicySettings(minPasswordLength, options.RequireUpper, options.RequireLower, options.RequireDigit, options.RequireSymbol);
     }
 
     /// <summary>
@@ -186,6 +174,26 @@ public static class ChangePasswordEndpoints
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
+    }
+
+    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, ILogger logger, string context)
+    {
+        var sameSiteString = string.IsNullOrWhiteSpace(value) ? "Strict" : value;
+        var sameSite = SameSiteMode.Strict;
+        if (sameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
+            sameSite = SameSiteMode.Lax;
+        else if (sameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
+            sameSite = SameSiteMode.None;
+        else if (!sameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
+            logger.LogWarning("{Context}:SameSite non valido ({SameSite}), fallback a Strict", context, sameSiteString);
+
+        if (!isDevelopment && sameSite == SameSiteMode.None && !allowNone)
+        {
+            logger.LogWarning("{Context}:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita {Context}:AllowSameSiteNone per override esplicito)", context, sameSiteString);
+            sameSite = SameSiteMode.Strict;
+        }
+
+        return sameSite;
     }
 }
 

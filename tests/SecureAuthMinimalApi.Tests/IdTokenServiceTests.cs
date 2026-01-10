@@ -1,7 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using Xunit;
 
@@ -11,28 +12,51 @@ public class IdTokenServiceTests
 {
     private static IdTokenService CreateService(Dictionary<string, string?>? overrides = null)
     {
-        var data = new Dictionary<string, string?>
+        var idOptions = new IdTokenOptions
         {
-            ["IdToken:Issuer"] = "TestIdIssuer",
-            ["IdToken:Audience"] = "TestIdAudience",
-            ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___",
-            ["IdToken:IncludeEmail"] = "true",
-            ["Jwt:Issuer"] = "FallbackIssuer",
-            ["Jwt:Audience"] = "FallbackAudience",
-            ["Jwt:SecretKey"] = "TEST_JWT_SECRET_AT_LEAST_32_CHARACTERS_LONG___"
+            Issuer = "TestIdIssuer",
+            Audience = "TestIdAudience",
+            Secret = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___"
+        };
+        var jwtOptions = new JwtOptions
+        {
+            Issuer = "FallbackIssuer",
+            Audience = "FallbackAudience",
+            SecretKey = "TEST_JWT_SECRET_AT_LEAST_32_CHARACTERS_LONG___"
         };
 
         if (overrides is not null)
         {
             foreach (var kv in overrides)
-                data[kv.Key] = kv.Value;
+            {
+                switch (kv.Key)
+                {
+                    case "IdToken:Issuer":
+                        idOptions.Issuer = kv.Value;
+                        break;
+                    case "IdToken:Audience":
+                        idOptions.Audience = kv.Value;
+                        break;
+                    case "IdToken:Secret":
+                        idOptions.Secret = kv.Value;
+                        break;
+                    case "IdToken:SigningKeyPath":
+                        idOptions.SigningKeyPath = kv.Value;
+                        break;
+                    case "Jwt:Issuer":
+                        jwtOptions.Issuer = kv.Value ?? "";
+                        break;
+                    case "Jwt:Audience":
+                        jwtOptions.Audience = kv.Value ?? "";
+                        break;
+                    case "Jwt:SecretKey":
+                        jwtOptions.SecretKey = kv.Value ?? "";
+                        break;
+                }
+            }
         }
 
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(data)
-            .Build();
-
-        return new IdTokenService(config);
+        return new IdTokenService(Microsoft.Extensions.Options.Options.Create(idOptions), Microsoft.Extensions.Options.Options.Create(jwtOptions));
     }
 
     [Fact]
@@ -124,15 +148,14 @@ public class IdTokenServiceTests
     {
         // Scenario: prova a creare l'ID token con secret simmetrico troppo corto.
         // Risultato atteso: eccezione per secret insufficiente.
-        var cfg = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["IdToken:Issuer"] = "Issuer",
-                ["IdToken:Audience"] = "Audience",
-                ["IdToken:Secret"] = "short"
-            })
-            .Build();
+        var cfg = new IdTokenOptions
+        {
+            Issuer = "Issuer",
+            Audience = "Audience",
+            Secret = "short"
+        };
+        var jwt = new JwtOptions { Issuer = "Fallback", Audience = "Fallback", SecretKey = "THIS_IS_A_LONG_SECRET_KEY_32_CHARS_MIN" };
 
-        Assert.Throws<InvalidOperationException>(() => new IdTokenService(cfg));
+        Assert.Throws<InvalidOperationException>(() => new IdTokenService(Microsoft.Extensions.Options.Options.Create(cfg), Microsoft.Extensions.Options.Options.Create(jwt)));
     }
 }
