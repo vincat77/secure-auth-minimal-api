@@ -181,6 +181,22 @@ WHERE id = @userId;";
     }
 
     /// <summary>
+    /// Rigenera il token di conferma email e la relativa scadenza.
+    /// </summary>
+    public async Task UpdateEmailConfirmTokenAsync(string userId, string token, string expiresUtcIso, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
+    {
+        const string sql = @"
+UPDATE users
+SET email_confirm_token = @token,
+    email_confirm_expires_utc = @expiresUtcIso,
+    email_confirmed = 0
+WHERE id = @userId;";
+
+        var db = connection ?? Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, token, expiresUtcIso }, transaction: tx, cancellationToken: ct));
+    }
+
+    /// <summary>
     /// Aggiorna l'hash della password per l'utente.
     /// </summary>
     public async Task UpdatePasswordAsync(string userId, string passwordHash, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)

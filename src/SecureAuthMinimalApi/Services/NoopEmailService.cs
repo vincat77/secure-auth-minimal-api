@@ -19,4 +19,10 @@ public sealed class NoopEmailService : IEmailService
         _logger.LogInformation("Invio email reset password a {Email} token={Token} exp={Exp}", toEmail, resetToken, expiresAtUtc);
         return Task.CompletedTask;
     }
+
+    public Task SendEmailConfirmationAsync(string toEmail, string confirmToken, string expiresAtUtc)
+    {
+        _logger.LogInformation("Invio email conferma a {Email} token={Token} exp={Exp}", toEmail, confirmToken, expiresAtUtc);
+        return Task.CompletedTask;
+    }
 }

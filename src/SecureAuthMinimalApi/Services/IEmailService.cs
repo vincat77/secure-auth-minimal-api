@@ -8,4 +8,5 @@ namespace SecureAuthMinimalApi.Services;
 public interface IEmailService
 {
     Task SendPasswordResetEmailAsync(string toEmail, string resetToken, string expiresAtUtc);
+    Task SendEmailConfirmationAsync(string toEmail, string confirmToken, string expiresAtUtc);
 }

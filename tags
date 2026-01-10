@@ -553,6 +553,8 @@ SeedExpiredRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	
 SeedExpiredRefreshTokensAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRefreshTokensAsync(string dbPath, int count)$/;"	m	class:CleanupServiceTests	file:
 SeedValidRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedValidRecordsAsync(string dbPath)$/;"	m	class:CleanupServiceTests	file:
 SendAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, Cance/;"	m	class:MainFormChangePasswordTests.StubHandler
+SendEmailConfirmationAsync	src/SecureAuthMinimalApi/Services/IEmailService.cs	/^    Task SendEmailConfirmationAsync(string toEmail, string confirmToken, string expiresAtUtc);$/;"	m	interface:IEmailService
+SendEmailConfirmationAsync	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    public Task SendEmailConfirmationAsync(string toEmail, string confirmToken, string expiresAt/;"	m	class:NoopEmailService
 SendPasswordResetEmailAsync	src/SecureAuthMinimalApi/Services/IEmailService.cs	/^    Task SendPasswordResetEmailAsync(string toEmail, string resetToken, string expiresAtUtc);$/;"	m	interface:IEmailService
 SendPasswordResetEmailAsync	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    public Task SendPasswordResetEmailAsync(string toEmail, string resetToken, string expiresAtU/;"	m	class:NoopEmailService
 SerilogSmokeTests	tests/SecureAuthMinimalApi.Tests/SerilogSmokeTests.cs	/^    public SerilogSmokeTests(WebApplicationFactory<Program> factory)$/;"	m	class:SerilogSmokeTests
@@ -626,6 +628,7 @@ UnsafeMethods	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    privat
 UpdateCountdown	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public void UpdateCountdown()$/;"	m	class:RefreshCountdownControl
 UpdateCountdown	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    public void UpdateCountdown(TimeSpan elapsedSinceUpdate)$/;"	m	class:SessionCountdownControl
 UpdateDevice	clients/WinFormsClient/Controls/DeviceInfoControl.cs	/^    public void UpdateDevice(string? deviceId, bool? issuedNow = null)$/;"	m	class:DeviceInfoControl
+UpdateEmailConfirmTokenAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task UpdateEmailConfirmTokenAsync(string userId, string token, string expiresUt/;"	m	class:UserRepository
 UpdateInfo	clients/WinFormsClient/Controls/SessionCard.cs	/^    public void UpdateInfo(string? userId, string? sessionId, string? expiresAtUtc, string? crea/;"	m	class:SessionCard
 UpdateLastSeenAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task UpdateLastSeenAsync(string sessionId, string lastSeenUtcIso, CancellationT/;"	m	class:SessionRepository
 UpdatePasswordAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task UpdatePasswordAsync(string userId, string passwordHash, CancellationToken /;"	m	class:UserRepository

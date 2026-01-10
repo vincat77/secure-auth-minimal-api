@@ -59,7 +59,31 @@ namespace SecureAuthMinimalApi.Endpoints;
 
             if (resetConfig.RequireConfirmed && !user.EmailConfirmed)
             {
-                logger.LogInformation("Password reset bloccato: email non confermata userId={UserId}", user.Id);
+                var confirmToken = string.IsNullOrWhiteSpace(user.EmailConfirmToken)
+                    ? Guid.NewGuid().ToString("N")
+                    : user.EmailConfirmToken!;
+                var confirmExp = string.IsNullOrWhiteSpace(user.EmailConfirmExpiresUtc)
+                    ? DateTime.UtcNow.AddHours(24)
+                    : DateTime.Parse(user.EmailConfirmExpiresUtc).ToUniversalTime();
+                if (confirmExp <= DateTime.UtcNow)
+                {
+                    confirmExp = DateTime.UtcNow.AddHours(24);
+                }
+
+                await users.UpdateEmailConfirmTokenAsync(user.Id, confirmToken, confirmExp.ToString("O"), ctx.RequestAborted);
+                if (!string.IsNullOrWhiteSpace(user.Email))
+                {
+                    try
+                    {
+                        await emailService.SendEmailConfirmationAsync(user.Email!, confirmToken, confirmExp.ToString("O"));
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Errore invio email conferma per reset bloccato userId={UserId}", user.Id);
+                    }
+                }
+
+                logger.LogInformation("Password reset bloccato: email non confermata userId={UserId}, token di conferma (ri)inviato", user.Id);
                 return Results.Ok(new { ok = true });
             }
 
