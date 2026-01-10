@@ -51,6 +51,7 @@ BaseUri	clients/WinFormsClient/MainForm.cs	/^  private Uri BaseUri => new(_urlCo
 BaseUrl	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^    private const string BaseUrl = "https:\/\/api.dicebear.com\/9.x\/adventurer\/";$/;"	f	class:ImageLoaderTests	file:
 BatchSize	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^    public int BatchSize { get; set; } = 200;$/;"	p	class:CleanupOptions
 BeginBusy	clients/WinFormsClient/MainForm.cs	/^  private IDisposable BeginBusy(string message)$/;"	m	class:MainForm	file:
+Buckets	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        private static readonly ConcurrentDictionary<string, ConcurrentQueue<DateTime>> Buckets /;"	f	class:PasswordResetEndpoints.RateLimiter	file:
 BusyScope	clients/WinFormsClient/MainForm.cs	/^    public BusyScope(Action onDispose)$/;"	m	class:MainForm.BusyScope
 BusyScope	clients/WinFormsClient/MainForm.cs	/^  private sealed class BusyScope : IDisposable$/;"	c	class:MainForm
 ChallengeId	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public string? ChallengeId$/;"	p	class:MfaPanelControl
@@ -466,6 +467,9 @@ Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
 RandomBytes	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static byte[] RandomBytes(int len)$/;"	m	class:ChangePasswordEndpoints	file:
 RandomBytes	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static byte[] RandomBytes(int len)$/;"	m	class:EndpointUtilities
+RateLimitRequests	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetConfig
+RateLimitWindowMinutes	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetConfig
+RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints
 ReadyEndpoints	src/SecureAuthMinimalApi/Endpoints/ReadyEndpoints.cs	/^public static class ReadyEndpoints$/;"	c
 Ready_endpoint_returns_200_when_db_and_jwt_are_valid	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_200_when_db_and_jwt_are_valid()$/;"	m	class:ApiTests
 Ready_endpoint_returns_503_when_db_unreachable	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_503_when_db_unreachable()$/;"	m	class:ApiTests
@@ -579,6 +583,7 @@ SetTotpSecretAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public 
 SetupMfaAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task SetupMfaAsync()$/;"	m	class:MainForm	file:
 SetupMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:ActionButtonsControl
 SetupMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:MfaPanelControl
+ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        public static bool ShouldThrottle(string key, int limit, TimeSpan window)$/;"	m	class:PasswordResetEndpoints.RateLimiter
 ShowCookiesClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ShowCookiesClicked;$/;"	E	class:ActionButtonsControl
 ShowQrClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ShowQrClicked;$/;"	E	class:ActionButtonsControl
 ShowQrClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ShowQrClicked;$/;"	E	class:MfaPanelControl

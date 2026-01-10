@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,8 @@ namespace SecureAuthMinimalApi.Endpoints;
             var resetConfig = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordResetConfig>>().Value;
             var env = app.Services.GetRequiredService<IHostEnvironment>();
             var includeTokenInResponse = resetConfig.IncludeTokenInResponseForTesting && env.IsDevelopment();
+            var rateLimitEnabled = resetConfig.RateLimitRequests > 0 && resetConfig.RateLimitWindowMinutes > 0;
+            var rateLimitWindow = TimeSpan.FromMinutes(resetConfig.RateLimitWindowMinutes <= 0 ? 15 : resetConfig.RateLimitWindowMinutes);
 
             app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
             {
@@ -35,6 +38,16 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (string.IsNullOrWhiteSpace(email))
             {
                 return Results.BadRequest(new { ok = false, error = "invalid_input" });
+            }
+
+            if (rateLimitEnabled)
+            {
+                var clientIp = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+                var key = $"{email}|{clientIp}";
+                if (RateLimiter.ShouldThrottle(key, resetConfig.RateLimitRequests, rateLimitWindow))
+                {
+                    return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+                }
             }
 
             var user = await users.GetByEmailAsync(email!, ctx.RequestAborted);
@@ -178,5 +191,30 @@ namespace SecureAuthMinimalApi.Endpoints;
         var bytes = Encoding.UTF8.GetBytes(token);
         var hash = sha.ComputeHash(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static class RateLimiter
+    {
+        private static readonly ConcurrentDictionary<string, ConcurrentQueue<DateTime>> Buckets = new(StringComparer.OrdinalIgnoreCase);
+
+        public static bool ShouldThrottle(string key, int limit, TimeSpan window)
+        {
+            if (limit <= 0)
+                return false;
+
+            var queue = Buckets.GetOrAdd(key, _ => new ConcurrentQueue<DateTime>());
+            var now = DateTime.UtcNow;
+
+            while (queue.TryPeek(out var ts) && now - ts > window)
+            {
+                queue.TryDequeue(out _);
+            }
+
+            if (queue.Count >= limit)
+                return true;
+
+            queue.Enqueue(now);
+            return false;
+        }
     }
 }

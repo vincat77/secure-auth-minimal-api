@@ -8,7 +8,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `Jwt:AccessTokenMinutes` - Durata in minuti del token di accesso. Intero >0.
 
 ## IdToken
-- `IdToken:Issuer` - Issuer dell'id_token (può essere diverso dall'access token).
+- `IdToken:Issuer` - Issuer dell'id_token (puï¿½ essere diverso dall'access token).
 - `IdToken:Audience` - Audience prevista per l'id_token.
 - `IdToken:SigningKeyPath` - Percorso chiave RSA/EC per firmare l'id_token (PEM/XML). Se vuoto e solo in dev, fallback HMAC (meno sicuro).
 - `IdToken:Secret` - Chiave HMAC di fallback (dev). In prod preferire chiave RSA via `SigningKeyPath`.
@@ -37,7 +37,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `UsernamePolicy:Lowercase` - Se true normalizza username in minuscolo. Bool.
 
 ## EmailConfirmation
-- `EmailConfirmation:Required` - Se true blocca il login finché l'utente non conferma l'email (default true); se false permette il login anche senza conferma, ma i token di conferma restano generati per uso eventuale.
+- `EmailConfirmation:Required` - Se true blocca il login finchï¿½ l'utente non conferma l'email (default true); se false permette il login anche senza conferma, ma i token di conferma restano generati per uso eventuale.
 
 ## RememberMe (refresh cookie)
 - `RememberMe:Days` - Durata del refresh/remember in giorni. Intero >0.
@@ -46,7 +46,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `RememberMe:Path` - Path del cookie refresh (es. `/refresh`).
 
 ## Mfa
-- `Mfa:ChallengeMinutes` - Validità di un challenge MFA in minuti. Intero >0.
+- `Mfa:ChallengeMinutes` - Validitï¿½ di un challenge MFA in minuti. Intero >0.
 - `Mfa:RequireUaMatch` - Richiede match User-Agent tra login e conferma. Bool.
 - `Mfa:RequireIpMatch` - Richiede match IP tra login e conferma. Bool.
 - `Mfa:MaxAttemptsPerChallenge` - Tentativi TOTP per challenge. Intero >=1.
@@ -62,7 +62,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `Device:ClearOnLogoutAll` - Se true cancella cookie device su logout-all.
 
 ## Session
-- `Session:IdleMinutes` - Timeout di inattività (minuti). <=0 per disabilitare idle timeout.
+- `Session:IdleMinutes` - Timeout di inattivitï¿½ (minuti). <=0 per disabilitare idle timeout.
 
 ## Cleanup
 - `Cleanup:Enabled` - Abilita il job di pulizia record scaduti. Bool.
@@ -92,3 +92,6 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - PasswordReset:RequireConfirmed - Se true solo utenti con email confermata possono ricevere token reset (default true).
 - PasswordReset:IncludeTokenInResponseForTesting - Solo per test/dev: include il token in response su /password-reset/request (non usare in prod).
 - PasswordReset:RetentionDays - Giorni di retention per token scaduti/usati prima del cleanup (default 7).
+- PasswordReset:RateLimitRequests - Numero massimo di richieste reset per (email+IP) nella finestra (default 5). <=0 per disabilitare.
+- PasswordReset:RateLimitWindowMinutes - Finestra in minuti per il rate limit (default 15).
+

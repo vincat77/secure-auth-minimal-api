@@ -9,4 +9,6 @@ public sealed class PasswordResetConfig
     public bool RequireConfirmed { get; set; } = true;
     public bool IncludeTokenInResponseForTesting { get; set; } = false;
     public int RetentionDays { get; set; } = 7;
+    public int RateLimitRequests { get; set; } = 5;
+    public int RateLimitWindowMinutes { get; set; } = 15;
 }
