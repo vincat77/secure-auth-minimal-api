@@ -26,7 +26,7 @@ Correggere criticità (DoS/log leak/seed demo) e rendere più affidabili configu
    - Verifica: test refresh con UA diverso passano quando flag=false.
 
 5) Cookie SameSite/RequireSecure hardening  
-   - File: `Endpoints/LoginEndpoints.cs` (emissione refresh/device).  
+   - File: `Endpoints/LoginEndpoints.cs` (emissione refresh/device) – vedi blocco config `RememberMe:SameSite` e `Device:SameSite`.  
    - Azione: in prod forza sempre `Secure=true`; vieta `SameSite=None` per refresh/device salvo flag `AllowSameSiteNone` (default false). Log warning se disattivato.  
    - Verifica: test login/refresh/device in ambiente “Production” rispettano i flag.
 

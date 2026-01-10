@@ -44,6 +44,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `RememberMe:SameSite` - SameSite del cookie refresh (`Strict` o `Lax`).
 - `RememberMe:CookieName` - Nome del cookie refresh.
 - `RememberMe:Path` - Path del cookie refresh (es. `/refresh`).
+- `RememberMe:AllowSameSiteNone` - Se true consente `SameSite=None` per il refresh token (default false; in prod sconsigliato).
 
 ## Mfa
 - `Mfa:ChallengeMinutes` - Validit� di un challenge MFA in minuti. Intero >0.
@@ -61,6 +62,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 - `Device:RequireSecure` - Flag Secure per cookie device. Bool; true in prod.
 - `Device:PersistDays` - Durata cookie device in giorni. Intero >0.
 - `Device:ClearOnLogoutAll` - Se true cancella cookie device su logout-all.
+- `Device:AllowSameSiteNone` - Se true consente `SameSite=None` per device cookie (default false; in prod sconsigliato).
 
 ## Session
 - `Session:IdleMinutes` - Timeout di inattivit� (minuti). <=0 per disabilitare idle timeout.

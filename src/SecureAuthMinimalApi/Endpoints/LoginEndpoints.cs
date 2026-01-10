@@ -175,8 +175,12 @@ public static class LoginEndpoints
                 rememberSameSite = SameSiteMode.Lax;
             else if (!rememberSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
                 logger.LogWarning("RememberMe:SameSite non valido ({SameSite}), fallback a Strict", rememberSameSiteString);
-            if (!isDevelopment && rememberSameSite == SameSiteMode.None)
-                logger.LogWarning("RememberMe:SameSite=None in ambiente non Development: sconsigliato");
+            var allowRememberNone = app.Configuration.GetValue<bool?>("RememberMe:AllowSameSiteNone") ?? false;
+            if (!isDevelopment && rememberSameSite == SameSiteMode.None && !allowRememberNone)
+            {
+                logger.LogWarning("RememberMe:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita RememberMe:AllowSameSiteNone per override esplicito)");
+                rememberSameSite = SameSiteMode.Strict;
+            }
             var rememberCookieName = app.Configuration["RememberMe:CookieName"] ?? "refresh_token";
             var rememberPath = app.Configuration["RememberMe:Path"] ?? "/refresh";
             var deviceCookieName = app.Configuration["Device:CookieName"] ?? "device_id";
@@ -188,8 +192,12 @@ public static class LoginEndpoints
                 deviceSameSite = SameSiteMode.None;
             else if (!deviceSameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
                 logger.LogWarning("Device:SameSite non valido ({SameSite}), fallback a Strict", deviceSameSiteString);
-            if (!isDevelopment && deviceSameSite == SameSiteMode.None)
-                logger.LogWarning("Device:SameSite=None in ambiente non Development: sconsigliato");
+            var allowDeviceNone = app.Configuration.GetValue<bool?>("Device:AllowSameSiteNone") ?? false;
+            if (!isDevelopment && deviceSameSite == SameSiteMode.None && !allowDeviceNone)
+            {
+                logger.LogWarning("Device:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita Device:AllowSameSiteNone per override esplicito)");
+                deviceSameSite = SameSiteMode.Strict;
+            }
             var deviceRequireSecureConfig = app.Configuration.GetValue<bool?>("Device:RequireSecure");
             var deviceRequireSecure = isDevelopment
                 ? (deviceRequireSecureConfig ?? (app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? false))
