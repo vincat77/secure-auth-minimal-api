@@ -75,11 +75,15 @@ public static class LoginEndpoints
                 logger.LogInformation("Login: password verificata username={Username}", safeUsername);
             }
 
-            if (!user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
+            if (emailConfirmationRequired && !user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
             {
                 logger.LogWarning("Login bloccato: email non confermata username={Username} userId={UserId}", safeUsername, user.Id);
                 await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);
                 return Results.Json(new { ok = false, error = "email_not_confirmed" }, statusCode: StatusCodes.Status403Forbidden);
+            }
+            else if (!emailConfirmationRequired && !user.EmailConfirmed)
+            {
+                logger.LogInformation("Login: email non confermata ma requisito disabilitato username={Username} userId={UserId}", safeUsername, user.Id);
             }
 
             if (!string.IsNullOrWhiteSpace(user.TotpSecret))

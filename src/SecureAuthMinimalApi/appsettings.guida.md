@@ -36,6 +36,9 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 ## UsernamePolicy
 - `UsernamePolicy:Lowercase` - Se true normalizza username in minuscolo. Bool.
 
+## EmailConfirmation
+- `EmailConfirmation:Required` - Se true blocca il login finché l'utente non conferma l'email (default true); se false permette il login anche senza conferma, ma i token di conferma restano generati per uso eventuale.
+
 ## RememberMe (refresh cookie)
 - `RememberMe:Days` - Durata del refresh/remember in giorni. Intero >0.
 - `RememberMe:SameSite` - SameSite del cookie refresh (`Strict` o `Lax`).
