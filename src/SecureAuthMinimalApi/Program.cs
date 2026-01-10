@@ -54,6 +54,7 @@ builder.Services.AddSingleton<MfaChallengeRepository>();
 builder.Services.AddSingleton<PasswordResetRepository>();
 builder.Services.AddSingleton<IdTokenService>();
 builder.Services.AddSingleton<IEmailService, NoopEmailService>();
+builder.Services.Configure<PasswordResetConfig>(builder.Configuration.GetSection("PasswordReset"));
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();
@@ -221,7 +222,7 @@ app.MapConfirmEmail(logger);
 app.MapLogoutAll(logger);
 app.MapRefresh(logger);
 app.MapIntrospect(logger);
-app.MapPasswordReset(logger, resetRequireConfirmed, resetExpirationMinutes, resetIncludeToken);
+app.MapPasswordReset(logger);
 
 var shutdownCts = new CancellationTokenSource();
 var appTask = app.RunAsync(shutdownCts.Token);

@@ -14,8 +14,9 @@ namespace SecureAuthMinimalApi.Endpoints;
 /// </summary>
 public static class PasswordResetEndpoints
 {
-    public static void MapPasswordReset(this WebApplication app, ILogger logger, bool requireConfirmed, int expirationMinutes, bool includeTokenInResponseForTesting)
+    public static void MapPasswordReset(this WebApplication app, ILogger logger)
     {
+        var resetConfig = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordResetConfig>>().Value;
         app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
@@ -37,14 +38,15 @@ public static class PasswordResetEndpoints
                 return Results.Ok(new { ok = true });
             }
 
-            if (requireConfirmed && !user.EmailConfirmed)
+            if (resetConfig.RequireConfirmed && !user.EmailConfirmed)
             {
                 logger.LogInformation("Password reset bloccato: email non confermata userId={UserId}", user.Id);
                 return Results.Ok(new { ok = true });
             }
 
             var now = DateTime.UtcNow;
-            var expires = now.AddMinutes(expirationMinutes <= 0 ? 30 : expirationMinutes);
+            var expMinutes = resetConfig.ExpirationMinutes <= 0 ? 30 : resetConfig.ExpirationMinutes;
+            var expires = now.AddMinutes(expMinutes);
             var token = GenerateToken();
             var tokenHash = HashToken(token);
             var reset = new PasswordReset
@@ -63,18 +65,21 @@ public static class PasswordResetEndpoints
             await resets.CreateAsync(reset, ctx.RequestAborted);
             logger.LogInformation("Password reset creato userId={UserId} exp={Exp}", user.Id, reset.ExpiresAtUtc);
 
-            if (includeTokenInResponseForTesting)
+            if (resetConfig.IncludeTokenInResponseForTesting)
             {
                 return Results.Ok(new { ok = true, resetToken = token });
             }
 
-            try
+            if (!string.IsNullOrWhiteSpace(user.Email))
             {
-                await emailService.SendPasswordResetEmailAsync(user.Email, token, reset.ExpiresAtUtc);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Errore durante l'invio email reset password userId={UserId}", user.Id);
+                try
+                {
+                    await emailService.SendPasswordResetEmailAsync(user.Email, token, reset.ExpiresAtUtc);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Errore durante l'invio email reset password userId={UserId}", user.Id);
+                }
             }
 
             return Results.Ok(new { ok = true });
@@ -96,7 +101,7 @@ public static class PasswordResetEndpoints
             }
 
             var user = await users.GetByIdAsync(reset.UserId, ctx.RequestAborted);
-            if (user is null)
+            if (user is null || string.IsNullOrWhiteSpace(user.EmailNormalized))
             {
                 return Results.BadRequest(new { ok = false, error = "invalid_token" });
             }
