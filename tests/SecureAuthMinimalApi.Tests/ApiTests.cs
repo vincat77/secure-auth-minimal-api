@@ -40,14 +40,14 @@ public class ApiTests : IAsyncLifetime
     private static (WebApplicationFactory<Program> Factory, HttpClient Client, string DbPath) CreateFactory(bool requireSecure, bool forceLowerUsername = false, IDictionary<string, string?>? extraConfig = null)
     {
         var dbPath = Path.Combine(Path.GetTempPath(), $"secure-auth-tests-{Guid.NewGuid():N}.db");
+        var envValue = "Development";
+        if (extraConfig is not null && extraConfig.TryGetValue("Environment", out var extEnv) && !string.IsNullOrWhiteSpace(extEnv))
+        {
+            envValue = extEnv!;
+        }
         var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
-                var envValue = "Development";
-                if (extraConfig is not null && extraConfig.TryGetValue("Environment", out var env) && !string.IsNullOrWhiteSpace(env))
-                {
-                    envValue = env!;
-                }
                 builder.UseEnvironment(envValue);
                 builder.ConfigureAppConfiguration((context, configBuilder) =>
                 {
@@ -76,11 +76,16 @@ public class ApiTests : IAsyncLifetime
                 });
             });
 
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        var options = new WebApplicationFactoryClientOptions
         {
             HandleCookies = false,
             AllowAutoRedirect = false
-        });
+        };
+        if (envValue.Equals("Production", StringComparison.OrdinalIgnoreCase))
+        {
+            options.BaseAddress = new Uri("https://localhost");
+        }
+        var client = factory.CreateClient(options);
 
         return (factory, client, dbPath);
     }

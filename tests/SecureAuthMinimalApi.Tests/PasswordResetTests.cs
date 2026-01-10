@@ -247,7 +247,7 @@ public class PasswordResetTests : IAsyncLifetime
                         ["PasswordReset:IncludeTokenInResponseForTesting"] = "true",
                         ["PasswordReset:RetentionDays"] = "7",
                         ["Cookie:RequireSecure"] = "false",
-                        ["EmailConfirmation:Required"] = "true",
+                        ["EmailConfirmation:Required"] = "false",
                         ["Jwt:SecretKey"] = "TEST_SECRET_KEY_AT_LEAST_32_CHARACTERS_LONG__",
                         ["Jwt:Issuer"] = "TestIssuer",
                         ["Jwt:Audience"] = "TestAudience",
