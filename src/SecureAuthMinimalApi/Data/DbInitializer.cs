@@ -192,8 +192,8 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @
 
   private static void EnsureColumn(SqliteConnection conn, string table, string column, string? typeOverride = null)
   {
-    var pragma = conn.Query<string>($"PRAGMA table_info({table});");
-    if (!pragma.Any(x => x.Contains(column, StringComparison.OrdinalIgnoreCase)))
+    var pragma = conn.Query($"PRAGMA table_info({table});");
+    if (!pragma.Any(x => string.Equals((string)x.name, column, StringComparison.OrdinalIgnoreCase)))
     {
       try
       {
