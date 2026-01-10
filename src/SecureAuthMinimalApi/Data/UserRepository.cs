@@ -183,15 +183,15 @@ WHERE id = @userId;";
     /// <summary>
     /// Aggiorna l'hash della password per l'utente.
     /// </summary>
-    public async Task UpdatePasswordAsync(string userId, string passwordHash, CancellationToken ct)
+    public async Task UpdatePasswordAsync(string userId, string passwordHash, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
     {
         const string sql = @"
 UPDATE users
 SET password_hash = @passwordHash
 WHERE id = @userId;";
 
-        using var db = Open();
-        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, passwordHash }, cancellationToken: ct));
+        var db = connection ?? Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, passwordHash }, transaction: tx, cancellationToken: ct));
     }
 
     private User? DecryptTotp(User? user)

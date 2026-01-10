@@ -24,34 +24,34 @@ public sealed class PasswordResetRepository
     /// <summary>
     /// Crea un nuovo reset token (token_hash già calcolato a monte).
     /// </summary>
-    public async Task CreateAsync(PasswordReset reset, CancellationToken ct)
+    public async Task CreateAsync(PasswordReset reset, CancellationToken ct, IDbTransaction? tx = null, IDbConnection? connection = null)
     {
         const string sql = @"
 INSERT INTO password_resets (id, user_id, token_hash, expires_at_utc, used_at_utc, created_at_utc, client_ip, user_agent)
 VALUES (@Id, @UserId, @TokenHash, @ExpiresAtUtc, @UsedAtUtc, @CreatedAtUtc, @ClientIp, @UserAgent);";
 
-        using var db = Open();
-        await db.ExecuteAsync(new CommandDefinition(sql, reset, cancellationToken: ct));
+        var db = connection ?? Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, reset, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>
     /// Marca come usati eventuali reset attivi precedenti per l'utente.
     /// </summary>
-    public async Task InvalidatePreviousForUserAsync(string userId, string nowIso, CancellationToken ct)
+    public async Task InvalidatePreviousForUserAsync(string userId, string nowIso, CancellationToken ct, IDbTransaction? tx = null, IDbConnection? connection = null)
     {
         const string sql = @"
 UPDATE password_resets
 SET used_at_utc = @nowIso
 WHERE user_id = @userId AND used_at_utc IS NULL AND expires_at_utc > @nowIso;";
 
-        using var db = Open();
-        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, nowIso }, cancellationToken: ct));
+        var db = connection ?? Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, nowIso }, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>
     /// Recupera un reset tramite hash del token.
     /// </summary>
-    public async Task<PasswordReset?> GetByTokenHashAsync(string tokenHash, CancellationToken ct)
+    public async Task<PasswordReset?> GetByTokenHashAsync(string tokenHash, CancellationToken ct, IDbTransaction? tx = null, IDbConnection? connection = null)
     {
         const string sql = @"
 SELECT id       AS Id,
@@ -66,22 +66,22 @@ FROM password_resets
 WHERE token_hash = @tokenHash
 LIMIT 1;";
 
-        using var db = Open();
-        return await db.QuerySingleOrDefaultAsync<PasswordReset>(new CommandDefinition(sql, new { tokenHash }, cancellationToken: ct));
+        var db = connection ?? Open();
+        return await db.QuerySingleOrDefaultAsync<PasswordReset>(new CommandDefinition(sql, new { tokenHash }, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>
     /// Marca il reset come usato se non già usato; restituisce righe interessate (0 se giù usato).
     /// </summary>
-    public async Task<int> MarkUsedAsync(string id, string usedAtIso, CancellationToken ct)
+    public async Task<int> MarkUsedAsync(string id, string usedAtIso, CancellationToken ct, IDbTransaction? tx = null, IDbConnection? connection = null)
     {
         const string sql = @"
 UPDATE password_resets
 SET used_at_utc = @usedAtIso
 WHERE id = @id AND used_at_utc IS NULL;";
 
-        using var db = Open();
-        return await db.ExecuteAsync(new CommandDefinition(sql, new { id, usedAtIso }, cancellationToken: ct));
+        var db = connection ?? Open();
+        return await db.ExecuteAsync(new CommandDefinition(sql, new { id, usedAtIso }, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>

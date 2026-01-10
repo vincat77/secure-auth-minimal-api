@@ -90,15 +90,15 @@ WHERE session_id = @sessionId;";
     /// <summary>
     /// Revoca tutte le sessioni attive per l'utente specificato.
     /// </summary>
-    public async Task RevokeAllForUserAsync(string userId, string revokedAtUtcIso, CancellationToken ct)
+    public async Task RevokeAllForUserAsync(string userId, string revokedAtUtcIso, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
     {
         const string sql = @"
 UPDATE user_sessions
 SET revoked_at_utc = @revokedAtUtcIso
 WHERE user_id = @userId AND revoked_at_utc IS NULL;";
 
-        using var db = Open();
-        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, revokedAtUtcIso }, cancellationToken: ct));
+        var db = connection ?? Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, revokedAtUtcIso }, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>

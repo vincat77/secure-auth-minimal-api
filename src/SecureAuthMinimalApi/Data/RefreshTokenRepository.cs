@@ -163,20 +163,20 @@ VALUES (@Id, @UserId, @SessionId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, @Rev
     /// <summary>
     /// Revoca tutti i refresh token attivi per l'utente.
     /// </summary>
-    public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken ct)
+    public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
     {
         const string sql = @"
 UPDATE refresh_tokens
 SET revoked_at_utc = @revokedAt, rotation_reason = @reason
 WHERE user_id = @userId AND revoked_at_utc IS NULL;";
 
-        using var db = Open();
+        var db = connection ?? Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
         {
             userId,
             revokedAt = DateTime.UtcNow.ToString("O"),
             reason
-        }, cancellationToken: ct));
+        }, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -117,17 +118,34 @@ public static class PasswordResetEndpoints
                 return Results.BadRequest(new { ok = false, error = "password_must_be_different" });
             }
 
-            var used = await resets.MarkUsedAsync(reset.Id, DateTime.UtcNow.ToString("O"), ctx.RequestAborted);
-            if (used == 0)
+            var newHash = Services.PasswordHasher.Hash(req.NewPassword!);
+            var nowIso = DateTime.UtcNow.ToString("O");
+
+            // Transazione best-effort: MarkUsed + Update password + revoke session/refresh.
+            await using var db = new Microsoft.Data.Sqlite.SqliteConnection(ctx.RequestServices.GetRequiredService<IConfiguration>().GetConnectionString("Sqlite"));
+            await db.OpenAsync(ctx.RequestAborted);
+            await using var tx = await db.BeginTransactionAsync(ctx.RequestAborted);
+            try
             {
-                return Results.BadRequest(new { ok = false, error = "invalid_token" });
+                var used = await resets.MarkUsedAsync(reset.Id, nowIso, ctx.RequestAborted, tx, db);
+                if (used == 0)
+                {
+                    await tx.RollbackAsync(ctx.RequestAborted);
+                    return Results.BadRequest(new { ok = false, error = "invalid_token" });
+                }
+
+                await users.UpdatePasswordAsync(user.Id, newHash, ctx.RequestAborted, db, tx);
+                await sessions.RevokeAllForUserAsync(user.Id, nowIso, ctx.RequestAborted, db, tx);
+                await refreshRepo.RevokeAllForUserAsync(user.Id, "password_reset", ctx.RequestAborted, db, tx);
+
+                await tx.CommitAsync(ctx.RequestAborted);
+            }
+            catch
+            {
+                await tx.RollbackAsync(ctx.RequestAborted);
+                throw;
             }
 
-            var newHash = Services.PasswordHasher.Hash(req.NewPassword!);
-            await users.UpdatePasswordAsync(user.Id, newHash, ctx.RequestAborted);
-            var nowIso = DateTime.UtcNow.ToString("O");
-            await sessions.RevokeAllForUserAsync(user.Id, nowIso, ctx.RequestAborted);
-            await refreshRepo.RevokeAllForUserAsync(user.Id, "password_reset", ctx.RequestAborted);
             logger.LogInformation("Password reset completato userId={UserId}", user.Id);
             return Results.Ok(new { ok = true });
         });
