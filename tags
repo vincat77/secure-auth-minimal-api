@@ -501,6 +501,7 @@ RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.
 RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^public partial class RefreshCountdownControl : UserControl$/;"	c
 RefreshEndpoints	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^public static class RefreshEndpoints$/;"	c
 RefreshOptions	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^public sealed class RefreshOptions$/;"	c
+RefreshResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record RefreshResponse(bool Ok, string? CsrfToken, bool? RememberIssued, bool/;"	m	class:ApiTests	file:
 RefreshSessionInfoAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task RefreshSessionInfoAsync()$/;"	m	class:MainForm	file:
 RefreshToken	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^public sealed class RefreshToken$/;"	c
 RefreshTokenHasher	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^    public RefreshTokenHasher(IConfiguration config)$/;"	m	class:RefreshTokenHasher
@@ -508,6 +509,8 @@ RefreshTokenHasher	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^pub
 RefreshTokenRepository	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public RefreshTokenRepository(IConfiguration config, RefreshTokenHasher hasher)$/;"	m	class:RefreshTokenRepository
 RefreshTokenRepository	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^public sealed class RefreshTokenRepository$/;"	c
 RefreshTokenRepositoryTests	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^public class RefreshTokenRepositoryTests : IAsyncLifetime$/;"	c
+Refresh_with_different_user_agent_fails_when_match_enabled	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_different_user_agent_fails_when_match_enabled()$/;"	m	class:ApiTests
+Refresh_with_different_user_agent_succeeds_when_match_disabled	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_different_user_agent_succeeds_when_match_disabled()$/;"	m	class:ApiTests
 Refresh_with_expired_token_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_expired_token_returns_unauthorized()$/;"	m	class:ApiTests
 Refresh_with_mismatched_device_cookie_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_mismatched_device_cookie_returns_unauthorized()$/;"	m	class:ApiTests
 Refresh_with_revoked_token_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_revoked_token_returns_unauthorized()$/;"	m	class:ApiTests

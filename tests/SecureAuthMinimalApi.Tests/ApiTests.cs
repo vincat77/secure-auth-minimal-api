@@ -262,6 +262,7 @@ public class ApiTests : IAsyncLifetime
     private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
     private sealed record ChangePasswordApiResponse(bool Ok, string? Error, IEnumerable<string>? Errors, string? CsrfToken);
     private sealed record ErrorResponse(bool? Ok, string? Error);
+    private sealed record RefreshResponse(bool Ok, string? CsrfToken, bool? RememberIssued, bool? DeviceIssued, string? DeviceId, string? RefreshExpiresAtUtc);
 
     private async Task ConfirmEmailAsync(string token)
     {
@@ -3185,6 +3186,99 @@ CREATE TABLE IF NOT EXISTS users (
             var maxAgeSec = int.Parse(maxAgePart.Split('=')[1]);
             var expected = 3 * 24 * 60 * 60;
             Assert.InRange(maxAgeSec, expected - 5, expected + 5);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Refresh_with_different_user_agent_succeeds_when_match_disabled()
+    {
+        // Scenario: RequireUserAgentMatch=false, il refresh funziona anche con UA diverso.
+        // Risultato atteso: refresh 200 e rememberIssued=true anche se UA cambia.
+        LogTestStart();
+        var overrides = new Dictionary<string, string?>
+        {
+            ["Refresh:RequireUserAgentMatch"] = "false"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: overrides);
+        try
+        {
+            var username = $"ua_disabled_{Guid.NewGuid():N}";
+            var password = "Password123!";
+            var email = $"{username}@example.com";
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+            var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+            var confirm = await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+            Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+            var refreshCookie = cookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+            var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+            req.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
+            req.Headers.TryAddWithoutValidation("User-Agent", "Custom-UA-Changed");
+            var refreshResp = await client.SendAsync(req);
+            Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
+            var payload = await refreshResp.Content.ReadFromJsonAsync<RefreshResponse>();
+            Assert.True(payload!.Ok);
+            Assert.True(payload.RememberIssued ?? false);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Refresh_with_different_user_agent_fails_when_match_enabled()
+    {
+        // Scenario: RequireUserAgentMatch=true, il refresh fallisce se UA cambia.
+        // Risultato atteso: 401 Unauthorized.
+        LogTestStart();
+        var overrides = new Dictionary<string, string?>
+        {
+            ["Refresh:RequireUserAgentMatch"] = "true"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: false, extraConfig: overrides);
+        try
+        {
+            var username = $"ua_enabled_{Guid.NewGuid():N}";
+            var password = "Password123!";
+            var email = $"{username}@example.com";
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+            var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+            var confirm = await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+            Assert.Equal(HttpStatusCode.OK, confirm.StatusCode);
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var cookies = login.Headers.GetValues("Set-Cookie").ToList();
+            var refreshCookie = cookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+            var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+            req.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
+            req.Headers.TryAddWithoutValidation("User-Agent", "Custom-UA-Changed");
+            var refreshResp = await client.SendAsync(req);
+            Assert.Equal(HttpStatusCode.Unauthorized, refreshResp.StatusCode);
         }
         finally
         {
