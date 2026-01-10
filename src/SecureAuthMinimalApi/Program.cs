@@ -10,6 +10,12 @@ using System.Threading;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var hostUrls = builder.Configuration.GetSection("Hosting:Urls").Get<string[]>();
+if (hostUrls?.Length > 0)
+{
+    builder.WebHost.UseUrls(hostUrls);
+}
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -128,6 +134,12 @@ LogStartupInfo(
     mfaRequireIpMatch,
     mfaMaxAttempts,
     skipDbInit);
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var addresses = app.Urls.Any() ? app.Urls.ToArray() : serverUrls.ToArray();
+    logger.LogInformation("SecureAuthMinimalApi in ascolto su: {Urls}", string.Join(", ", addresses));
+});
 
 // Hardening header solo fuori da Development.
 if (!isDevelopment)

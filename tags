@@ -212,7 +212,6 @@ GetByIdAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public asy
 GetByIdAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByIdAsync(string userId, CancellationToken ct)$/;"	m	class:UserRepository
 GetByTokenAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task<RefreshToken?> GetByTokenAsync(string tokenValue, CancellationToken ct)$/;"	m	class:RefreshTokenRepository
 GetByUsernameAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)$/;"	m	class:UserRepository
-GetConfiguredUrls	src/SecureAuthMinimalApi/Program.cs	/^static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)$/;"	m
 GetField	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static T GetField<T>(object target, string name)$/;"	m	class:MainFormChangePasswordTests	file:
 GetRequiredSession	src/SecureAuthMinimalApi/AuthHelpers.cs	/^    public static UserSession GetRequiredSession(this HttpContext ctx)$/;"	m	class:AuthHelpers
 GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    public TokenValidationParameters GetValidationParameters() => _validation;$/;"	m	class:IdTokenService
@@ -226,6 +225,8 @@ HealthResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed
 Health_endpoint_returns_ok	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Health_endpoint_returns_ok()$/;"	m	class:ApiTests
 Health_endpoint_works_with_serilog_config	tests/SecureAuthMinimalApi.Tests/SerilogSmokeTests.cs	/^    public async Task Health_endpoint_works_with_serilog_config()$/;"	m	class:SerilogSmokeTests
 Health_in_production_includes_security_headers	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Health_in_production_includes_security_headers()$/;"	m	class:ApiTests
+HostingUrlsTests	tests/SecureAuthMinimalApi.Tests/HostingUrlsTests.cs	/^public class HostingUrlsTests$/;"	c
+HostingUrls_FromConfiguration_AreAppliedToServerAddresses	tests/SecureAuthMinimalApi.Tests/HostingUrlsTests.cs	/^    public void HostingUrls_FromConfiguration_AreAppliedToServerAddresses()$/;"	m	class:HostingUrlsTests
 Http	clients/WinFormsClient/ImageLoader.cs	/^    private static readonly HttpClient Http = new();$/;"	f	class:ImageLoader	file:
 ILoginThrottle	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^public interface ILoginThrottle$/;"	i
 Id	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required string Id { get; init; }$/;"	p	class:LoginAudit
@@ -307,7 +308,6 @@ LogEvent	clients/WinFormsClient/MainForm.cs	/^  private void LogEvent(string lev
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.Designer.cs	/^partial class LogPanelControl$/;"	c
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public LogPanelControl()$/;"	m	class:LogPanelControl
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^public partial class LogPanelControl : UserControl$/;"	c
-LogStartupInfo	src/SecureAuthMinimalApi/Program.cs	/^static void LogStartupInfo($/;"	m
 LogTestStart	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private void LogTestStart([CallerMemberName] string name = "")$/;"	m	class:ApiTests	file:
 LoginAndGetSessionAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string usernam/;"	m	class:ApiTests	file:
 LoginAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task LoginAsync()$/;"	m	class:MainForm	file:
@@ -427,7 +427,6 @@ PasswordHasher	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^public stat
 PasswordPolicySettings	src/SecureAuthMinimalApi/Models/PasswordPolicySettings.cs	/^public sealed record PasswordPolicySettings(int MinLength, bool RequireUpper, bool RequireLower,/;"	m
 PictureUrl	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? PictureUrl { get; init; }$/;"	p	class:User
 Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
-Program	src/SecureAuthMinimalApi/Program.cs	/^public partial class Program { }$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
 RandomBytes	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static byte[] RandomBytes(int len)$/;"	m	class:ChangePasswordEndpoints	file:
 RandomBytes	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static byte[] RandomBytes(int len)$/;"	m	class:EndpointUtilities
@@ -550,7 +549,6 @@ StatusInfoControl	clients/WinFormsClient/Controls/StatusInfoControl.cs	/^public 
 StubHandler	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)$/;"	m	class:MainFormChangePasswordTests.StubHandler
 StubHandler	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private sealed class StubHandler : HttpMessageHandler$/;"	c	class:MainFormChangePasswordTests
 Tampered_token_returns_401_on_me	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Tampered_token_returns_401_on_me()$/;"	m	class:ApiTests
-Task.WhenAny	src/SecureAuthMinimalApi/Program.cs	/^await Task.WhenAny(appTask, consoleTask);$/;"	m
 ThrottleRow	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    private sealed record ThrottleRow$/;"	p	class:LoginThrottleRepository
 ThrottleState	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^public sealed record ThrottleState(string Username, int Failures, DateTimeOffset LockedUntilUtc)/;"	m
 TickCountdown	clients/WinFormsClient/Controls/SessionCard.cs	/^    public void TickCountdown()$/;"	m	class:SessionCard
@@ -757,18 +755,6 @@ _user	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^    private Labe
 _user	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    private Label _user = null!;$/;"	f	class:StatusInfoControl	file:
 _userInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _userInput = null!;$/;"	f	class:MainForm	file:
 _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly TokenValidationParameters _validation;$/;"	f	class:IdTokenService	file:
-app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
-app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(logger, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
-app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
-app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
-app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(logger, forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequ/;"	m
-app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m
-app.MapMfaSetup	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaSetup();$/;"	m
-app.MapReady	src/SecureAuthMinimalApi/Program.cs	/^app.MapReady();$/;"	m
-app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister(logger, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymb/;"	m
-app.UseCookieJwtAuth	src/SecureAuthMinimalApi/Program.cs	/^app.UseCookieJwtAuth();$/;"	m
-app.UseCsrfProtection	src/SecureAuthMinimalApi/Program.cs	/^app.UseCsrfProtection();$/;"	m
-async	src/SecureAuthMinimalApi/Program.cs	/^app.Use(async (ctx, next) =>$/;"	m
 builder.Host.UseSerilog	src/SecureAuthMinimalApi/Program.cs	/^builder.Host.UseSerilog();$/;"	m
 builder.Services.AddDataProtection	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddDataProtection();$/;"	m
 builder.Services.AddHostedService	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddHostedService<ExpiredCleanupService>();$/;"	m
@@ -805,4 +791,3 @@ enabled	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public voi
 enabled	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public void SetMfaEnabled(bool enabled) => _confirmMfaButton.Enabled = enabled;$/;"	f	class:MfaPanelControl
 enabled	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public void SetQrEnabled(bool enabled) => _showQrButton.Enabled = enabled;$/;"	f	class:MfaPanelControl
 loggerFactory	src/SecureAuthMinimalApi/Program.cs	/^using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());$/;"	t	file:
-shutdownCts.Cancel	src/SecureAuthMinimalApi/Program.cs	/^shutdownCts.Cancel();$/;"	m
