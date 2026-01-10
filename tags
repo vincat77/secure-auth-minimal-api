@@ -104,6 +104,8 @@ ConfirmMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    
 ConfirmMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ConfirmMfaClicked;$/;"	E	class:MfaPanelControl
 ConfirmMfaEndpoints	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^public static class ConfirmMfaEndpoints$/;"	c
 ConfirmMfaRequest	src/SecureAuthMinimalApi/ConfirmMfaRequest.cs	/^public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, s/;"	m
+Confirm_email_expired_token_blocks_login_when_required	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_expired_token_blocks_login_when_required()$/;"	m	class:ApiTests
+Confirm_email_expired_token_when_not_required_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_expired_token_when_not_required_returns_gone()$/;"	m	class:ApiTests
 Confirm_email_with_expired_token_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_expired_token_returns_gone()$/;"	m	class:ApiTests
 Confirm_email_with_invalid_token_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_invalid_token_returns_bad_request()$/;"	m	class:ApiTests
 Confirm_email_with_valid_token_marks_confirmed	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_valid_token_marks_confirmed()$/;"	m	class:ApiTests
@@ -334,18 +336,21 @@ Login_lockout_persists_across_factory	tests/SecureAuthMinimalApi.Tests/ApiTests.
 Login_lockout_respects_custom_threshold	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_lockout_respects_custom_threshold()$/;"	m	class:ApiTests
 Login_me_logout_flow	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_me_logout_flow()$/;"	m	class:ApiTests
 Login_missing_fields_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_missing_fields_returns_bad_request()$/;"	m	class:ApiTests
+Login_remember_false_with_email_not_required_emits_no_refresh	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_false_with_email_not_required_emits_no_refresh()$/;"	m	class:ApiTests
 Login_remember_respects_configured_days_for_maxage	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_respects_configured_days_for_maxage()$/;"	m	class:ApiTests
 Login_remember_sets_device_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_sets_device_cookie()$/;"	m	class:ApiTests
 Login_remember_stores_hashed_refresh_token	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_stores_hashed_refresh_token()$/;"	m	class:ApiTests
 Login_remember_with_email_not_required_emits_refresh	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_with_email_not_required_emits_refresh()$/;"	m	class:ApiTests
 Login_resets_throttle_after_success	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_resets_throttle_after_success()$/;"	m	class:ApiTests
 Login_sets_cookie_with_expected_flags	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_sets_cookie_with_expected_flags()$/;"	m	class:ApiTests
+Login_with_mfa_and_email_required_returns_challenge	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_mfa_and_email_required_returns_challenge()$/;"	m	class:ApiTests
 Login_with_mfa_when_email_not_required_returns_challenge	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_mfa_when_email_not_required_returns_challenge()$/;"	m	class:ApiTests
 Login_with_remember_emits_refresh_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_remember_emits_refresh_cookie()$/;"	m	class:ApiTests
 Login_with_wrong_credentials_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_wrong_credentials_returns_unauthorized()$/;"	m	class:ApiTests
 Login_without_remember_does_not_emit_refresh_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_without_remember_does_not_emit_refresh_cookie()$/;"	m	class:ApiTests
 Login_without_require_secure_drops_secure_flag	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_without_require_secure_drops_secure_flag()$/;"	m	class:ApiTests
 Login_without_totp_remains_one_step	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_without_totp_remains_one_step()$/;"	m	class:ApiTests
+Login_wrong_password_with_email_not_required_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_wrong_password_with_email_not_required_returns_unauthorized()$/;"	m	class:ApiTests
 LogoutAllEndpoints	src/SecureAuthMinimalApi/Endpoints/LogoutAllEndpoints.cs	/^public static class LogoutAllEndpoints$/;"	c
 LogoutAllTests	tests/SecureAuthMinimalApi.Tests/LogoutAllTests.cs	/^    public LogoutAllTests(WebApplicationFactory<Program> factory)$/;"	m	class:LogoutAllTests
 LogoutAllTests	tests/SecureAuthMinimalApi.Tests/LogoutAllTests.cs	/^public class LogoutAllTests : IClassFixture<WebApplicationFactory<Program>>$/;"	c
@@ -357,6 +362,7 @@ LogoutRefreshTests	tests/SecureAuthMinimalApi.Tests/LogoutRefreshTests.cs	/^publ
 LogoutResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record LogoutResponse(bool Ok);$/;"	m	class:ApiTests	file:
 Logout_all_revokes_all_refresh_for_user	tests/SecureAuthMinimalApi.Tests/LogoutAllTests.cs	/^    public async Task Logout_all_revokes_all_refresh_for_user()$/;"	m	class:LogoutAllTests
 Logout_all_revokes_refresh_but_device_cookie_reused_on_next_login	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Logout_all_revokes_refresh_but_device_cookie_reused_on_next_login()$/;"	m	class:ApiTests
+Logout_and_logout_all_work_when_email_not_confirmed	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Logout_and_logout_all_work_when_email_not_confirmed()$/;"	m	class:ApiTests
 Logout_revokes_refresh_token	tests/SecureAuthMinimalApi.Tests/LogoutRefreshTests.cs	/^    public async Task Logout_revokes_refresh_token()$/;"	m	class:LogoutRefreshTests
 Logout_with_wrong_csrf_returns_403	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Logout_with_wrong_csrf_returns_403()$/;"	m	class:ApiTests
 Logout_without_csrf_returns_403	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Logout_without_csrf_returns_403()$/;"	m	class:ApiTests

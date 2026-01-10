@@ -712,6 +712,279 @@ public class ApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Login_with_mfa_and_email_required_returns_challenge()
+    {
+        // Scenario: email richiesta e utente con TOTP configurato; dopo setup MFA il login deve rispondere mfa_required.
+        // Risultato atteso: login step 1 401 mfa_required e challenge salvata.
+        LogTestStart();
+        var username = $"mfa_email_req_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var reg = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+        var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using (var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup"))
+        {
+            setupReq.Headers.Add("Cookie", accessCookie);
+            setupReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+            var setupResp = await _client.SendAsync(setupReq);
+            Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+        }
+
+        using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+        {
+            logoutReq.Headers.Add("Cookie", accessCookie);
+            logoutReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+            var logoutResp = await _client.SendAsync(logoutReq);
+            Assert.Equal(HttpStatusCode.OK, logoutResp.StatusCode);
+        }
+
+        var loginMfa = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Unauthorized, loginMfa.StatusCode);
+        var mfaReq = await loginMfa.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+        Assert.Equal("mfa_required", mfaReq!.Error);
+
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await db.OpenAsync();
+        var challengeCount = await db.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM mfa_challenges WHERE user_id = @u", new { u = regPayload!.UserId });
+        Assert.True(challengeCount > 0);
+    }
+
+    [Fact]
+    public async Task Login_remember_false_with_email_not_required_emits_no_refresh()
+    {
+        // Scenario: EmailConfirmation:Required=false, RememberMe non richiesto.
+        // Risultato atteso: login 200 ma rememberIssued=false e nessun cookie refresh/device.
+        LogTestStart();
+        var username = $"remember_off_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = "false"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = false });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            Assert.True(payload!.Ok);
+            Assert.False(payload.RememberIssued);
+
+            var cookies = login.Headers.TryGetValues("Set-Cookie", out var values) ? values.ToList() : new List<string>();
+            Assert.DoesNotContain(cookies, c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(cookies, c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Login_wrong_password_with_email_not_required_returns_unauthorized()
+    {
+        // Scenario: EmailConfirmation:Required=false ma password errata.
+        // Risultato atteso: 401 senza cookie emessi.
+        LogTestStart();
+        var username = $"wrongpw_no_email_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = "false"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+
+            var resp = await client.PostAsJsonAsync("/login", new { Username = username, Password = "WRONG" });
+            Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+            var hasSetCookie = resp.Headers.TryGetValues("Set-Cookie", out var cookies) && cookies.Any(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
+            Assert.False(hasSetCookie);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Confirm_email_expired_token_when_not_required_returns_gone()
+    {
+        // Scenario: EmailConfirmation:Required=false ma il token è scaduto; login consentito, conferma restituisce 410 e non marca confermato.
+        // Risultato atteso: /confirm-email 410 token_expired, EmailConfirmed resta 0.
+        LogTestStart();
+        var username = $"expired_no_req_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = "false"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+            var token = regPayload!.EmailConfirmToken!;
+
+            await using (var db = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+            {
+                await db.OpenAsync();
+                var past = DateTime.UtcNow.AddHours(-1).ToString("O");
+                await db.ExecuteAsync("UPDATE users SET email_confirm_expires_utc = @p WHERE username = @u", new { p = past, u = username });
+            }
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+            var confirm = await client.PostAsJsonAsync("/confirm-email", new { Token = token });
+            Assert.Equal(HttpStatusCode.Gone, confirm.StatusCode);
+
+            await using var dbCheck = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
+            await dbCheck.OpenAsync();
+            var flags = await dbCheck.QuerySingleAsync<(long Confirmed, string? Token)>("SELECT email_confirmed, email_confirm_token FROM users WHERE username = @u", new { u = username });
+            Assert.Equal(0, flags.Confirmed);
+            Assert.Equal(token, flags.Token);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Confirm_email_expired_token_blocks_login_when_required()
+    {
+        // Scenario: email richiesta ma token scaduto; login resta 403 email_not_confirmed e /confirm-email 410.
+        // Risultato atteso: login 403 email_not_confirmed, conferma 410 e EmailConfirmed resta 0.
+        LogTestStart();
+        var username = $"expired_req_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var reg = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+        var token = regPayload!.EmailConfirmToken!;
+
+        await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+        {
+            await db.OpenAsync();
+            var past = DateTime.UtcNow.AddHours(-1).ToString("O");
+            await db.ExecuteAsync("UPDATE users SET email_confirm_expires_utc = @p WHERE username = @u", new { p = past, u = username });
+        }
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+        Assert.Equal(HttpStatusCode.Forbidden, login.StatusCode);
+        var doc = await login.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.Equal("email_not_confirmed", doc!.RootElement.GetProperty("error").GetString());
+
+        var confirm = await _client.PostAsJsonAsync("/confirm-email", new { Token = token });
+        Assert.Equal(HttpStatusCode.Gone, confirm.StatusCode);
+
+        await using var dbCheck = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        await dbCheck.OpenAsync();
+        var flags = await dbCheck.QuerySingleAsync<(long Confirmed, string? Token)>("SELECT email_confirmed, email_confirm_token FROM users WHERE username = @u", new { u = username });
+        Assert.Equal(0, flags.Confirmed);
+        Assert.Equal(token, flags.Token);
+    }
+
+    [Fact]
+    public async Task Logout_and_logout_all_work_when_email_not_confirmed()
+    {
+        // Scenario: EmailConfirmation:Required=false, utente non confermato effettua login e poi chiama /logout e /logout-all.
+        // Risultato atteso: entrambi restituiscono 200 e la sessione viene invalidata (introspect inattivo).
+        LogTestStart();
+        var username = $"logout_no_confirm_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = "false"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var payload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+            // logout
+            using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+            {
+                logoutReq.Headers.Add("Cookie", accessCookie);
+                logoutReq.Headers.Add("X-CSRF-Token", payload!.CsrfToken);
+                var logoutResp = await client.SendAsync(logoutReq);
+                Assert.Equal(HttpStatusCode.OK, logoutResp.StatusCode);
+            }
+
+            var introspectAfterLogout = await IntrospectAsync(accessCookie);
+            Assert.True(introspectAfterLogout is null || !introspectAfterLogout.Active);
+
+            // nuovo login e logout-all
+            var login2 = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.OK, login2.StatusCode);
+            var payload2 = await login2.Content.ReadFromJsonAsync<LoginResponse>();
+            var accessCookie2 = login2.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+            using (var logoutAllReq = new HttpRequestMessage(HttpMethod.Post, "/logout-all"))
+            {
+                logoutAllReq.Headers.Add("Cookie", accessCookie2);
+                logoutAllReq.Headers.Add("X-CSRF-Token", payload2!.CsrfToken);
+                logoutAllReq.Content = JsonContent.Create(new { Password = password });
+                var logoutAll = await client.SendAsync(logoutAllReq);
+                Assert.Equal(HttpStatusCode.OK, logoutAll.StatusCode);
+            }
+
+            var introspectAfterAll = await IntrospectAsync(accessCookie2);
+            Assert.True(introspectAfterAll is null || !introspectAfterAll.Active);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
+    [Fact]
     public async Task Confirm_email_with_valid_token_marks_confirmed()
     {
         // Scenario: registra un utente, prende il token di conferma e lo invia a POST /confirm-email per attivare l'account.
