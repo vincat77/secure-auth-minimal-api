@@ -950,6 +950,41 @@ public class ApiTests : IAsyncLifetime
         Assert.Equal(token, flags.Token);
     }
 
+    [Fact]
+    public async Task Email_confirmation_required_fallbacks_to_true_on_invalid_config()
+    {
+        // Scenario: EmailConfirmation:Required impostato a valore non booleano.
+        // Risultato atteso: fallback a true, quindi login senza conferma viene bloccato con 403 email_not_confirmed.
+        LogTestStart();
+        var username = $"badflag_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = "not_bool"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.Forbidden, login.StatusCode);
+            var doc = await login.Content.ReadFromJsonAsync<JsonDocument>();
+            Assert.Equal("email_not_confirmed", doc!.RootElement.GetProperty("error").GetString());
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

@@ -60,7 +60,17 @@ var requireLower = app.Configuration.GetValue<bool?>("PasswordPolicy:RequireLowe
 var requireDigit = app.Configuration.GetValue<bool?>("PasswordPolicy:RequireDigit") ?? false;
 var requireSymbol = app.Configuration.GetValue<bool?>("PasswordPolicy:RequireSymbol") ?? false;
 var forceLowerUsername = app.Configuration.GetValue<bool?>("UsernamePolicy:Lowercase") ?? false;
-var emailConfirmationRequired = app.Configuration.GetValue<bool?>("EmailConfirmation:Required") ?? true;
+var emailRequiredRaw = app.Configuration["EmailConfirmation:Required"];
+bool emailConfirmationRequired;
+if (string.IsNullOrWhiteSpace(emailRequiredRaw))
+{
+    emailConfirmationRequired = true;
+}
+else if (!bool.TryParse(emailRequiredRaw, out emailConfirmationRequired))
+{
+    emailConfirmationRequired = true;
+    logger.LogWarning("EmailConfirmation:Required non valido ({Value}), fallback a true", emailRequiredRaw);
+}
 var mfaChallengeMinutes = app.Configuration.GetValue<int?>("Mfa:ChallengeMinutes") ?? 10;
 if (mfaChallengeMinutes <= 0)
 {

@@ -187,6 +187,7 @@ EmailConfirmExpiresUtc	src/SecureAuthMinimalApi/Models/User.cs	/^    public stri
 EmailConfirmToken	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmToken { get; init; }$/;"	p	class:User
 EmailConfirmed	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool EmailConfirmed { get; init; }$/;"	p	class:User
 EmailNormalized	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailNormalized { get; init; }$/;"	p	class:User
+Email_confirmation_required_fallbacks_to_true_on_invalid_config	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Email_confirmation_required_fallbacks_to_true_on_invalid_config()$/;"	m	class:ApiTests
 Enabled	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^    public bool Enabled { get; set; } = true;$/;"	p	class:CleanupOptions
 EndpointUtilities	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^internal static class EndpointUtilities$/;"	c
 EnsureColumn	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  private static void EnsureColumn(SqliteConnection conn, string table, string column, string? t/;"	m	class:DbInitializer	file:
