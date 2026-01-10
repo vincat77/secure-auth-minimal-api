@@ -94,6 +94,8 @@ public static class RegisterEndpoints
                 Username = safeUsername,
                 PasswordHash = PasswordHasher.Hash(password),
                 CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+                IsLocked = false,
+                DeletedAtUtc = null,
                 Name = string.IsNullOrWhiteSpace(fullName) ? null : fullName,
                 GivenName = givenName!,
                 FamilyName = familyName!,

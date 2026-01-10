@@ -61,7 +61,21 @@ Aggiungere un flusso di reset password per utenti non autenticati: richiesta tok
    - Cleanup: garantire che i token scaduti vengano rimossi regolarmente per non accumularsi.
    - Token invalidato da nuova richiesta: request #1 crea token1, request #2 invalida token1 (used_at_utc settato), confirm token1 fallisce, token2 funziona.
    - RequireConfirmed=false: utente non confermato può ottenere token e completare reset.
-   - Account locked/deleted: request 200 ma nessun token creato; conferma dopo delete → 400 invalid_token; se locked tra request/confirm → 400 account_locked.
+   - Account locked/deleted (stato attuale: schema e blocchi già in codice; mancano test dedicati):
+     * Schema: `users` ha `is_locked` (INT) e `deleted_at_utc` (TEXT), mappati in `User` e nelle query `UserRepository`.
+     * Endpoint /password-reset/request: se locked o deleted → log info e risposta 200 senza creare token.
+     * Endpoint /password-reset/confirm: se deleted → 400 `invalid_token`; se locked → 400 `account_locked`.
+     * Test da aggiungere: request locked/deleted (nessun token creato) e confirm locked/deleted (errori sopra, token unused).
+     * Helper eventuali: `MarkLockedAsync` / `SoftDeleteAsync` in `UserRepository` se servirà; cleanup opzionale per token orfani di utenti deleted.
+   - Test ancora da implementare (TODO):
+     * Password policy fail: confirm con password debole → 400 password_policy_failed, password invariata.
+     * Password uguale all’attuale: confirm con stessa password → 400 password_must_be_different.
+     * Token formato invalido: confirm con token malformato o lunghezza errata → 400 invalid_token.
+     * Race doppia conferma: due conferme concorrenti sullo stesso token → una 200, una 400; password cambiata una sola volta.
+     * Cleanup/retention: forzare scadenze/usate oltre retention e verificare DeleteExpiredAsync.
+     * Cascade delete: cancellazione utente elimina i reset associati.
+     * Hash/token check: solo hash salvato (no plain), SHA256(token) == token_hash.
+     * Token uniqueness stress (opzionale): 100 reset paralleli senza collisioni.
    - Input validation: email vuota/null → 400; token vuoto/malformed → 400 invalid_token; mismatch password → 400 invalid_input.
    - Race condition: due conferme simultanee sullo stesso token → una 200, una 400 invalid_token; password cambiata una sola volta.
    - Revoca sessioni/refresh: dopo reset, tutte le sessioni (`user_sessions`) e i refresh attivi devono risultare revocati; vecchi access/refresh non validi.
@@ -902,3 +916,4 @@ _GenerateUniqueTokens`
 
 **Test runtime stimato:** ~30-60 secondi per suite completa (con DB in-memory e parallelizzazione xUnit). 
 ---------------------------------------------
+
