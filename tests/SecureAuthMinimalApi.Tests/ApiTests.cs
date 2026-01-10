@@ -150,6 +150,9 @@ public class ApiTests : IAsyncLifetime
         // Scenario: un load balancer chiama GET /health senza autenticazione per verificare se l'istanza risponde; il test usa un client anonimo e controlla che non servano cookie o token.
         // Risultato atteso: 200 e body { ok = true }.
         LogTestStart();
+        // Act
+        // Assert
+
         var response = await _client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -165,7 +168,11 @@ public class ApiTests : IAsyncLifetime
         // Scenario: un monitor interno chiama GET /live senza cookie ne header speciali per verificare la liveness; il test controlla che l'API risponda subito senza auth e senza redirect.
         // Risultato atteso: 200 e body { ok = true }.
         LogTestStart();
+        // Act
+        // Assert
+
         var response = await _client.GetAsync("/live");
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<HealthResponse>();
         Assert.NotNull(payload);
@@ -178,6 +185,9 @@ public class ApiTests : IAsyncLifetime
         // Scenario: POST /login con credenziali demo ottiene cookie access_token e csrfToken, poi GET /me con quel cookie legge il profilo e infine POST /logout con X-CSRF-Token chiude la sessione; il test verifica anche su SQLite che la sessione esista e poi prova /me che deve fallire.
         // Risultato atteso: login 200 con token+csrf, /me 200 con dati, /logout 200 e /me successivo 401.
         LogTestStart();
+        // Act
+        // Assert
+
         var loginResponse = await _client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
 
@@ -267,6 +277,9 @@ public class ApiTests : IAsyncLifetime
         // Scenario: genera un access token con JwtTokenService.CreateAccessToken e lo legge con JwtSecurityTokenHandler per assicurarsi che contenga solo i claim minimi (sub/jti/iat/exp/iss/aud/nbf) senza dati utente, poi valida firma e issuer/audience.
         // Risultato atteso: token con soli claim ammessi e validazione riuscita.
         LogTestStart();
+        // Act
+        // Assert
+
         var jwtService = _factory.Services.GetRequiredService<JwtTokenService>();
         var (token, expires) = jwtService.CreateAccessToken("session-123");
 
@@ -306,6 +319,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: in ambiente Cookie:RequireSecure=true esegue POST /login e ispeziona l'header Set-Cookie dell'access_token per verificare flag HttpOnly, Secure, SameSite=Strict, Path=/ e Max-Age.
         // Risultato atteso: Set-Cookie include tutti i flag previsti per access_token.
         LogTestStart();
+        // Act
+        // Assert
         var (factory, client, dbPath) = CreateFactory(requireSecure: true);
         try
         {
@@ -340,7 +355,11 @@ public class ApiTests : IAsyncLifetime
         // Scenario: POST /login con username valido ma password errata per verificare che non vengano emessi token o cookie e che il server risponda con errore.
         // Risultato atteso: HTTP 401 Unauthorized senza cookie emessi.
         LogTestStart();
+        // Act
+        // Assert
+
         var response = await _client.PostAsJsonAsync("/login", new { Username = "demo", Password = "wrong" });
+
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
@@ -350,6 +369,9 @@ public class ApiTests : IAsyncLifetime
         // Scenario: POST /register crea utente e token di conferma email, /confirm-email attiva l'account, poi POST /login genera cookie+csrf, GET /me restituisce il profilo e POST /logout con X-CSRF-Token chiude la sessione.
         // Risultato atteso: registrazione 201 con token, conferma 200, login 200, /me 200, logout 200.
         LogTestStart();
+        // Act
+        // Assert
+
         var username = $"user_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -385,6 +407,9 @@ public class ApiTests : IAsyncLifetime
         // Scenario: esegue due POST /register con lo stesso username/email per verificare la gestione dei duplicati.
         // Risultato atteso: la seconda registrazione restituisce 409 Conflict.
         LogTestStart();
+        // Act
+        // Assert
+
         var username = $"dup_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -402,6 +427,9 @@ public class ApiTests : IAsyncLifetime
         // Scenario: POST /register deve restituire un token di conferma email con scadenza e salvarlo nel DB; il test legge risposta e poi interroga SQLite per confrontare token e exp.
         // Risultato atteso: token e scadenza della risposta coincidono con i valori salvati.
         LogTestStart();
+        // Act
+        // Assert
+
         var username = $"mailtoken_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -427,6 +455,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: dopo POST /register l'utente tenta POST /login senza confermare l'email e riceve 403 email_not_confirmed; poi chiama /confirm-email con il token e riprova il login.
         // Risultato atteso: primo login 403 email_not_confirmed, secondo login 200.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"need_confirm_{Guid.NewGuid():N}";
         var email = $"{username}@example.com";
         var password = "P@ssw0rd!Long";
@@ -455,6 +485,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: registra un utente, prende il token di conferma e lo invia a POST /confirm-email per attivare l'account.
         // Risultato atteso: conferma email 200 e stato utente confermato.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"confirm_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -484,6 +516,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: prova a confermare l'email con un token scaduto su POST /confirm-email.
         // Risultato atteso: HTTP 410 Gone e utente non confermato.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"confirm_exp_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -510,6 +544,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: invia a POST /confirm-email un token manomesso o non valido.
         // Risultato atteso: HTTP 400 BadRequest e nessuna conferma.
         LogTestStart();
+        // Act
+        // Assert
         var response = await _client.PostAsJsonAsync("/confirm-email", new { Token = "invalid" });
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -520,6 +556,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: esegue due POST /register con email che differiscono solo per maiuscole/minuscole per verificare il controllo case-insensitive.
         // Risultato atteso: la seconda registrazione restituisce 409 Conflict.
         LogTestStart();
+        // Act
+        // Assert
         var username1 = $"user1_{Guid.NewGuid():N}";
         var username2 = $"user2_{Guid.NewGuid():N}";
         var emailMixed = $"Mixed_{Guid.NewGuid():N}@Example.com";
@@ -538,6 +576,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: registra un utente con email mista maiuscole/minuscole e poi legge dal DB per verificare che sia salvata in minuscolo.
         // Risultato atteso: email persistita in lower-case e registrazione 201.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"normmail_{Guid.NewGuid():N}";
         var emailMixed = $"Mixed_{Guid.NewGuid():N}@Example.com";
         var password = "P@ssw0rd!Long";
@@ -557,6 +597,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: POST /register con password piu corta del minimo configurato per verificare la policy.
         // Risultato atteso: HTTP 400 con errori di policy password.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"short_{Guid.NewGuid():N}";
         var shortPwd = "short";
         var email = $"{username}@example.com";
@@ -577,6 +619,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: prova a configurare JwtTokenService con secret troppo corto e istanziarlo.
         // Risultato atteso: eccezione di configurazione per secret insufficiente.
         LogTestStart();
+        // Act
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -597,6 +640,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: inizializza JwtTokenService senza Jwt:SecretKey configurato.
         // Risultato atteso: eccezione che impedisce l'avvio per secret mancante.
         LogTestStart();
+        // Act
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -616,6 +660,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: costruisce JwtTokenService senza issuer o audience per verificare la validazione configurazione.
         // Risultato atteso: eccezione per issuer/audience mancanti.
         LogTestStart();
+        // Act
         var configMissingIssuer = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -645,6 +690,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: invoca DbInitializer senza connection string valida.
         // Risultato atteso: InvalidOperationException segnalando la configurazione mancante.
         LogTestStart();
+        // Act
+        // Assert
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
         var ex = Assert.Throws<InvalidOperationException>(() => DbInitializer.EnsureCreated(config));
         Assert.Contains("Missing ConnectionStrings:Sqlite", ex.Message);
@@ -656,6 +703,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: esegue DbInitializer piu volte per assicurarsi che la seed dell'utente demo non venga duplicata.
         // Risultato atteso: nessun errore e nessun duplicato di seed tra le esecuzioni.
         LogTestStart();
+        // Act
         var dbPath = Path.Combine(Path.GetTempPath(), $"dbinit-{Guid.NewGuid():N}.db");
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -693,6 +741,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: POST /register con password priva di simboli per verificare la policy di complessita.
         // Risultato atteso: HTTP 400 con errore di policy per simboli mancanti.
         LogTestStart();
+        // Act
         var extraConfig = new Dictionary<string, string?>
         {
             ["PasswordPolicy:MinLength"] = "8",
@@ -736,6 +785,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: simula ambiente Production e chiama GET /health per controllare gli header di sicurezza (HSTS, X-Content-Type-Options, X-Frame-Options).
         // Risultato atteso: risposta 200 con header di sicurezza presenti.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["Environment"] = "Production"
@@ -769,6 +819,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: in ambiente Production configura Cookie:RequireSecure=false ma esegue POST /login per verificare che il flag Secure venga comunque forzato.
         // Risultato atteso: Set-Cookie access_token contiene sempre Secure anche se disabilitato in config.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["Environment"] = "Production",
@@ -801,6 +852,8 @@ public class ApiTests : IAsyncLifetime
         // Scenario: chiama GET /ready con DB accessibile e Jwt:SecretKey valido per verificare la readiness.
         // Risultato atteso: HTTP 200 dalla readiness probe.
         LogTestStart();
+        // Act
+        // Assert
         var response = await _client.GetAsync("/ready");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -811,6 +864,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: rimuove Jwt:SecretKey dalla config e chiama GET /ready.
         // Risultato atteso: readiness risponde 503 indicando configurazione JWT mancante.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["Jwt:SecretKey"] = "",
@@ -843,6 +897,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: fornisce una connection string non raggiungibile e chiama GET /ready.
         // Risultato atteso: readiness risponde 503 per errore di connessione al DB.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["ConnectionStrings:Sqlite"] = "Data Source=Z:\\nonexistent\\db.db",
@@ -874,6 +929,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: imposta una lunghezza minima password incoerente e tenta POST /register.
         // Risultato atteso: eccezione/errore di configurazione che blocca la registrazione.
         LogTestStart();
+        // Act
         // MinLength = 0 deve far rifiutare la password troppo corta in fase di register.
         var extraConfig = new Dictionary<string, string?>
         {
@@ -909,6 +965,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: configura AccessTokenMinutes a zero o negativo e costruisce JwtTokenService.
         // Risultato atteso: eccezione di validazione per durata non positiva.
         LogTestStart();
+        // Act
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -929,6 +986,7 @@ public class ApiTests : IAsyncLifetime
         // Scenario: avvia DbInitializer su schema legacy privo della colonna totp_secret per verificare la migrazione.
         // Risultato atteso: la colonna viene creata senza rompere i dati esistenti.
         LogTestStart();
+        // Act
         var dbPath = Path.Combine(Path.GetTempPath(), $"dbinit-old-{Guid.NewGuid():N}.db");
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -975,6 +1033,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: esegue un login e controlla in tabella audit che outcome e dettagli siano salvati senza includere la password inviata.
         // Risultato atteso: record audit con esito corretto e senza il segreto in chiaro.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"auditdetail_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1011,6 +1071,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: invia ripetuti POST /login con credenziali errate fino a superare la soglia di throttle.
         // Risultato atteso: l'endpoint risponde 429 Too Many Requests dopo i tentativi falliti.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"lock_{Guid.NewGuid():N}";
         // 5 tentativi errati -> 401, al 6° scatta il lock -> 429
         for (var i = 0; i < 5; i++)
@@ -1029,6 +1091,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: configura una soglia di lockout piu bassa e ripete i login falliti fino a superarla.
         // Risultato atteso: blocco scatta esattamente alla soglia configurata con risposta 429.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["LoginThrottle:MaxFailures"] = "3",
@@ -1066,6 +1129,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /register con username contenente spazi ai lati, poi conferma email e prova /login con username trim per verificare normalizzazione.
         // Risultato atteso: registrazione riuscita e login possibile con username senza spazi.
         LogTestStart();
+        // Act
+        // Assert
         var rawUsername = $" trim_{Guid.NewGuid():N} ";
         var trimmed = rawUsername.Trim();
         var password = "P@ssw0rd!Long";
@@ -1093,6 +1158,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: provoca alcuni login falliti per incrementare il throttle, poi esegue un login riuscito e verifica che il contatore venga azzerato per i tentativi successivi.
         // Risultato atteso: dopo un successo il throttle non blocca piu immediatamente e i contatori ripartono.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"reset_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Longer";
         var email = $"{username}@example.com";
@@ -1126,6 +1193,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: registra un utente con username con spazi, poi tenta un secondo /register con versione trim per verificare il controllo equivalenza.
         // Risultato atteso: seconda registrazione 409 Conflict per duplicato normalizzato.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"trimdup_{Guid.NewGuid():N}";
         var padded = $"  {username}  ";
         var password = "P@ssw0rd!Long";
@@ -1144,6 +1213,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: invia POST /register senza campi obbligatori (username/password/email).
         // Risultato atteso: HTTP 400 con lista di errori di validazione.
         LogTestStart();
+        // Act
+        // Assert
         var r1 = await _client.PostAsJsonAsync("/register", new { Username = "", Password = "whatever", Email = "" });
         Assert.Equal(HttpStatusCode.BadRequest, r1.StatusCode);
         var d1 = await r1.Content.ReadFromJsonAsync<JsonDocument>();
@@ -1172,6 +1243,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: invia POST /login senza username o password.
         // Risultato atteso: HTTP 400 con errori di input.
         LogTestStart();
+        // Act
+        // Assert
         var r1 = await _client.PostAsJsonAsync("/login", new { Username = "", Password = "whatever" });
         Assert.Equal(HttpStatusCode.BadRequest, r1.StatusCode);
         var d1 = await r1.Content.ReadFromJsonAsync<JsonDocument>();
@@ -1193,6 +1266,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: raggiunge il lockout per troppi login falliti, ricrea la factory/app e verifica che il blocco persista tramite lo storage condiviso.
         // Risultato atteso: nuovo client riceve ancora 429 finche non scade il lockout.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"persist_{Guid.NewGuid():N}";
         // 5 fallimenti per attivare lock
         for (var i = 0; i < 5; i++)
@@ -1217,6 +1292,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: esegue un login riuscito e uno fallito, poi legge la tabella audit per verificare la presenza di entrambi gli esiti e dei dettagli attesi.
         // Risultato atteso: record audit per success e failure con outcome coerente.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"audit_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1249,6 +1326,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: abilita TOTP con setup API, genera challenge, conferma codice corretto e completa il login ottenendo cookie e csrf.
         // Risultato atteso: flusso MFA a due step completato con sessione e token emessi.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totp_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1304,6 +1383,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: dopo aver creato una challenge MFA invia un codice TOTP errato a /login/confirm-mfa.
         // Risultato atteso: HTTP 401 e incremento del contatore tentativi.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totp_fail_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1348,6 +1429,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: abilita TOTP, effettua login che restituisce solo challengeId senza cookie, poi verifica che i cookie vengano emessi solo dopo la conferma su /login/confirm-mfa.
         // Risultato atteso: nessun cookie dopo challenge, cookie emessi solo dopo conferma.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totp_step_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1389,6 +1472,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: tenta di confermare una challenge TOTP scaduta o gia marcata usata.
         // Risultato atteso: HTTP 401 senza rilascio di token.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totp_exp_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1427,6 +1512,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: crea challenge TOTP con un certo User-Agent e prova a confermare con un UA diverso quando mfaRequireUaMatch è abilitato.
         // Risultato atteso: conferma rifiutata con 401 per mismatch UA.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totp_ua_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1471,6 +1558,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: ripete conferme TOTP sbagliate fino a raggiungere mfaMaxAttempts e verifica che la challenge venga invalidata.
         // Risultato atteso: oltre il limite, la challenge risponde 401 e non accetta altri codici.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totp_attempts_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1516,6 +1605,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: challenge TOTP salvata con un IP, poi conferma da IP diverso quando mfaRequireIpMatch è true.
         // Risultato atteso: conferma rifiutata con 401 per mismatch IP.
         LogTestStart();
+        // Act
         var username = $"totp_ip_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1585,6 +1675,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: utente senza secret TOTP fa POST /login e deve ottenere subito cookie/accesso senza challenge MFA.
         // Risultato atteso: login a singolo step con token e csrf emessi.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"plain_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1606,6 +1698,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /login con RememberMe=true per verificare che oltre all'access_token venga emesso il cookie refresh_token.
         // Risultato atteso: risposta 200 con cookie refresh_token presente.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"remember_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1642,6 +1736,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: con un refresh token valido chiama POST /refresh e verifica che il token venga ruotato, salvato e che vengano emessi nuovi cookie access/refresh.
         // Risultato atteso: refresh 200, nuovo refresh token salvato e cookie aggiornati.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"refresh_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1679,6 +1775,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /login con RememberMe=true e device cookie assente per verificare che venga creato e inviato il cookie device_id insieme al refresh.
         // Risultato atteso: device_id generato e inviato come cookie insieme al refresh token.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"device_login_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1700,6 +1798,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: login con RememberMe salva il refresh token e verifica che in DB sia memorizzato l'hash e non il token in chiaro.
         // Risultato atteso: refresh token persistito solo in forma hashed.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"hash_refresh_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1728,6 +1828,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: login password step emette id_token con amr=pwd, include email e nonce fornito; il test decodifica e verifica i claim.
         // Risultato atteso: id_token contiene amr=pwd, claim email e nonce richiesto.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"idpwd_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1760,6 +1862,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: login con MFA a due step: il primo step non deve avere amr=mfa, dopo conferma MFA l'id_token finale deve avere amr=mfa.
         // Risultato atteso: primo id_token senza amr=mfa, secondo con amr=mfa.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"idmfa_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1819,6 +1923,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /login con password errata per verificare che non venga restituito alcun id_token.
         // Risultato atteso: 401 e campo id_token assente.
         LogTestStart();
+        // Act
+        // Assert
         var resp = await _client.PostAsJsonAsync("/login", new { Username = "demo", Password = "wrong" });
         Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
         var body = await resp.Content.ReadAsStringAsync();
@@ -1831,6 +1937,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: confronto auth_time tra id_token del primo step e quello emesso dopo MFA step-up per verificare che il secondo sia piu recente.
         // Risultato atteso: auth_time del token post-MFA è maggiore del primo.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"idstep_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -1895,6 +2003,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: disabilita IdToken:IncludeEmail e verifica che id_token emesso contenga comunque claim di profilo (name/given_name/family_name/picture).
         // Risultato atteso: id_token valido con claim profilo presenti anche senza email flag.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["IdToken:IncludeEmail"] = "false",
@@ -1940,6 +2049,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: emette un id_token e lo valida con TokenValidationParameters assicurando che exp e parametri siano corretti.
         // Risultato atteso: validazione ok e exp futura coerente.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___",
@@ -1975,6 +2085,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: esegue login con RememberMe e MFA: ottiene challenge, conferma codice TOTP, riceve cookie access+refresh e csrf, poi verifica l'accesso.
         // Risultato atteso: flusso completo riuscito con cookie/CSRF e refresh emessi.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"fullflow_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2070,6 +2182,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: tenta POST /refresh senza includere il cookie device_id richiesto per il binding.
         // Risultato atteso: HTTP 401 Unauthorized.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"device_missing_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2093,6 +2207,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: chiama /refresh con refresh token valido ma device_id differente da quello associato.
         // Risultato atteso: HTTP 401 per mismatch device.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"device_mismatch_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2116,6 +2232,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: esegue /logout-all per revocare tutti i refresh dell'utente, poi effettua un nuovo login e verifica che il device_id esistente venga riutilizzato mentre i refresh precedenti restano revocati.
         // Risultato atteso: refresh correnti revocati, device_id riusato nel nuovo login.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"device_logoutall_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2163,6 +2281,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: configura Device:SameSite e Device:RequireSecure, esegue login RememberMe e ispeziona il cookie device_id per verificare i flag.
         // Risultato atteso: cookie device_id con SameSite/Secure coerenti alla config.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["Device:SameSite"] = "Lax",
@@ -2203,6 +2322,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: marca un refresh token come revocato e poi chiama POST /refresh con quel token.
         // Risultato atteso: HTTP 401 e nessun nuovo token emesso.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"refresh_rev_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2236,6 +2357,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: usa un refresh token scaduto per chiamare POST /refresh.
         // Risultato atteso: HTTP 401 per exp superata.
         LogTestStart();
+        // Act
         var username = $"refresh_exp_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2266,6 +2388,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: salva un refresh token con uno User-Agent e poi chiama /refresh con UA diverso per verificare il binding.
         // Risultato atteso: HTTP 401 per mismatch User-Agent.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"refresh_ua_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2294,6 +2418,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: chiama /refresh senza inviare il cookie di refresh_token.
         // Risultato atteso: HTTP 401 per assenza token.
         LogTestStart();
+        // Act
+        // Assert
         var resp = await _client.PostAsync("/refresh", content: null);
         Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
     }
@@ -2304,6 +2430,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /login con RememberMe=false per verificare che non venga emesso il cookie refresh_token.
         // Risultato atteso: risposta 200 senza cookie refresh_token.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"norem_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2327,6 +2455,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: configura RememberMe:Days e chiama POST /login con RememberMe=true per verificare che il Max-Age del refresh corrisponda ai giorni impostati.
         // Risultato atteso: cookie refresh_token con Max-Age coerente alla config.
         LogTestStart();
+        // Act
         var extra = new Dictionary<string, string?>
         {
             ["RememberMe:Days"] = "3"
@@ -2364,6 +2493,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: abilita TOTP per un utente, poi legge dal DB la colonna totp_secret per verificare che sia cifrata e non in chiaro.
         // Risultato atteso: secret memorizzato cifrato, non leggibile in chiaro.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totpenc_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2406,6 +2537,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: invia codice TOTP errato su /login/confirm-mfa dopo una challenge valida.
         // Risultato atteso: HTTP 401 e incremento tentativi.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totpbad_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2439,6 +2572,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: abilita TOTP, poi chiama l'endpoint di disable e prova a fare /login senza codice per verificare il ritorno a single-factor.
         // Risultato atteso: login riuscito senza MFA dopo disable.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"totpdisable_{Guid.NewGuid():N}";
         var password = "P@ssw0rd!Long";
         var email = $"{username}@example.com";
@@ -2506,6 +2641,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: esegue POST /logout senza header X-CSRF-Token pur avendo cookie di sessione.
         // Risultato atteso: HTTP 403 Forbidden e sessione non revocata.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, _) = await LoginAndGetSessionAsync();
 
         using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, "/logout");
@@ -2526,6 +2663,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /logout con cookie valido ma header X-CSRF-Token errato.
         // Risultato atteso: HTTP 403 e nessuna revoca della sessione.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, csrf) = await LoginAndGetSessionAsync();
         var wrongCsrf = csrf + "X";
 
@@ -2548,6 +2687,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: forza la scadenza di una sessione nel DB e poi chiama GET /me con il cookie originale.
         // Risultato atteso: HTTP 401 per sessione scaduta.
         LogTestStart();
+        // Act
         var (cookie, _) = await LoginAndGetSessionAsync();
 
         await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
@@ -2572,6 +2712,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: chiama GET /me senza inviare cookie di sessione.
         // Risultato atteso: HTTP 401 unauthorized.
         LogTestStart();
+        // Act
+        // Assert
         var response = await _client.GetAsync("/me");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
@@ -2587,6 +2729,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: altera la firma dell'access_token ottenuto da /login e lo usa su GET /me.
         // Risultato atteso: HTTP 401 per firma non valida.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, _) = await LoginAndGetSessionAsync();
         var token = cookie.Split('=', 2)[1];
         var tampered = token + "x"; // break signature
@@ -2604,6 +2748,7 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: revoca la sessione nel DB e prova GET /me con il vecchio cookie.
         // Risultato atteso: HTTP 401 per sessione revocata.
         LogTestStart();
+        // Act
         var (cookie, _) = await LoginAndGetSessionAsync();
 
         await using (var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared"))
@@ -2628,6 +2773,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: in ambiente Development con Cookie:RequireSecure=false esegue POST /login e analizza il Set-Cookie per verificare l'assenza del flag Secure mantenendo gli altri.
         // Risultato atteso: cookie access_token senza Secure ma con HttpOnly, SameSite=Strict, Path=/ e Max-Age.
         LogTestStart();
+        // Act
+        // Assert
         var (factory, client, dbPath) = CreateFactory(requireSecure: false);
         try
         {
@@ -2660,6 +2807,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: dopo un login chiama GET /introspect per vedere active=true, poi POST /logout e richiama /introspect per verificare active=false e reason=revoked.
         // Risultato atteso: active true prima del logout, poi false con reason revoked.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, csrf) = await LoginAndGetSessionAsync();
 
         var before = await IntrospectAsync(cookie);
@@ -2684,6 +2833,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: utente loggato chiama POST /me/password con password nuova valida; il test verifica che il vecchio cookie diventi 401, la vecchia password non funzioni piu e la nuova si, con nuovo cookie/csrf.
         // Risultato atteso: sessione ruotata, vecchie credenziali rifiutate, nuove accettate.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"changepw_{Guid.NewGuid():N}";
         var oldPassword = "OldP@ssw0rd!1";
         var newPassword = "NewP@ssw0rd!2";
@@ -2744,6 +2895,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /me/password con CurrentPassword errata e nuova password valida.
         // Risultato atteso: HTTP 400 invalid_current_password e nessuna modifica delle credenziali.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"changepw_wrong_{Guid.NewGuid():N}";
         var oldPassword = "OldP@ssw0rd!1";
         var newPassword = "NewP@ssw0rd!2";
@@ -2779,6 +2932,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: POST /me/password con nuova password che viola la policy (es. troppo corta o debole).
         // Risultato atteso: HTTP 400 con lista errori policy e nessun cambio di password.
         LogTestStart();
+        // Act
+        // Assert
         var username = $"changepw_policy_{Guid.NewGuid():N}";
         var oldPassword = "OldP@ssw0rd!1";
         var weakPassword = "short";
@@ -2817,6 +2972,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: prende un access_token valido e ne ricrea uno con aud diversa, poi lo usa su GET /me.
         // Risultato atteso: HTTP 401 per audience non valida.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, _) = await LoginAndGetSessionAsync();
         var token = cookie.Split('=', 2)[1];
         var wrongAudToken = RetokenizeWithOverrides(token, audience: "WrongAudience");
@@ -2835,6 +2992,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: modifica l'issuer di un access_token e prova GET /me.
         // Risultato atteso: HTTP 401 per issuer non valido.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, _) = await LoginAndGetSessionAsync();
         var token = cookie.Split('=', 2)[1];
         var wrongIssToken = RetokenizeWithOverrides(token, issuer: "WrongIssuer");
@@ -2853,6 +3012,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: crea un access_token con exp nel passato e lo usa su GET /me.
         // Risultato atteso: HTTP 401 per token scaduto.
         LogTestStart();
+        // Act
+        // Assert
         var (cookie, _) = await LoginAndGetSessionAsync();
         var token = cookie.Split('=', 2)[1];
 
@@ -2948,6 +3109,8 @@ CREATE TABLE IF NOT EXISTS users (
         // Scenario: abilita UsernamePolicy:Lowercase, registra un utente mixed-case, conferma email e verifica che il login funzioni sia con username in minuscolo che maiuscolo; controlla anche che in DB sia salvato in lower-case.
         // Risultato atteso: username salvato in minuscolo e login case-insensitive riuscito.
         LogTestStart();
+        // Act
+        // Assert
         var (factory, client, dbPath) = CreateFactory(requireSecure: false, forceLowerUsername: true);
         try
         {
