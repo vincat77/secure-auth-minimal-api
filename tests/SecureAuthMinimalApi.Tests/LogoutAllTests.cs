@@ -51,6 +51,8 @@ public class LogoutAllTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Logout_all_revokes_all_refresh_for_user()
     {
+        // Scenario: utente con più refresh token attivi invoca POST /logout-all per revocarli tutti.
+        // Risultato atteso: tutti i refresh token dell'utente risultano revocati e non più usabili.
         var (client, dbPath) = await CreateClientAsync();
         try
         {

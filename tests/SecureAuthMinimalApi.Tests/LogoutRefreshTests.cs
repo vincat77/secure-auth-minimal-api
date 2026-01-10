@@ -52,6 +52,8 @@ public class LogoutRefreshTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Logout_revokes_refresh_token()
     {
+        // Scenario: utente con RememberMe esegue POST /logout e poi tenta di usare il refresh token associato.
+        // Risultato atteso: refresh token marcato revoked e rifiutato.
         var (client, dbPath) = await CreateClientAsync();
         try
         {

@@ -48,6 +48,8 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Idle_expired_session_returns_401_and_revokes()
     {
+        // Scenario: imposta idle timeout breve, lascia inattiva la sessione oltre il limite e chiama GET /me con il cookie.
+        // Risultato atteso: HTTP 401 e sessione marcata revocata.
         var (client, dbPath) = await CreateClientAsync();
         try
         {
@@ -78,6 +80,8 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Idle_within_timeout_updates_last_seen_and_returns_ok()
     {
+        // Scenario: effettua richieste entro la finestra di idle timeout e verifica che LastSeen venga aggiornato e l'accesso resti valido.
+        // Risultato atteso: /me 200 e LastSeen aggiornato.
         var (client, dbPath) = await CreateClientAsync();
         try
         {
@@ -103,6 +107,8 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Idle_disabled_behaves_as_before()
     {
+        // Scenario: disabilita idle timeout e chiama /me dopo un intervallo che supererebbe il limite se attivo.
+        // Risultato atteso: /me continua a rispondere 200 e sessione non revocata.
         var factory = _factory.WithWebHostBuilder(builder => builder.UseSetting("Session:IdleMinutes", "0"));
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false, AllowAutoRedirect = false });
         var login = await client.PostAsJsonAsync("/login", new { Username = "demo", Password = DemoPassword });
@@ -112,6 +118,8 @@ public class IdleTimeoutTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Headers_expose_expiry_and_idle_remaining()
     {
+        // Scenario: chiama /me e legge gli header esposti per scadenza sessione e idle restante.
+        // Risultato atteso: header presenti con valori coerenti a exp e idle.
         var (client, dbPath) = await CreateClientAsync();
         try
         {

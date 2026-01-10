@@ -96,6 +96,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_missing_fields_returns_invalid_input()
     {
+        // Scenario: POST /me/password senza alcuni campi obbligatori (current/new/confirm) per verificare la validazione dell'input.
+        // Risultato atteso: HTTP 400 invalid_input e nessuna modifica delle credenziali.
         var (factory, client, dbPath) = CreateFactory();
         try
         {
@@ -123,6 +125,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_enforces_min_length_override()
     {
+        // Scenario: configura una lunghezza minima password personalizzata, invia POST /me/password con nuova password più corta per verificare la policy.
+        // Risultato atteso: HTTP 400 con errore di lunghezza minima e password invariata.
         var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?> { ["PasswordPolicy:MinLength"] = "20" });
         try
         {
@@ -150,6 +154,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_updates_hash_and_revokes_sessions()
     {
+        // Scenario: utente loggato chiama POST /me/password con password valida; il test verifica che l'hash in DB cambi e che le vecchie sessioni vengano revocate (vecchio cookie 401, nuovo cookie OK).
+        // Risultato atteso: nuova password attiva, vecchia sessione e credenziali rifiutate.
         var (factory, client, dbPath) = CreateFactory();
         try
         {
@@ -191,6 +197,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_mismatch_returns_400()
     {
+        // Scenario: POST /me/password con NewPassword e ConfirmPassword diverse.
+        // Risultato atteso: HTTP 400 per mismatch e nessun cambio di password.
         var (factory, client, dbPath) = CreateFactory();
         try
         {
@@ -218,6 +226,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_without_csrf_returns_403()
     {
+        // Scenario: invia POST /me/password con cookie valido ma senza header X-CSRF-Token.
+        // Risultato atteso: HTTP 403 e password non cambiata.
         var (factory, client, dbPath) = CreateFactory();
         try
         {
@@ -240,6 +250,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_policy_enforced_with_require_upper()
     {
+        // Scenario: abilita policy che richiede lettere maiuscole e invia POST /me/password con nuova password senza maiuscole.
+        // Risultato atteso: HTTP 400 con errori di policy e nessuna modifica.
         var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?> { ["PasswordPolicy:RequireUpper"] = "true" });
         try
         {
@@ -268,6 +280,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_concurrent_requests_only_first_succeeds()
     {
+        // Scenario: due richieste concorrenti di POST /me/password sullo stesso utente; la prima deve riuscire, la seconda trova la sessione ruotata/revocata e fallisce.
+        // Risultato atteso: prima richiesta OK, seconda 401/403 per sessione non più valida.
         var (factory, client, dbPath) = CreateFactory();
         try
         {
@@ -306,6 +320,8 @@ public class ChangePasswordExtendedTests : IClassFixture<WebApplicationFactory<P
     [Fact]
     public async Task Change_password_revokes_refresh_token()
     {
+        // Scenario: dopo un cambio password con RememberMe attivo si tenta di usare il refresh token precedente.
+        // Risultato atteso: refresh token precedente revocato e rifiutato.
         var (factory, client, dbPath) = CreateFactory();
         try
         {

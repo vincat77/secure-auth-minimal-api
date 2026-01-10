@@ -27,6 +27,8 @@ public class SerilogSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Health_endpoint_works_with_serilog_config()
     {
+        // Scenario: avvia l'app con configurazione Serilog e chiama GET /health per verificare che il logging non interferisca.
+        // Risultato atteso: /health risponde 200.
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             HandleCookies = false,

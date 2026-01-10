@@ -17,6 +17,8 @@ public class MainFormChangePasswordTests
     [Fact]
     public async Task ChangePasswordAsync_sends_payload_and_updates_csrf_on_success()
     {
+        // Scenario: il form WinForms invia la richiesta di cambio password con payload corretto e, su successo, aggiorna il token CSRF locale.
+        // Risultato atteso: payload inviato, stato aggiornato e nuovo CSRF salvato.
         await RunStaAsync(async () =>
         {
             var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
@@ -55,6 +57,8 @@ public class MainFormChangePasswordTests
     [Fact]
     public async Task ChangePasswordAsync_preserves_fields_on_failure()
     {
+        // Scenario: la chiamata di cambio password fallisce (es. 400) e il form deve mantenere i valori inseriti dall'utente per consentire correzioni.
+        // Risultato atteso: campi non vengono puliti e l'errore viene mostrato.
         await RunStaAsync(async () =>
         {
             var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -90,6 +94,8 @@ public class MainFormChangePasswordTests
     [Fact]
     public async Task ChangePasswordAsync_handles_network_error_without_reset()
     {
+        // Scenario: si verifica un errore di rete durante il submit; il form deve mostrare l'errore senza perdere i dati inseriti.
+        // Risultato atteso: input preservati e stato coerente dopo l'eccezione di rete.
         await RunStaAsync(async () =>
         {
             var handler = new StubHandler(_ => throw new HttpRequestException("network fail"));
@@ -118,6 +124,8 @@ public class MainFormChangePasswordTests
     [Fact]
     public async Task ChangePassword_controls_enabled_only_when_authenticated()
     {
+        // Scenario: verifica che i controlli di cambio password siano disabilitati senza sessione e diventino attivi dopo autenticazione simulata.
+        // Risultato atteso: controlli abilitati solo quando l'utente è autenticato.
         await RunStaAsync(async () =>
         {
             using var form = new MainForm();

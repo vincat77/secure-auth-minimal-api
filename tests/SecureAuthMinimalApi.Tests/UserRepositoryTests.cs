@@ -15,6 +15,8 @@ public class UserRepositoryTests
     [Fact]
     public async Task UpdatePasswordAsync_updates_hash_in_db()
     {
+        // Scenario: chiama UpdatePasswordAsync su un utente e poi legge il DB per verificare che l'hash sia cambiato.
+        // Risultato atteso: hash password aggiornato nel database.
         var dbPath = Path.Combine(Path.GetTempPath(), $"userrepo-{Guid.NewGuid():N}.db");
         try
         {

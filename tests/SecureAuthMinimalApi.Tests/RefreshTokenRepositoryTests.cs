@@ -67,6 +67,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task Create_and_get_by_token_returns_record()
     {
+        // Scenario: inserisce un refresh token tramite repository e poi lo recupera con GetByTokenAsync.
+        // Risultato atteso: il record inserito viene restituito correttamente.
         var token = NewToken("user1");
         await _repo.CreateAsync(token, CancellationToken.None);
 
@@ -82,6 +84,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task Rotate_revokes_old_and_inserts_new()
     {
+        // Scenario: ruota un refresh token esistente: l'attuale viene revocato e un nuovo token viene inserito con riferimento al precedente.
+        // Risultato atteso: vecchio token revocato, nuovo token presente con parent linkage.
         var oldToken = NewToken("user2", sessionId: "sess-old");
         await _repo.CreateAsync(oldToken, CancellationToken.None);
 
@@ -102,6 +106,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task Revoke_all_for_user_revokes_only_target_user()
     {
+        // Scenario: chiama RevokeAllForUserAsync per un utente specifico in presenza di token di altri utenti.
+        // Risultato atteso: revocati solo i token dell'utente target, gli altri restano validi.
         var t1 = NewToken("userA");
         var t2 = NewToken("userA");
         var t3 = NewToken("userB");
@@ -122,6 +128,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task Revoke_by_id_sets_revoked()
     {
+        // Scenario: revoca un refresh token specifico passando l'ID.
+        // Risultato atteso: campo revoked valorizzato per quel token.
         var token = NewToken("userC");
         await _repo.CreateAsync(token, CancellationToken.None);
 
@@ -135,6 +143,8 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task Revoke_by_token_sets_revoked()
     {
+        // Scenario: revoca un refresh token cercandolo per valore in chiaro.
+        // Risultato atteso: token trovato e marcato come revoked.
         var token = NewToken("userD");
         await _repo.CreateAsync(token, CancellationToken.None);
 

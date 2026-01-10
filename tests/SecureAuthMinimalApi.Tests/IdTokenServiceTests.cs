@@ -38,6 +38,8 @@ public class IdTokenServiceTests
     [Fact]
     public void CreateIdToken_includes_profile_claims()
     {
+        // Scenario: genera un ID token popolando name, given_name, family_name, email e picture per verificare che vengano inclusi nei claim.
+        // Risultato atteso: ID token contiene tutti i claim di profilo disponibili.
         var service = CreateService();
 
         var (token, _) = service.CreateIdToken(
@@ -68,6 +70,8 @@ public class IdTokenServiceTests
     [Fact]
     public void CreateIdToken_allows_missing_email_and_picture()
     {
+        // Scenario: costruisce un ID token senza email né picture per verificare che i claim opzionali possano mancare.
+        // Risultato atteso: ID token valido senza i claim opzionali assenti.
         var service = CreateService();
 
         var (token, _) = service.CreateIdToken(
@@ -91,6 +95,8 @@ public class IdTokenServiceTests
     [Fact]
     public void CreateIdToken_uses_rsa_when_keypath_present()
     {
+        // Scenario: configura un percorso di chiave RSA e genera un ID token per verificare la firma asimmetrica.
+        // Risultato atteso: token firmato RSA validabile con la chiave pubblica.
         using var rsa = RSA.Create(2048);
         var pk = rsa.ExportRSAPrivateKey();
         var pem = "-----BEGIN RSA PRIVATE KEY-----\n" +
@@ -116,6 +122,8 @@ public class IdTokenServiceTests
     [Fact]
     public void CreateIdToken_throws_on_short_secret()
     {
+        // Scenario: prova a creare l'ID token con secret simmetrico troppo corto.
+        // Risultato atteso: eccezione per secret insufficiente.
         var cfg = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {

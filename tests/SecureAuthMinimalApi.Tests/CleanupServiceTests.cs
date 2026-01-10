@@ -66,6 +66,8 @@ public class CleanupServiceTests
     [Fact]
     public async Task Cleanup_removes_expired_records()
     {
+        // Scenario: esegue il servizio di cleanup con sessioni/refresh scaduti nel DB.
+        // Risultato atteso: record scaduti cancellati, quelli validi lasciati.
         var (factory, client, dbPath) = CreateFactory();
         try
         {
@@ -90,6 +92,8 @@ public class CleanupServiceTests
     [Fact]
     public async Task Cleanup_disabled_does_not_remove_records()
     {
+        // Scenario: cleanup disabilitato via config ma DB contiene record scaduti.
+        // Risultato atteso: nessuna rimozione, record ancora presenti.
         var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?>
         {
             ["Cleanup:Enabled"] = "false"
@@ -114,6 +118,8 @@ public class CleanupServiceTests
     [Fact]
     public async Task Cleanup_batches_when_limited_iterations()
     {
+        // Scenario: imposta un limite di iterazioni/batch e popola il DB con molti record scaduti.
+        // Risultato atteso: il servizio elimina solo il numero massimo previsto per run.
         var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?>
         {
             ["Cleanup:BatchSize"] = "1",
@@ -142,6 +148,8 @@ public class CleanupServiceTests
     [Fact]
     public async Task Cleanup_keeps_valid_records()
     {
+        // Scenario: esegue cleanup con mix di record validi e scaduti.
+        // Risultato atteso: i record non scaduti rimangono intatti.
         var (factory, client, dbPath) = CreateFactory(new Dictionary<string, string?>
         {
             ["Cleanup:IntervalSeconds"] = "1"
