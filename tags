@@ -464,6 +464,7 @@ RegisterSuccessAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    
 RegisterSuccessAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    Task RegisterSuccessAsync(string username, CancellationToken ct);$/;"	m	interface:ILoginThrottle
 Register_duplicate_email_case_insensitive_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_email_case_insensitive_returns_conflict()$/;"	m	class:ApiTests
 Register_duplicate_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_returns_conflict()$/;"	m	class:ApiTests
+Register_duplicate_returns_conflict_when_email_confirmation_not_required	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_returns_conflict_when_email_confirmation_not_required()$/;"	m	class:ApiTests
 Register_duplicate_with_trim_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_with_trim_returns_conflict()$/;"	m	class:ApiTests
 Register_fails_when_min_length_is_invalid_config	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_fails_when_min_length_is_invalid_config()$/;"	m	class:ApiTests
 Register_generates_email_confirmation_token_and_persists	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_generates_email_confirmation_token_and_persists()$/;"	m	class:ApiTests

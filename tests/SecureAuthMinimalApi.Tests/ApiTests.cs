@@ -422,6 +422,37 @@ public class ApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Register_duplicate_returns_conflict_when_email_confirmation_not_required()
+    {
+        // Scenario: EmailConfirmation:Required=false ma doppia registrazione con stessa email/username.
+        // Risultato atteso: la seconda registrazione ritorna 409 anche se la conferma email è disabilitata.
+        LogTestStart();
+
+        var username = $"dup_no_email_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?> { ["EmailConfirmation:Required"] = "false" };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var first = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+            var second = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
+    [Fact]
     public async Task Register_generates_email_confirmation_token_and_persists()
     {
         // Scenario: POST /register deve restituire un token di conferma email con scadenza e salvarlo nel DB; il test legge risposta e poi interroga SQLite per confrontare token e exp.
