@@ -117,7 +117,7 @@ CountAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private
 CreateAccessToken	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public (string Token, DateTime ExpiresUtc) CreateAccessToken(string sessionId)$/;"	m	class:JwtTokenService	file:
 CreateAsync	src/SecureAuthMinimalApi/Data/LoginAuditRepository.cs	/^    public async Task CreateAsync(LoginAudit audit, CancellationToken ct)$/;"	m	class:LoginAuditRepository
 CreateAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task CreateAsync(MfaChallenge challenge, CancellationToken ct)$/;"	m	class:MfaChallengeRepository
-CreateAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task CreateAsync(PasswordReset reset, CancellationToken ct)$/;"	m	class:PasswordResetRepository
+CreateAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task CreateAsync(PasswordReset reset, CancellationToken ct, IDbTransaction? tx /;"	m	class:PasswordResetRepository
 CreateAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task CreateAsync(RefreshToken token, CancellationToken ct)$/;"	m	class:RefreshTokenRepository
 CreateAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task CreateAsync(UserSession session, CancellationToken ct)$/;"	m	class:SessionRepository
 CreateAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task CreateAsync(User user, CancellationToken ct)$/;"	m	class:UserRepository
@@ -131,6 +131,7 @@ CreateIdToken_includes_profile_claims	tests/SecureAuthMinimalApi.Tests/IdTokenSe
 CreateIdToken_throws_on_short_secret	tests/SecureAuthMinimalApi.Tests/IdTokenServiceTests.cs	/^    public void CreateIdToken_throws_on_short_secret()$/;"	m	class:IdTokenServiceTests
 CreateIdToken_uses_rsa_when_keypath_present	tests/SecureAuthMinimalApi.Tests/IdTokenServiceTests.cs	/^    public void CreateIdToken_uses_rsa_when_keypath_present()$/;"	m	class:IdTokenServiceTests
 CreateRsaCredentials	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private static SigningCredentials CreateRsaCredentials(string keyText)$/;"	m	class:IdTokenService	file:
+CreateUserAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private async Task<(string UserId, string Email, string Password, string ConfirmToken)> Crea/;"	m	class:PasswordResetTests	file:
 Create_and_get_by_token_returns_record	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    public async Task Create_and_get_by_token_returns_record()$/;"	m	class:RefreshTokenRepositoryTests
 CreatedAtUtc	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public required string CreatedAtUtc { get; init; }$/;"	p	class:MfaChallenge
 CreatedAtUtc	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^    public string CreatedAtUtc { get; init; } = default!;$/;"	p	class:PasswordReset
@@ -149,7 +150,7 @@ DbLoginThrottle	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    publi
 DbLoginThrottle	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^public sealed class DbLoginThrottle : ILoginThrottle$/;"	c
 DeleteDb	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private static void DeleteDb(string dbPath)$/;"	m	class:ChangePasswordExtendedTests	file:
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:MfaChallengeRepository
-DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:PasswordResetRepository
+DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string cutoffIso, int batchSize, CancellationToken/;"	m	class:PasswordResetRepository
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:RefreshTokenRepository
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:SessionRepository
 DemoPassword	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private const string DemoPassword = "123456789012";$/;"	f	class:ApiTests	file:
@@ -184,6 +185,7 @@ Dispose	clients/WinFormsClient/Controls/StatusBanner.Designer.cs	/^    protected
 Dispose	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    protected override void Dispose(bool disposing)$/;"	m	class:StatusInfoControl
 Dispose	clients/WinFormsClient/MainForm.cs	/^    public void Dispose()$/;"	m	class:MainForm.BusyScope
 DisposeAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public Task DisposeAsync()$/;"	m	class:ApiTests
+DisposeAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public Task DisposeAsync()$/;"	m	class:PasswordResetTests
 DisposeAsync	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    public Task DisposeAsync()$/;"	m	class:RefreshTokenRepositoryTests
 DumpCookies	clients/WinFormsClient/MainForm.cs	/^  private void DumpCookies()$/;"	m	class:MainForm	file:
 Email	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? Email { get; init; }$/;"	p	class:User
@@ -198,6 +200,7 @@ EnsureColumn	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  private static v
 EnsureCreated	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  public static void EnsureCreated(IConfiguration config)$/;"	m	class:DbInitializer
 EnsureHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void EnsureHttpClient()$/;"	m	class:MainForm	file:
 ExecuteAsync	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    protected override async Task ExecuteAsync(CancellationToken stoppingToken)$/;"	m	class:ExpiredCleanupService
+ExpirationMinutes	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int ExpirationMinutes { get; set; } = 30;$/;"	p	class:PasswordResetConfig
 ExpiredCleanupService	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    public ExpiredCleanupService($/;"	m	class:ExpiredCleanupService
 ExpiredCleanupService	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^public sealed class ExpiredCleanupService : BackgroundService$/;"	c
 Expired_jwt_returns_401_on_me	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Expired_jwt_returns_401_on_me()$/;"	m	class:ApiTests
@@ -209,6 +212,7 @@ ExpiresAtUtc	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public require
 FamilyName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? FamilyName { get; init; }$/;"	p	class:User
 FixedTimeEquals	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfMiddleware	file:
 Full_auth_flow_with_remember_and_mfa	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Full_auth_flow_with_remember_and_mfa()$/;"	m	class:ApiTests
+GenerateToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string GenerateToken()$/;"	m	class:PasswordResetEndpoints	file:
 GetAsync	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public async Task<ThrottleState> GetAsync(string username, CancellationToken ct)$/;"	m	class:LoginThrottleRepository
 GetByEmailAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByEmailAsync(string emailNormalized, CancellationToken ct)$/;"	m	class:UserRepository
 GetByEmailTokenAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByEmailTokenAsync(string token, CancellationToken ct)$/;"	m	class:UserRepository
@@ -224,6 +228,8 @@ GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^  
 GetValidationParameters	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public TokenValidationParameters GetValidationParameters()$/;"	m	class:JwtTokenService
 GivenName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? GivenName { get; init; }$/;"	p	class:User
 Hash	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^    public static string Hash(string password)$/;"	m	class:PasswordHasher
+HashToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetEndpoints	file:
+HashToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetTests	file:
 HeadersDump	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        public string? HeadersDump { get; private set; }$/;"	p	class:MainFormChangePasswordTests.StubHandler
 Headers_expose_expiry_and_idle_remaining	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    public async Task Headers_expose_expiry_and_idle_remaining()$/;"	m	class:IdleTimeoutTests
 HealthEndpoints	src/SecureAuthMinimalApi/Endpoints/HealthEndpoints.cs	/^public static class HealthEndpoints$/;"	c
@@ -234,6 +240,7 @@ Health_in_production_includes_security_headers	tests/SecureAuthMinimalApi.Tests/
 HostingUrlsTests	tests/SecureAuthMinimalApi.Tests/HostingUrlsTests.cs	/^public class HostingUrlsTests$/;"	c
 HostingUrls_FromConfiguration_AreAppliedToServerAddresses	tests/SecureAuthMinimalApi.Tests/HostingUrlsTests.cs	/^    public void HostingUrls_FromConfiguration_AreAppliedToServerAddresses()$/;"	m	class:HostingUrlsTests
 Http	clients/WinFormsClient/ImageLoader.cs	/^    private static readonly HttpClient Http = new();$/;"	f	class:ImageLoader	file:
+IEmailService	src/SecureAuthMinimalApi/Services/IEmailService.cs	/^public interface IEmailService$/;"	i
 ILoginThrottle	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^public interface ILoginThrottle$/;"	i
 Id	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required string Id { get; init; }$/;"	p	class:LoginAudit
 Id	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public required string Id { get; init; }$/;"	p	class:MfaChallenge
@@ -258,8 +265,10 @@ Idle_expired_session_returns_401_and_revokes	tests/SecureAuthMinimalApi.Tests/Id
 Idle_within_timeout_updates_last_seen_and_returns_ok	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    public async Task Idle_within_timeout_updates_last_seen_and_returns_ok()$/;"	m	class:IdleTimeoutTests
 ImageLoader	clients/WinFormsClient/ImageLoader.cs	/^public static class ImageLoader$/;"	c
 ImageLoaderTests	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^public class ImageLoaderTests$/;"	c
+IncludeTokenInResponseForTesting	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool IncludeTokenInResponseForTesting { get; set; } = false;$/;"	p	class:PasswordResetConfig
 IncrementAttemptAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task IncrementAttemptAsync(string id, CancellationToken ct)$/;"	m	class:MfaChallengeRepository
 InitializeAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public Task InitializeAsync()$/;"	m	class:ApiTests
+InitializeAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public Task InitializeAsync()$/;"	m	class:PasswordResetTests
 InitializeAsync	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    public Task InitializeAsync()$/;"	m	class:RefreshTokenRepositoryTests
 InitializeComponent	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^  private void InitializeComponent()$/;"	m	class:ActionButtonsControl	file:
 InitializeComponent	clients/WinFormsClient/Controls/DeviceAlertControl.Designer.cs	/^    private void InitializeComponent()$/;"	m	class:DeviceAlertControl	file:
@@ -394,11 +403,12 @@ MapLogoutAll	src/SecureAuthMinimalApi/Endpoints/LogoutAllEndpoints.cs	/^    publ
 MapMe	src/SecureAuthMinimalApi/Endpoints/MeEndpoints.cs	/^    public static void MapMe(this WebApplication app)$/;"	m	class:MeEndpoints
 MapMfaDisable	src/SecureAuthMinimalApi/Endpoints/MfaDisableEndpoints.cs	/^    public static void MapMfaDisable(this WebApplication app, ILogger logger)$/;"	m	class:MfaDisableEndpoints
 MapMfaSetup	src/SecureAuthMinimalApi/Endpoints/MfaSetupEndpoints.cs	/^    public static void MapMfaSetup(this WebApplication app)$/;"	m	class:MfaSetupEndpoints
+MapPasswordReset	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        public static void MapPasswordReset(this WebApplication app, ILogger logger)$/;"	m	class:PasswordResetEndpoints
 MapReady	src/SecureAuthMinimalApi/Endpoints/ReadyEndpoints.cs	/^    public static void MapReady(this WebApplication app)$/;"	m	class:ReadyEndpoints
 MapRefresh	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    public static void MapRefresh(this WebApplication app, ILogger logger)$/;"	m	class:RefreshEndpoints
 MapRegister	src/SecureAuthMinimalApi/Endpoints/RegisterEndpoints.cs	/^    public static void MapRegister($/;"	m	class:RegisterEndpoints
 MarkUsedAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task MarkUsedAsync(string id, CancellationToken ct)$/;"	m	class:MfaChallengeRepository
-MarkUsedAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> MarkUsedAsync(string id, string usedAtIso, CancellationToken ct)$/;"	m	class:PasswordResetRepository
+MarkUsedAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> MarkUsedAsync(string id, string usedAtIso, CancellationToken ct, IDbT/;"	m	class:PasswordResetRepository
 MaxIterationsPerRun	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^    public int? MaxIterationsPerRun { get; set; }$/;"	p	class:CleanupOptions
 MeAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task MeAsync()$/;"	m	class:MainForm	file:
 MeClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? MeClicked;$/;"	E	class:ActionButtonsControl
@@ -420,6 +430,8 @@ MfaSetupResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record Mf
 MfaSetupResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);$/;"	m	class:ApiTests	file:
 Name	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? Name { get; init; }$/;"	p	class:User
 NewToken	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    private static RefreshToken NewToken(string userId, string? sessionId = null, string? parent/;"	m	class:RefreshTokenRepositoryTests	file:
+NoopEmailService	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    public NoopEmailService(ILogger<NoopEmailService> logger)$/;"	m	class:NoopEmailService
+NoopEmailService	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^public sealed class NoopEmailService : IEmailService$/;"	c
 NormalizeEmail	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static string? NormalizeEmail(string? email)$/;"	m	class:EndpointUtilities
 NormalizeUsername	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static string? NormalizeUsername(string? username, bool forceLower)$/;"	m	class:EndpointUtilities
 OnLoad	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    protected override void OnLoad(EventArgs e)$/;"	m	class:ActionButtonsControl
@@ -436,8 +448,16 @@ PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required strin
 PasswordHasher	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
 PasswordPolicySettings	src/SecureAuthMinimalApi/Models/PasswordPolicySettings.cs	/^public sealed record PasswordPolicySettings(int MinLength, bool RequireUpper, bool RequireLower,/;"	m
 PasswordReset	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^public sealed class PasswordReset$/;"	c
+PasswordResetConfig	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^public sealed class PasswordResetConfig$/;"	c
+PasswordResetConfirmRequest	src/SecureAuthMinimalApi/Models/PasswordResetConfirmRequest.cs	/^public sealed record PasswordResetConfirmRequest(string? Token, string? NewPassword, string? Con/;"	m
+PasswordResetEndpoints	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    public static class PasswordResetEndpoints$/;"	c
 PasswordResetRepository	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public PasswordResetRepository(IConfiguration config)$/;"	m	class:PasswordResetRepository
 PasswordResetRepository	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^public sealed class PasswordResetRepository$/;"	c
+PasswordResetRequest	src/SecureAuthMinimalApi/Models/PasswordResetRequest.cs	/^public sealed record PasswordResetRequest(string? Email);$/;"	m
+PasswordResetRetentionDays	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^    public int? PasswordResetRetentionDays { get; set; }$/;"	p	class:CleanupOptions
+PasswordResetTests	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^public class PasswordResetTests : IAsyncLifetime$/;"	c
+PasswordReset_ExpiredToken_ReturnsInvalidToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_ExpiredToken_ReturnsInvalidToken()$/;"	m	class:PasswordResetTests
+PasswordReset_Flow_Succeeds	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_Flow_Succeeds()$/;"	m	class:PasswordResetTests
 PictureUrl	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? PictureUrl { get; init; }$/;"	p	class:User
 Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
@@ -475,6 +495,7 @@ RegisterFailureAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    T
 RegisterRequest	src/SecureAuthMinimalApi/RegisterRequest.cs	/^public sealed record RegisterRequest(string? Username, string? Email, string? Password, string? /;"	m
 RegisterResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, str/;"	m	class:MainForm	file:
 RegisterResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, s/;"	m	class:ApiTests	file:
+RegisterResponse	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? /;"	m	class:PasswordResetTests	file:
 RegisterSuccessAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public async Task RegisterSuccessAsync(string username, CancellationToken ct)$/;"	m	class:DbLoginThrottle
 RegisterSuccessAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    Task RegisterSuccessAsync(string username, CancellationToken ct);$/;"	m	interface:ILoginThrottle
 Register_duplicate_email_case_insensitive_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_email_case_insensitive_returns_conflict()$/;"	m	class:ApiTests
@@ -493,13 +514,16 @@ Register_with_missing_symbol_fails_password_policy	tests/SecureAuthMinimalApi.Te
 Register_with_short_password_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_with_short_password_returns_bad_request()$/;"	m	class:ApiTests
 RememberChecked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public bool RememberChecked$/;"	p	class:ActionButtonsControl
 RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	class:MainForm	file:
+RequireConfirmed	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetConfig
 ResetAsync	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public async Task ResetAsync(string username, CancellationToken ct)$/;"	m	class:LoginThrottleRepository
 ResetChangePasswordForm	clients/WinFormsClient/MainForm.cs	/^  private void ResetChangePasswordForm()$/;"	m	class:MainForm	file:
 ResetHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void ResetHttpClient()$/;"	m	class:MainForm	file:
 ResetInfo	clients/WinFormsClient/Controls/DeviceInfoControl.cs	/^    public void ResetInfo()$/;"	m	class:DeviceInfoControl
+ResetRequestResponse	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private record ResetRequestResponse(bool Ok, string? ResetToken);$/;"	m	class:PasswordResetTests	file:
 ResetStatus	clients/WinFormsClient/Controls/DeviceAlertControl.cs	/^    public void ResetStatus()$/;"	m	class:DeviceAlertControl
+RetentionDays	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RetentionDays { get; set; } = 7;$/;"	p	class:PasswordResetConfig
 RetokenizeWithOverrides	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private string RetokenizeWithOverrides(string token, string? audience = null, string? issuer/;"	m	class:ApiTests	file:
-RevokeAllForUserAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken ct)$/;"	m	class:RefreshTokenRepository
+RevokeAllForUserAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken ct, /;"	m	class:RefreshTokenRepository
 RevokeAllForUserAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task RevokeAllForUserAsync(string userId, string revokedAtUtcIso, CancellationT/;"	m	class:SessionRepository
 RevokeAllForUserExceptAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task RevokeAllForUserExceptAsync(string userId, string sessionIdToKeep, string /;"	m	class:SessionRepository
 RevokeAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task RevokeAsync(string sessionId, string revokedAtUtcIso, CancellationToken ct/;"	m	class:SessionRepository
@@ -522,6 +546,8 @@ SeedExpiredRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	
 SeedExpiredRefreshTokensAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRefreshTokensAsync(string dbPath, int count)$/;"	m	class:CleanupServiceTests	file:
 SeedValidRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedValidRecordsAsync(string dbPath)$/;"	m	class:CleanupServiceTests	file:
 SendAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, Cance/;"	m	class:MainFormChangePasswordTests.StubHandler
+SendPasswordResetEmailAsync	src/SecureAuthMinimalApi/Services/IEmailService.cs	/^    Task SendPasswordResetEmailAsync(string toEmail, string resetToken, string expiresAtUtc);$/;"	m	interface:IEmailService
+SendPasswordResetEmailAsync	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    public Task SendPasswordResetEmailAsync(string toEmail, string resetToken, string expiresAtU/;"	m	class:NoopEmailService
 SerilogSmokeTests	tests/SecureAuthMinimalApi.Tests/SerilogSmokeTests.cs	/^    public SerilogSmokeTests(WebApplicationFactory<Program> factory)$/;"	m	class:SerilogSmokeTests
 SerilogSmokeTests	tests/SecureAuthMinimalApi.Tests/SerilogSmokeTests.cs	/^public class SerilogSmokeTests : IClassFixture<WebApplicationFactory<Program>>$/;"	c
 SessionCard	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^partial class SessionCard$/;"	c
@@ -639,6 +665,7 @@ _challengeId	clients/WinFormsClient/MainForm.cs	/^  private string? _challengeId
 _challenges	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly MfaChallengeRepository _challenges;$/;"	f	class:ExpiredCleanupService	file:
 _changePasswordButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private Button _changePasswordButton = null!;$/;"	f	class:ActionButtonsControl	file:
 _client	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private HttpClient _client = null!;$/;"	f	class:ApiTests	file:
+_client	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private HttpClient _client = null!;$/;"	f	class:PasswordResetTests	file:
 _config	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^    private readonly IConfiguration _config;$/;"	f	class:CookieJwtAuthMiddleware	file:
 _config	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    private IConfiguration _config = null!;$/;"	f	class:RefreshTokenRepositoryTests	file:
 _confirmEmailButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private Button _confirmEmailButton = null!;$/;"	f	class:ActionButtonsControl	file:
@@ -663,6 +690,7 @@ _csrfToken	clients/WinFormsClient/MainForm.cs	/^  private string? _csrfToken;$/;
 _currentAvatar	clients/WinFormsClient/Controls/SessionCard.cs	/^    private Image? _currentAvatar;$/;"	f	class:SessionCard	file:
 _currentPasswordInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _currentPasswordInput = null!;$/;"	f	class:MainForm	file:
 _dbPath	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"secure-auth-tests-{Guid/;"	f	class:ApiTests	file:
+_dbPath	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private string _dbPath = null!;$/;"	f	class:PasswordResetTests	file:
 _dbPath	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    private string _dbPath = null!;$/;"	f	class:RefreshTokenRepositoryTests	file:
 _deviceAlert	clients/WinFormsClient/MainForm.Designer.cs	/^    private DeviceAlertControl _deviceAlert = null!;$/;"	f	class:MainForm	file:
 _deviceId	clients/WinFormsClient/Controls/DeviceInfoControl.Designer.cs	/^    private Label _deviceId = null!;$/;"	f	class:DeviceInfoControl	file:
@@ -680,6 +708,7 @@ _factory	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    p
 _factory	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:IdleTimeoutTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/LogoutAllTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:LogoutAllTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/LogoutRefreshTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:LogoutRefreshTests	file:
+_factory	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private WebApplicationFactory<Program> _factory = null!;$/;"	f	class:PasswordResetTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/SerilogSmokeTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:SerilogSmokeTests	file:
 _familyNameInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _familyNameInput = null!;$/;"	f	class:MainForm	file:
 _givenNameInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _givenNameInput = null!;$/;"	f	class:MainForm	file:
@@ -709,6 +738,7 @@ _logPanel	clients/WinFormsClient/MainForm.Designer.cs	/^    private LogPanelCont
 _logger	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^    private readonly ILogger<CookieJwtAuthMiddleware> _logger;$/;"	f	class:CookieJwtAuthMiddleware	file:
 _logger	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private readonly ILogger<CsrfMiddleware> _logger;$/;"	f	class:CsrfMiddleware	file:
 _logger	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly ILogger<ExpiredCleanupService> _logger;$/;"	f	class:ExpiredCleanupService	file:
+_logger	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    private readonly ILogger<NoopEmailService> _logger;$/;"	f	class:NoopEmailService	file:
 _loginButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private Button _loginButton = null!;$/;"	f	class:ActionButtonsControl	file:
 _logoutButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private Button _logoutButton = null!;$/;"	f	class:ActionButtonsControl	file:
 _maxFailures	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    private readonly int _maxFailures;$/;"	f	class:DbLoginThrottle	file:
@@ -778,6 +808,7 @@ builder.Host.UseSerilog	src/SecureAuthMinimalApi/Program.cs	/^builder.Host.UseSe
 builder.Services.AddDataProtection	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddDataProtection();$/;"	m
 builder.Services.AddHostedService	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddHostedService<ExpiredCleanupService>();$/;"	m
 builder.Services.AddLogging	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddLogging();$/;"	m
+builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<IEmailService, NoopEmailService>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<IdTokenService>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<JwtTokenService>();$/;"	m

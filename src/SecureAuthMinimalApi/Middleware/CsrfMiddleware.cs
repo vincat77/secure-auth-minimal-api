@@ -33,7 +33,9 @@ public sealed class CsrfMiddleware : IMiddleware
                         || path.Equals("/register", StringComparison.OrdinalIgnoreCase)
                         || path.Equals("/confirm-email", StringComparison.OrdinalIgnoreCase)
                         || path.Equals("/refresh", StringComparison.OrdinalIgnoreCase)
-                        || path.Equals("/login/confirm-mfa", StringComparison.OrdinalIgnoreCase);
+                        || path.Equals("/login/confirm-mfa", StringComparison.OrdinalIgnoreCase)
+                        || path.Equals("/password-reset/request", StringComparison.OrdinalIgnoreCase)
+                        || path.Equals("/password-reset/confirm", StringComparison.OrdinalIgnoreCase);
 
             if (!isPublic)
             {
