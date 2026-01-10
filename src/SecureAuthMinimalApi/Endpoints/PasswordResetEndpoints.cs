@@ -57,6 +57,18 @@ namespace SecureAuthMinimalApi.Endpoints;
                 return Results.Ok(new { ok = true });
             }
 
+            if (!string.IsNullOrWhiteSpace(user.DeletedAtUtc))
+            {
+                logger.LogInformation("Password reset bloccato: utente cancellato userId={UserId}", user.Id);
+                return Results.Ok(new { ok = true });
+            }
+
+            if (user.IsLocked)
+            {
+                logger.LogInformation("Password reset bloccato: account locked userId={UserId}", user.Id);
+                return Results.Ok(new { ok = true });
+            }
+
             if (resetConfig.RequireConfirmed && !user.EmailConfirmed)
             {
                 var confirmToken = string.IsNullOrWhiteSpace(user.EmailConfirmToken)
@@ -148,6 +160,16 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (user is null || string.IsNullOrWhiteSpace(user.EmailNormalized))
             {
                 return Results.BadRequest(new { ok = false, error = "invalid_token" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(user.DeletedAtUtc))
+            {
+                return Results.BadRequest(new { ok = false, error = "invalid_token" });
+            }
+
+            if (user.IsLocked)
+            {
+                return Results.BadRequest(new { ok = false, error = "account_locked" });
             }
 
             var cfg = ctx.RequestServices.GetRequiredService<IConfiguration>();

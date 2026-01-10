@@ -154,6 +154,7 @@ DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^   
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string cutoffIso, int batchSize, CancellationToken/;"	m	class:PasswordResetRepository
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:RefreshTokenRepository
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:SessionRepository
+DeletedAtUtc	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? DeletedAtUtc { get; init; }$/;"	p	class:User
 DemoPassword	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private const string DemoPassword = "123456789012";$/;"	f	class:ApiTests	file:
 DemoPassword	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private const string DemoPassword = "123456789012";$/;"	f	class:ChangePasswordExtendedTests	file:
 DemoPassword	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    private const string DemoPassword = "123456789012";$/;"	f	class:IdleTimeoutTests	file:
@@ -294,6 +295,7 @@ InvokeAsync	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^   
 InvokeAsync	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context, RequestDelegate next)$/;"	m	class:CsrfMiddleware
 InvokeChangePasswordAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static Task InvokeChangePasswordAsync(MainForm form)$/;"	m	class:MainFormChangePasswordTests	file:
 InvokePrivate	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static void InvokePrivate(object target, string name, params object[] args)$/;"	m	class:MainFormChangePasswordTests	file:
+IsLocked	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool IsLocked { get; init; }$/;"	p	class:User
 IsLockedAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public async Task<bool> IsLockedAsync(string username, CancellationToken ct)$/;"	m	class:DbLoginThrottle
 IsLockedAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    Task<bool> IsLockedAsync(string username, CancellationToken ct);$/;"	m	interface:ILoginThrottle
 IsSvg	clients/WinFormsClient/ImageLoader.cs	/^    private static bool IsSvg(string url)$/;"	m	class:ImageLoader	file:

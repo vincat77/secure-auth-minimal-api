@@ -9,6 +9,8 @@ public sealed class User
     public required string Username { get; init; }
     public required string PasswordHash { get; init; }
     public required string CreatedAtUtc { get; init; }
+    public bool IsLocked { get; init; }
+    public string? DeletedAtUtc { get; init; }
     public string? TotpSecret { get; init; }
     public string? Name { get; init; }
     public string? GivenName { get; init; }

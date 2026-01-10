@@ -63,6 +63,7 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Name, @Given
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
        email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
@@ -82,6 +83,7 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
        email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
@@ -102,6 +104,7 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
        email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
@@ -122,6 +125,7 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
        email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
