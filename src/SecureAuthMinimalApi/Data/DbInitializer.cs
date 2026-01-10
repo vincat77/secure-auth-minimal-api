@@ -1,4 +1,5 @@
 using Dapper;
+using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SecureAuthMinimalApi.Services;
@@ -95,6 +96,18 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
   user_agent TEXT NULL,
   client_ip TEXT NULL,
   attempt_count INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL,
+  expires_at_utc TEXT NOT NULL,
+  used_at_utc TEXT NULL,
+  created_at_utc TEXT NOT NULL,
+  client_ip TEXT NULL,
+  user_agent TEXT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );";
     conn.Execute(ddl);
 
@@ -128,6 +141,9 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
     const string idxRefreshRevoked = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_revoked ON refresh_tokens(revoked_at_utc);";
     const string idxMfaExpires = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_expires ON mfa_challenges(expires_at_utc);";
     const string idxMfaUsed = "CREATE INDEX IF NOT EXISTS idx_mfa_challenges_used ON mfa_challenges(used_at_utc);";
+    const string idxPasswordResetToken = "CREATE UNIQUE INDEX IF NOT EXISTS idx_password_resets_token_hash ON password_resets(token_hash);";
+    const string idxPasswordResetUser = "CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);";
+    const string idxPasswordResetExpires = "CREATE INDEX IF NOT EXISTS idx_password_resets_expires ON password_resets(expires_at_utc);";
     conn.Execute(idxRefreshTokenHash);
     conn.Execute(idxRefreshUser);
     conn.Execute(idxRefreshSession);
@@ -139,6 +155,9 @@ CREATE TABLE IF NOT EXISTS mfa_challenges (
     conn.Execute(idxRefreshRevoked);
     conn.Execute(idxMfaExpires);
     conn.Execute(idxMfaUsed);
+    conn.Execute(idxPasswordResetToken);
+    conn.Execute(idxPasswordResetUser);
+    conn.Execute(idxPasswordResetExpires);
 
     const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
     var exists = conn.ExecuteScalar<long>(seedCheck);

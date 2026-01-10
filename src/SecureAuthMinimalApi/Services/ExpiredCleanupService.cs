@@ -15,6 +15,7 @@ public sealed class ExpiredCleanupService : BackgroundService
     private readonly SessionRepository _sessions;
     private readonly RefreshTokenRepository _refreshTokens;
     private readonly MfaChallengeRepository _challenges;
+    private readonly PasswordResetRepository _passwordResets;
     private readonly ILogger<ExpiredCleanupService> _logger;
 
     /// <summary>
@@ -25,12 +26,14 @@ public sealed class ExpiredCleanupService : BackgroundService
         SessionRepository sessions,
         RefreshTokenRepository refreshTokens,
         MfaChallengeRepository challenges,
+        PasswordResetRepository passwordResets,
         ILogger<ExpiredCleanupService> logger)
     {
         _options = options.Value;
         _sessions = sessions;
         _refreshTokens = refreshTokens;
         _challenges = challenges;
+        _passwordResets = passwordResets;
         _logger = logger;
     }
 
@@ -79,31 +82,35 @@ public sealed class ExpiredCleanupService : BackgroundService
             var totalSessions = 0;
             var totalRefresh = 0;
             var totalChallenges = 0;
+            var totalPasswordResets = 0;
 
             for (var i = 0; i < maxIterations && !ct.IsCancellationRequested; i++)
             {
                 var deletedSessions = await _sessions.DeleteExpiredAsync(nowIso, batchSize, ct);
                 var deletedRefresh = await _refreshTokens.DeleteExpiredAsync(nowIso, batchSize, ct);
                 var deletedChallenges = await _challenges.DeleteExpiredAsync(nowIso, batchSize, ct);
+                var deletedPasswordResets = await _passwordResets.DeleteExpiredAsync(nowIso, batchSize, ct);
 
                 totalSessions += deletedSessions;
                 totalRefresh += deletedRefresh;
                 totalChallenges += deletedChallenges;
+                totalPasswordResets += deletedPasswordResets;
 
-                var deletedThisBatch = deletedSessions + deletedRefresh + deletedChallenges;
+                var deletedThisBatch = deletedSessions + deletedRefresh + deletedChallenges + deletedPasswordResets;
                 if (deletedThisBatch < batchSize)
                 {
                     break;
                 }
             }
 
-            if (totalSessions + totalRefresh + totalChallenges > 0)
+            if (totalSessions + totalRefresh + totalChallenges + totalPasswordResets > 0)
             {
                 _logger.LogInformation(
-                    "Cleanup completato: sessions={Sessions}, refresh={Refresh}, challenges={Challenges}",
+                    "Cleanup completato: sessions={Sessions}, refresh={Refresh}, challenges={Challenges}, passwordResets={PasswordResets}",
                     totalSessions,
                     totalRefresh,
-                    totalChallenges);
+                    totalChallenges,
+                    totalPasswordResets);
             }
             else
             {

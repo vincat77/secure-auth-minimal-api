@@ -47,6 +47,7 @@ builder.Services.AddSingleton<TotpSecretProtector>();
 builder.Services.AddSingleton<RefreshTokenHasher>();
 builder.Services.AddSingleton<RefreshTokenRepository>();
 builder.Services.AddSingleton<MfaChallengeRepository>();
+builder.Services.AddSingleton<PasswordResetRepository>();
 builder.Services.AddSingleton<IdTokenService>();
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.AddHostedService<ExpiredCleanupService>();
