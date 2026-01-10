@@ -215,6 +215,7 @@ app.MapLogin(logger, forceLowerUsername, emailConfirmationRequired, mfaChallenge
 app.MapConfirmMfa(logger, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
 app.MapMe();
 app.MapChangePassword();
+app.MapChangeEmail(logger);
 app.MapLogout(logger);
 app.MapMfaSetup();
 app.MapMfaDisable(logger);

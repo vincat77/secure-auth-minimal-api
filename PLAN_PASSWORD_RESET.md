@@ -55,6 +55,7 @@ Aggiungere un flusso di reset password per utenti non autenticati: richiesta tok
    - Rate limit/abuse: prevedere limitazioni su richieste di reset per IP/email e auditing per tentativi falliti (non implementato inizialmente ma raccomandato).
    - Resend token conferma: decidere se e quando inviare automaticamente un nuovo token di conferma quando il reset è rifiutato per email_non_confirmed.
    - Correzione email: per utenti non confermati con email errata, considerare un flow autenticato di cambio email prima del reset.
+   - Correzione email (stato attuale: solo resend token): manca un flusso di cambio email per utenti non confermati; opzione futura: endpoint autenticato per aggiornare Email/EmailNormalized e rigenerare token.
    - Revoca: verificare che il reset revochi refresh/sessioni attive.
    - Rate limit/resend: applicare limiti ai resend/reset per evitare flood verso l'email.
    - Token reuse: assicurarsi che un token marcato usato/scaduto non possa essere riutilizzato.

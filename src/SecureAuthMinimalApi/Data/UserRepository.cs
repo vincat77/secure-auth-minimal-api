@@ -214,6 +214,24 @@ WHERE id = @userId;";
         await db.ExecuteAsync(new CommandDefinition(sql, new { userId, passwordHash }, transaction: tx, cancellationToken: ct));
     }
 
+    /// <summary>
+    /// Aggiorna l'email per un utente non confermato rigenerando token e scadenza.
+    /// </summary>
+    public async Task UpdateEmailAsync(string userId, string email, string emailNormalized, string confirmToken, string confirmExpiresUtc, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
+    {
+        const string sql = @"
+UPDATE users
+SET email = @email,
+    email_normalized = @emailNormalized,
+    email_confirmed = 0,
+    email_confirm_token = @confirmToken,
+    email_confirm_expires_utc = @confirmExpiresUtc
+WHERE id = @userId;";
+
+        var db = connection ?? Open();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, email, emailNormalized, confirmToken, confirmExpiresUtc }, transaction: tx, cancellationToken: ct));
+    }
+
     private User? DecryptTotp(User? user)
     {
         if (user is null)
