@@ -60,6 +60,7 @@ var requireLower = app.Configuration.GetValue<bool?>("PasswordPolicy:RequireLowe
 var requireDigit = app.Configuration.GetValue<bool?>("PasswordPolicy:RequireDigit") ?? false;
 var requireSymbol = app.Configuration.GetValue<bool?>("PasswordPolicy:RequireSymbol") ?? false;
 var forceLowerUsername = app.Configuration.GetValue<bool?>("UsernamePolicy:Lowercase") ?? false;
+var emailConfirmationRequired = app.Configuration.GetValue<bool?>("EmailConfirmation:Required") ?? true;
 var mfaChallengeMinutes = app.Configuration.GetValue<int?>("Mfa:ChallengeMinutes") ?? 10;
 if (mfaChallengeMinutes <= 0)
 {
@@ -176,7 +177,7 @@ app.MapHealth();
 app.MapLive();
 app.MapReady();
 app.MapRegister(logger, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol, forceLowerUsername);
-app.MapLogin(logger, forceLowerUsername, mfaChallengeMinutes, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
+app.MapLogin(logger, forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
 app.MapConfirmMfa(logger, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
 app.MapMe();
 app.MapChangePassword();
@@ -295,6 +296,7 @@ static void LogStartupInfo(
             RequireSymbol = requireSymbol
         },
         UsernamePolicy = new { Lowercase = forceLowerUsername },
+        EmailConfirmation = new { Required = emailConfirmationRequired },
         Mfa = new
         {
             ChallengeMinutes = mfaChallengeMinutes,

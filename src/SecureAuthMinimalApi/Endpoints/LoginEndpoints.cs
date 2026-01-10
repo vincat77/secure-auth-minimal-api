@@ -16,6 +16,7 @@ public static class LoginEndpoints
         this WebApplication app,
         ILogger logger,
         bool forceLowerUsername,
+        bool emailConfirmationRequired,
         int mfaChallengeMinutes,
         bool mfaRequireUaMatch,
         bool mfaRequireIpMatch,

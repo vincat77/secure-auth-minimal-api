@@ -747,7 +747,7 @@ app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePasswor
 app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(logger, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
 app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
 app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
-app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(logger, forceLowerUsername, mfaChallengeMinutes, mfaRequireUaMatch, mfaRequireIpMat/;"	m
+app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(logger, forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequ/;"	m
 app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m
 app.MapMfaSetup	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaSetup();$/;"	m
 app.MapReady	src/SecureAuthMinimalApi/Program.cs	/^app.MapReady();$/;"	m
