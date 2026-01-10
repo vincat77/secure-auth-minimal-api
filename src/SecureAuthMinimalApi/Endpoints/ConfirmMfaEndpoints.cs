@@ -81,7 +81,7 @@ public static class ConfirmMfaEndpoints
             var totp = new OtpNet.Totp(OtpNet.Base32Encoding.ToBytes(user.TotpSecret));
             if (!totp.VerifyTotp(body.TotpCode, out _, new OtpNet.VerificationWindow(1, 1)))
             {
-                logger.LogWarning("Confirm MFA: TOTP errato challengeId={ChallengeId} code={Code}", challenge.Id, body.TotpCode);
+                logger.LogWarning("Confirm MFA: TOTP errato challengeId={ChallengeId} userId={UserId}", challenge.Id, user.Id);
                 await challenges.IncrementAttemptAsync(challenge.Id, ctx.RequestAborted);
                 await AuditAsync(auditRepo, user.Username, "invalid_totp", ctx, null);
                 return Results.Unauthorized();
