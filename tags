@@ -458,6 +458,9 @@ PasswordResetRetentionDays	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^ 
 PasswordResetTests	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^public class PasswordResetTests : IAsyncLifetime$/;"	c
 PasswordReset_ExpiredToken_ReturnsInvalidToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_ExpiredToken_ReturnsInvalidToken()$/;"	m	class:PasswordResetTests
 PasswordReset_Flow_Succeeds	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_Flow_Succeeds()$/;"	m	class:PasswordResetTests
+PasswordReset_NewRequest_InvalidatesPreviousToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_NewRequest_InvalidatesPreviousToken()$/;"	m	class:PasswordResetTests
+PasswordReset_SecondConfirm_FailsWithInvalidToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_SecondConfirm_FailsWithInvalidToken()$/;"	m	class:PasswordResetTests
+PasswordReset_UnconfirmedAllowed_WhenRequireConfirmedFalse	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_UnconfirmedAllowed_WhenRequireConfirmedFalse()$/;"	m	class:PasswordResetTests
 PictureUrl	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? PictureUrl { get; init; }$/;"	p	class:User
 Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector

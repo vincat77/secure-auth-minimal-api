@@ -156,6 +156,142 @@ public class PasswordResetTests : IAsyncLifetime
         Assert.Equal("invalid_token", body!.GetProperty("error").GetString());
     }
 
+    [Fact]
+    public async Task PasswordReset_SecondConfirm_FailsWithInvalidToken()
+    {
+        // Scenario: token già usato viene confermato una seconda volta.
+        // Risultato atteso: prima conferma OK, seconda 400 invalid_token; la nuova password resta valida.
+        var (_, email, oldPassword, confirmToken) = await CreateUserAsync();
+        var confirmEmail = await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        Assert.Equal(HttpStatusCode.OK, confirmEmail.StatusCode);
+
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var resetToken = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+
+        var firstConfirm = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = resetToken,
+            NewPassword = "FirstResetPwd!1",
+            ConfirmPassword = "FirstResetPwd!1"
+        });
+        Assert.Equal(HttpStatusCode.OK, firstConfirm.StatusCode);
+
+        var secondConfirm = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = resetToken,
+            NewPassword = "SecondResetPwd!2",
+            ConfirmPassword = "SecondResetPwd!2"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, secondConfirm.StatusCode);
+        var body = await secondConfirm.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("invalid_token", body!.GetProperty("error").GetString());
+
+        var loginOld = await _client.PostAsJsonAsync("/login", new { Username = email, Password = oldPassword });
+        Assert.Equal(HttpStatusCode.Unauthorized, loginOld.StatusCode);
+        var loginNew = await _client.PostAsJsonAsync("/login", new { Username = email, Password = "FirstResetPwd!1" });
+        Assert.Equal(HttpStatusCode.OK, loginNew.StatusCode);
+    }
+
+    [Fact]
+    public async Task PasswordReset_NewRequest_InvalidatesPreviousToken()
+    {
+        // Scenario: due richieste consecutive invalidano il primo token.
+        // Risultato atteso: token1 diventa invalid_token, token2 funziona e cambia la password.
+        var (_, email, _, confirmToken) = await CreateUserAsync();
+        var confirmEmail = await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        Assert.Equal(HttpStatusCode.OK, confirmEmail.StatusCode);
+
+        var req1 = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token1 = (await req1.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+        await Task.Delay(50); // differenzia i timestamp
+        var req2 = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token2 = (await req2.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+
+        var confirmOld = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token1,
+            NewPassword = "TmpPassword!3",
+            ConfirmPassword = "TmpPassword!3"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, confirmOld.StatusCode);
+
+        var confirmNew = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token2,
+            NewPassword = "LatestPassword!4",
+            ConfirmPassword = "LatestPassword!4"
+        });
+        Assert.Equal(HttpStatusCode.OK, confirmNew.StatusCode);
+
+        var loginNew = await _client.PostAsJsonAsync("/login", new { Username = email, Password = "LatestPassword!4" });
+        Assert.Equal(HttpStatusCode.OK, loginNew.StatusCode);
+    }
+
+    [Fact]
+    public async Task PasswordReset_UnconfirmedAllowed_WhenRequireConfirmedFalse()
+    {
+        // Scenario: RequireConfirmed=false consente reset per email non confermate.
+        // Risultato atteso: token creato e conferma riuscita per utente non confermato.
+        var altDb = Path.Combine(Path.GetTempPath(), $"reset-tests-{Guid.NewGuid():N}.db");
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseSetting("environment", "Development");
+                builder.ConfigureAppConfiguration((context, configBuilder) =>
+                {
+                    var overrides = new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:Sqlite"] = $"Data Source={altDb};Mode=ReadWriteCreate;Cache=Shared",
+                        ["PasswordReset:ExpirationMinutes"] = "30",
+                        ["PasswordReset:RequireConfirmed"] = "false",
+                        ["PasswordReset:IncludeTokenInResponseForTesting"] = "true",
+                        ["PasswordReset:RetentionDays"] = "7",
+                        ["Cookie:RequireSecure"] = "false",
+                        ["EmailConfirmation:Required"] = "true",
+                        ["Jwt:SecretKey"] = "TEST_SECRET_KEY_AT_LEAST_32_CHARACTERS_LONG__",
+                        ["Jwt:Issuer"] = "TestIssuer",
+                        ["Jwt:Audience"] = "TestAudience",
+                        ["Jwt:AccessTokenMinutes"] = "60",
+                        ["IdToken:Issuer"] = "TestIdIssuer",
+                        ["IdToken:Audience"] = "TestIdAudience",
+                        ["IdToken:Secret"] = "TEST_ID_TOKEN_SECRET_AT_LEAST_32_CHARS_LONG___",
+                        ["IdToken:IncludeEmail"] = "true"
+                    };
+                    configBuilder.AddInMemoryCollection(overrides);
+                });
+            });
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = false,
+            AllowAutoRedirect = false
+        });
+
+        // Utente non confermato
+        var email = $"reset_unconfirmed_{Guid.NewGuid():N}@example.com";
+        var password = "ResetPassword123!";
+        var register = await client.PostAsJsonAsync("/register", new { Email = email, Password = password, Username = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+
+        var request = await client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        Assert.Equal(HttpStatusCode.OK, request.StatusCode);
+        var token = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        var confirmReset = await client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token,
+            NewPassword = "NewPassword999!",
+            ConfirmPassword = "NewPassword999!"
+        });
+        Assert.Equal(HttpStatusCode.OK, confirmReset.StatusCode);
+
+        var login = await client.PostAsJsonAsync("/login", new { Username = email, Password = "NewPassword999!" });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        client.Dispose();
+        try { if (File.Exists(altDb)) File.Delete(altDb); } catch { }
+    }
+
     private static string HashToken(string token)
     {
         using var sha = System.Security.Cryptography.SHA256.Create();
