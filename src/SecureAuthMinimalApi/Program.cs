@@ -28,6 +28,10 @@ var cleanupEnabled = builder.Configuration.GetValue<bool?>("Cleanup:Enabled") ??
 var cleanupInterval = builder.Configuration.GetValue<int?>("Cleanup:IntervalSeconds") ?? 300;
 var cleanupBatch = builder.Configuration.GetValue<int?>("Cleanup:BatchSize") ?? 200;
 var cleanupMaxIterations = builder.Configuration.GetValue<int?>("Cleanup:MaxIterationsPerRun");
+var resetExpirationMinutes = builder.Configuration.GetValue<int?>("PasswordReset:ExpirationMinutes") ?? 30;
+var resetRequireConfirmed = builder.Configuration.GetValue<bool?>("PasswordReset:RequireConfirmed") ?? true;
+var resetIncludeToken = builder.Configuration.GetValue<bool?>("PasswordReset:IncludeTokenInResponseForTesting") ?? false;
+var resetRetentionDays = builder.Configuration.GetValue<int?>("PasswordReset:RetentionDays") ?? 7;
 logger.LogInformation(
     "Cleanup configurazione: enabled={Enabled}, intervalSeconds={Interval}, batchSize={Batch}, maxIterations={MaxIterations}",
     cleanupEnabled,
@@ -134,7 +138,11 @@ LogStartupInfo(
     mfaRequireUaMatch,
     mfaRequireIpMatch,
     mfaMaxAttempts,
-    skipDbInit);
+    skipDbInit,
+    resetExpirationMinutes,
+    resetRequireConfirmed,
+    resetIncludeToken,
+    resetRetentionDays);
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -298,7 +306,11 @@ static void LogStartupInfo(
     bool mfaRequireUaMatch,
     bool mfaRequireIpMatch,
     int mfaMaxAttempts,
-    bool skipDbInit)
+    bool skipDbInit,
+    int resetExpirationMinutes,
+    bool resetRequireConfirmed,
+    bool resetIncludeToken,
+    int resetRetentionDays)
 {
     var startupConfig = new
     {
@@ -330,6 +342,13 @@ static void LogStartupInfo(
             MaxAttemptsPerChallenge = mfaMaxAttempts
         },
         SessionIdleMinutes = app.Configuration.GetValue<int?>("Session:IdleMinutes"),
+        PasswordReset = new
+        {
+            ExpirationMinutes = resetExpirationMinutes,
+            RequireConfirmed = resetRequireConfirmed,
+            IncludeTokenInResponseForTesting = resetIncludeToken,
+            RetentionDays = resetRetentionDays
+        },
         RememberMe = new
         {
             Days = app.Configuration.GetValue<int?>("RememberMe:Days"),
