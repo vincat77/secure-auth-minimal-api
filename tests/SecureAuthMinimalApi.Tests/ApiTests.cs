@@ -950,6 +950,85 @@ public class ApiTests : IAsyncLifetime
         Assert.Equal(token, flags.Token);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Login_mfa_challenge_expired_returns_unauthorized(bool emailRequired)
+    {
+        // Scenario: login con MFA attiva produce mfa_required, ma la challenge scade prima della conferma.
+        // Risultato atteso: /login/confirm-mfa restituisce 401 e non emette cookie di sessione, sia con email richiesta che no.
+        LogTestStart();
+        var username = $"mfa_expired_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+        var overrides = new Dictionary<string, string?>
+        {
+            ["EmailConfirmation:Required"] = emailRequired ? "true" : "false",
+            ["Mfa:RequireUaMatch"] = "false",
+            ["Mfa:RequireIpMatch"] = "false"
+        };
+        var (factory, client, dbPath) = CreateFactory(requireSecure: false, extraConfig: overrides);
+        try
+        {
+            var reg = await client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+            Assert.Equal(HttpStatusCode.Created, reg.StatusCode);
+            var regPayload = await reg.Content.ReadFromJsonAsync<RegisterResponse>();
+            Assert.NotNull(regPayload);
+            if (emailRequired)
+            {
+                var confirmEmail = await client.PostAsJsonAsync("/confirm-email", new { Token = regPayload!.EmailConfirmToken });
+                Assert.Equal(HttpStatusCode.OK, confirmEmail.StatusCode);
+            }
+
+            var login = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+            var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            var accessCookie = login.Headers.GetValues("Set-Cookie").First(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+            using (var setupReq = new HttpRequestMessage(HttpMethod.Post, "/mfa/setup"))
+            {
+                setupReq.Headers.Add("Cookie", accessCookie);
+                setupReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+                var setupResp = await client.SendAsync(setupReq);
+                Assert.Equal(HttpStatusCode.OK, setupResp.StatusCode);
+            }
+
+            using (var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/logout"))
+            {
+                logoutReq.Headers.Add("Cookie", accessCookie);
+                logoutReq.Headers.Add("X-CSRF-Token", loginPayload!.CsrfToken);
+                var logoutResp = await client.SendAsync(logoutReq);
+                Assert.Equal(HttpStatusCode.OK, logoutResp.StatusCode);
+            }
+
+            var loginMfa = await client.PostAsJsonAsync("/login", new { Username = username, Password = password });
+            Assert.Equal(HttpStatusCode.Unauthorized, loginMfa.StatusCode);
+            var mfaReq = await loginMfa.Content.ReadFromJsonAsync<MfaRequiredResponse>();
+            Assert.Equal("mfa_required", mfaReq!.Error);
+
+            await using (var db = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared"))
+            {
+                await db.OpenAsync();
+                var past = DateTime.UtcNow.AddMinutes(-5).ToString("O");
+                await db.ExecuteAsync("UPDATE mfa_challenges SET expires_at_utc = @p WHERE id = @id", new { p = past, id = mfaReq.ChallengeId });
+            }
+
+            var confirmMfa = await client.PostAsJsonAsync("/login/confirm-mfa", new { ChallengeId = mfaReq.ChallengeId, TotpCode = "000000" });
+            Assert.Equal(HttpStatusCode.Unauthorized, confirmMfa.StatusCode);
+            var hasAccessCookie = confirmMfa.Headers.TryGetValues("Set-Cookie", out var setCookies) && setCookies.Any(c => c.StartsWith("access_token", StringComparison.OrdinalIgnoreCase));
+            Assert.False(hasAccessCookie);
+        }
+        finally
+        {
+            client.Dispose();
+            factory.Dispose();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { }
+            }
+        }
+    }
+
     [Fact]
     public async Task Logout_and_logout_all_work_when_email_not_confirmed()
     {

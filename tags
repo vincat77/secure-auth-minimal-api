@@ -335,6 +335,7 @@ Login_lockout_after_failures_returns_429	tests/SecureAuthMinimalApi.Tests/ApiTes
 Login_lockout_persists_across_factory	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_lockout_persists_across_factory()$/;"	m	class:ApiTests
 Login_lockout_respects_custom_threshold	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_lockout_respects_custom_threshold()$/;"	m	class:ApiTests
 Login_me_logout_flow	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_me_logout_flow()$/;"	m	class:ApiTests
+Login_mfa_challenge_expired_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_mfa_challenge_expired_returns_unauthorized(bool emailRequired)$/;"	m	class:ApiTests
 Login_missing_fields_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_missing_fields_returns_bad_request()$/;"	m	class:ApiTests
 Login_remember_false_with_email_not_required_emits_no_refresh	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_false_with_email_not_required_emits_no_refresh()$/;"	m	class:ApiTests
 Login_remember_respects_configured_days_for_maxage	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_respects_configured_days_for_maxage()$/;"	m	class:ApiTests
