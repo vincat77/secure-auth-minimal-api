@@ -91,6 +91,12 @@ public class PasswordResetTests : IAsyncLifetime
     private record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
     private record ResetRequestResponse(bool Ok, string? ResetToken);
 
+    private async Task<string> GetPasswordHashAsync(string userId)
+    {
+        await using var db = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        return await db.ExecuteScalarAsync<string>("SELECT password_hash FROM users WHERE id = @id", new { id = userId });
+    }
+
     [Fact]
     public async Task PasswordReset_Flow_Succeeds()
     {
@@ -122,6 +128,58 @@ public class PasswordResetTests : IAsyncLifetime
         // New password should succeed
         var loginNew = await _client.PostAsJsonAsync("/login", new { Username = email, Password = "NewResetPassword456!" });
         Assert.Equal(HttpStatusCode.OK, loginNew.StatusCode);
+    }
+
+    [Fact]
+    public async Task PasswordReset_WeakPassword_FailsPolicy()
+    {
+        // Scenario: conferma reset con password debole.
+        // Risultato atteso: 400 password_policy_failed, hash in DB invariato.
+        var (userId, email, oldPassword, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        var beforeHash = await GetPasswordHashAsync(userId);
+
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+
+        var weak = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token,
+            NewPassword = "123",
+            ConfirmPassword = "123"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, weak.StatusCode);
+        var payload = await weak.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("password_policy_failed", payload!.GetProperty("error").GetString());
+
+        var afterHash = await GetPasswordHashAsync(userId);
+        Assert.Equal(beforeHash, afterHash);
+    }
+
+    [Fact]
+    public async Task PasswordReset_SamePassword_Fails()
+    {
+        // Scenario: conferma reset con la stessa password attuale.
+        // Risultato atteso: 400 password_must_be_different, hash invariato.
+        var (userId, email, oldPassword, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        var beforeHash = await GetPasswordHashAsync(userId);
+
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+
+        var same = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token,
+            NewPassword = oldPassword,
+            ConfirmPassword = oldPassword
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, same.StatusCode);
+        var payload = await same.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("password_must_be_different", payload!.GetProperty("error").GetString());
+
+        var afterHash = await GetPasswordHashAsync(userId);
+        Assert.Equal(beforeHash, afterHash);
     }
 
     [Fact]
@@ -225,6 +283,65 @@ public class PasswordResetTests : IAsyncLifetime
 
         var loginNew = await _client.PostAsJsonAsync("/login", new { Username = email, Password = "LatestPassword!4" });
         Assert.Equal(HttpStatusCode.OK, loginNew.StatusCode);
+    }
+
+    [Fact]
+    public async Task PasswordReset_MalformedToken_ReturnsInvalidToken()
+    {
+        // Scenario: conferma con token malformato/lunghezza errata.
+        // Risultato atteso: 400 invalid_token.
+        var resp = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = "not-base64url!!",
+            NewPassword = "SomePassword1!",
+            ConfirmPassword = "SomePassword1!"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
+        var payload = await resp.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("invalid_token", payload!.GetProperty("error").GetString());
+
+        var shortToken = "abc123";
+        var resp2 = await _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = shortToken,
+            NewPassword = "SomePassword1!",
+            ConfirmPassword = "SomePassword1!"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, resp2.StatusCode);
+    }
+
+    [Fact]
+    public async Task PasswordReset_RaceDoubleConfirm_OnlyOneSucceeds()
+    {
+        // Scenario: due conferme concorrenti sullo stesso token.
+        // Risultato atteso: una 200, una 400 invalid_token; password cambiata una volta.
+        var (userId, email, oldPassword, confirmToken) = await CreateUserAsync();
+        await _client.PostAsJsonAsync("/confirm-email", new { Token = confirmToken });
+        var request = await _client.PostAsJsonAsync("/password-reset/request", new { Email = email });
+        var token = (await request.Content.ReadFromJsonAsync<ResetRequestResponse>())!.ResetToken!;
+
+        var task1 = _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token,
+            NewPassword = "RacePassword1!",
+            ConfirmPassword = "RacePassword1!"
+        });
+        var task2 = _client.PostAsJsonAsync("/password-reset/confirm", new
+        {
+            Token = token,
+            NewPassword = "RacePassword2!",
+            ConfirmPassword = "RacePassword2!"
+        });
+
+        await Task.WhenAll(task1, task2);
+        var statuses = new[] { task1.Result.StatusCode, task2.Result.StatusCode };
+        Assert.Contains(HttpStatusCode.OK, statuses);
+        Assert.Contains(HttpStatusCode.BadRequest, statuses);
+
+        var loginNew = await _client.PostAsJsonAsync("/login", new { Username = email, Password = "RacePassword1!" });
+        var loginAlt = await _client.PostAsJsonAsync("/login", new { Username = email, Password = "RacePassword2!" });
+        Assert.True(loginNew.StatusCode == HttpStatusCode.OK || loginAlt.StatusCode == HttpStatusCode.OK);
+        Assert.True(loginNew.StatusCode == HttpStatusCode.Unauthorized || loginAlt.StatusCode == HttpStatusCode.Unauthorized);
     }
 
     [Fact]

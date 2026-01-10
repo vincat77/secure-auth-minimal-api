@@ -225,6 +225,7 @@ GetByTokenAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    pu
 GetByTokenHashAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<PasswordReset?> GetByTokenHashAsync(string tokenHash, CancellationToken ct/;"	m	class:PasswordResetRepository
 GetByUsernameAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)$/;"	m	class:UserRepository
 GetField	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static T GetField<T>(object target, string name)$/;"	m	class:MainFormChangePasswordTests	file:
+GetPasswordHashAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private async Task<string> GetPasswordHashAsync(string userId)$/;"	m	class:PasswordResetTests	file:
 GetRequiredSession	src/SecureAuthMinimalApi/AuthHelpers.cs	/^    public static UserSession GetRequiredSession(this HttpContext ctx)$/;"	m	class:AuthHelpers
 GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    public TokenValidationParameters GetValidationParameters() => _validation;$/;"	m	class:IdTokenService
 GetValidationParameters	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public TokenValidationParameters GetValidationParameters()$/;"	m	class:JwtTokenService
@@ -461,9 +462,13 @@ PasswordResetRetentionDays	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^ 
 PasswordResetTests	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^public class PasswordResetTests : IAsyncLifetime$/;"	c
 PasswordReset_ExpiredToken_ReturnsInvalidToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_ExpiredToken_ReturnsInvalidToken()$/;"	m	class:PasswordResetTests
 PasswordReset_Flow_Succeeds	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_Flow_Succeeds()$/;"	m	class:PasswordResetTests
+PasswordReset_MalformedToken_ReturnsInvalidToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_MalformedToken_ReturnsInvalidToken()$/;"	m	class:PasswordResetTests
 PasswordReset_NewRequest_InvalidatesPreviousToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_NewRequest_InvalidatesPreviousToken()$/;"	m	class:PasswordResetTests
+PasswordReset_RaceDoubleConfirm_OnlyOneSucceeds	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_RaceDoubleConfirm_OnlyOneSucceeds()$/;"	m	class:PasswordResetTests
+PasswordReset_SamePassword_Fails	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_SamePassword_Fails()$/;"	m	class:PasswordResetTests
 PasswordReset_SecondConfirm_FailsWithInvalidToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_SecondConfirm_FailsWithInvalidToken()$/;"	m	class:PasswordResetTests
 PasswordReset_UnconfirmedAllowed_WhenRequireConfirmedFalse	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_UnconfirmedAllowed_WhenRequireConfirmedFalse()$/;"	m	class:PasswordResetTests
+PasswordReset_WeakPassword_FailsPolicy	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public async Task PasswordReset_WeakPassword_FailsPolicy()$/;"	m	class:PasswordResetTests
 PictureUrl	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? PictureUrl { get; init; }$/;"	p	class:User
 Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
