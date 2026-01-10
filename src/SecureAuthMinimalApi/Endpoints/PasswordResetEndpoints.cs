@@ -77,7 +77,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             {
                 try
                 {
-                    await emailService.SendPasswordResetEmailAsync(user.Email, token, reset.ExpiresAtUtc);
+                    await emailService.SendPasswordResetEmailAsync(user.Email!, token, reset.ExpiresAtUtc);
                 }
                 catch (Exception ex)
                 {
