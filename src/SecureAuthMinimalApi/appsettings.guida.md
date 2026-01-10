@@ -86,3 +86,9 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 ## Logging (ASP.NET Core)
 - `Logging:LogLevel:Default` - Livello log generico per hosting.
 - `Logging:LogLevel:Microsoft.AspNetCore` - Override per pipeline ASP.NET Core.
+
+## PasswordReset
+- PasswordReset:ExpirationMinutes - Durata validita' token di reset (minuti, default 30).
+- PasswordReset:RequireConfirmed - Se true solo utenti con email confermata possono ricevere token reset (default true).
+- PasswordReset:IncludeTokenInResponseForTesting - Solo per test/dev: include il token in response su /password-reset/request (non usare in prod).
+- PasswordReset:RetentionDays - Giorni di retention per token scaduti/usati prima del cleanup (default 7).
