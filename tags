@@ -337,8 +337,10 @@ Login_missing_fields_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTes
 Login_remember_respects_configured_days_for_maxage	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_respects_configured_days_for_maxage()$/;"	m	class:ApiTests
 Login_remember_sets_device_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_sets_device_cookie()$/;"	m	class:ApiTests
 Login_remember_stores_hashed_refresh_token	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_stores_hashed_refresh_token()$/;"	m	class:ApiTests
+Login_remember_with_email_not_required_emits_refresh	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_with_email_not_required_emits_refresh()$/;"	m	class:ApiTests
 Login_resets_throttle_after_success	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_resets_throttle_after_success()$/;"	m	class:ApiTests
 Login_sets_cookie_with_expected_flags	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_sets_cookie_with_expected_flags()$/;"	m	class:ApiTests
+Login_with_mfa_when_email_not_required_returns_challenge	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_mfa_when_email_not_required_returns_challenge()$/;"	m	class:ApiTests
 Login_with_remember_emits_refresh_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_remember_emits_refresh_cookie()$/;"	m	class:ApiTests
 Login_with_wrong_credentials_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_with_wrong_credentials_returns_unauthorized()$/;"	m	class:ApiTests
 Login_without_remember_does_not_emit_refresh_cookie	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_without_remember_does_not_emit_refresh_cookie()$/;"	m	class:ApiTests
@@ -459,8 +461,10 @@ Register_duplicate_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs
 Register_duplicate_with_trim_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_with_trim_returns_conflict()$/;"	m	class:ApiTests
 Register_fails_when_min_length_is_invalid_config	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_fails_when_min_length_is_invalid_config()$/;"	m	class:ApiTests
 Register_generates_email_confirmation_token_and_persists	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_generates_email_confirmation_token_and_persists()$/;"	m	class:ApiTests
+Register_invalid_email_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_invalid_email_returns_bad_request()$/;"	m	class:ApiTests
 Register_missing_fields_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_missing_fields_returns_bad_request()$/;"	m	class:ApiTests
 Register_normalizes_email_to_lowercase	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_normalizes_email_to_lowercase()$/;"	m	class:ApiTests
+Register_password_policy_failure_returns_errors	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_password_policy_failure_returns_errors()$/;"	m	class:ApiTests
 Register_then_login_success	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_then_login_success()$/;"	m	class:ApiTests
 Register_trims_username_and_allows_login	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_trims_username_and_allows_login()$/;"	m	class:ApiTests
 Register_with_missing_symbol_fails_password_policy	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_with_missing_symbol_fails_password_policy()$/;"	m	class:ApiTests

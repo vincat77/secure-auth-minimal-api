@@ -22,3 +22,11 @@ Permettere di rendere opzionale la verifica email durante la registrazione/login
    - Documentare il nuovo parametro in `appsettings*.json` e, se serve, nota nel README/appsettings.guida.
 
 4) Verifica finale: eseguire i test interessati (ApiTests, almeno i nuovi + quelli esistenti che toccano login/confirm) e rigenerare tag con `tools\\update-tags.ps1`. Includere eventuale comando `dotnet test` se tempo.
+
+## Estensioni test aggiuntivi (combos)
+- Email non richiesta + MFA attiva: con `EmailConfirmation:Required=false` e utente con TOTP configurato, login deve restituire `mfa_required` (non 403) e creare challenge.
+- Email non richiesta + RememberMe: login con `RememberMe=true` e flag email disabilitato deve restituire `rememberIssued=true` e persistere il refresh token.
+- Registrazione fallita (email invalida): `/register` con email senza `@` deve restituire 400 `invalid_input` con `email_invalid`.
+- Registrazione fallita (password policy): con policy severa e password debole, `/register` deve restituire 400 `password_policy_failed` con lista errori.
+- TOTP flow: setup/confirm MFA e poi login deve richiedere MFA e accettare il codice corretto; verificare id_token/sessione coerenti (se già previsto).
+- RememberMe disabilitato: con `RememberMe:Days=0` (o simile), login con `RememberMe=true` non deve emettere refresh/device (`rememberIssued=false`).
