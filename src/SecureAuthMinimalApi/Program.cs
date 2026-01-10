@@ -141,7 +141,7 @@ LogStartupInfo(
     skipDbInit,
     resetExpirationMinutes,
     resetRequireConfirmed,
-    resetIncludeToken,
+    isDevelopment && resetIncludeToken,
     resetRetentionDays);
 
 app.Lifetime.ApplicationStarted.Register(() =>

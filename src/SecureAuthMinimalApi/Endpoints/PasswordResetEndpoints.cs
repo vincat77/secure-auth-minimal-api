@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
@@ -90,11 +91,12 @@ public static class PasswordResetEndpoints
                 return Results.BadRequest(new { ok = false, error = "invalid_token" });
             }
 
-            var minLength = ctx.RequestServices.GetRequiredService<IConfiguration>().GetValue<int?>("PasswordPolicy:MinLength") ?? 12;
-            var requireUpper = ctx.RequestServices.GetRequiredService<IConfiguration>().GetValue<bool?>("PasswordPolicy:RequireUpper") ?? false;
-            var requireLower = ctx.RequestServices.GetRequiredService<IConfiguration>().GetValue<bool?>("PasswordPolicy:RequireLower") ?? false;
-            var requireDigit = ctx.RequestServices.GetRequiredService<IConfiguration>().GetValue<bool?>("PasswordPolicy:RequireDigit") ?? false;
-            var requireSymbol = ctx.RequestServices.GetRequiredService<IConfiguration>().GetValue<bool?>("PasswordPolicy:RequireSymbol") ?? false;
+            var cfg = ctx.RequestServices.GetRequiredService<IConfiguration>();
+            var minLength = cfg.GetValue<int?>("PasswordPolicy:MinLength") ?? 12;
+            var requireUpper = cfg.GetValue<bool?>("PasswordPolicy:RequireUpper") ?? false;
+            var requireLower = cfg.GetValue<bool?>("PasswordPolicy:RequireLower") ?? false;
+            var requireDigit = cfg.GetValue<bool?>("PasswordPolicy:RequireDigit") ?? false;
+            var requireSymbol = cfg.GetValue<bool?>("PasswordPolicy:RequireSymbol") ?? false;
             var policyErrors = AuthHelpers.ValidatePassword(req.NewPassword!, minLength, requireUpper, requireLower, requireDigit, requireSymbol);
             if (policyErrors.Any())
             {
