@@ -83,13 +83,14 @@ public sealed class ExpiredCleanupService : BackgroundService
             var totalRefresh = 0;
             var totalChallenges = 0;
             var totalPasswordResets = 0;
+            var retentionCutoffIso = DateTime.UtcNow.AddDays(-Math.Max(1, _options.PasswordResetRetentionDays ?? 7)).ToString("O");
 
             for (var i = 0; i < maxIterations && !ct.IsCancellationRequested; i++)
             {
                 var deletedSessions = await _sessions.DeleteExpiredAsync(nowIso, batchSize, ct);
                 var deletedRefresh = await _refreshTokens.DeleteExpiredAsync(nowIso, batchSize, ct);
                 var deletedChallenges = await _challenges.DeleteExpiredAsync(nowIso, batchSize, ct);
-                var deletedPasswordResets = await _passwordResets.DeleteExpiredAsync(nowIso, batchSize, ct);
+                var deletedPasswordResets = await _passwordResets.DeleteExpiredAsync(retentionCutoffIso, batchSize, ct);
 
                 totalSessions += deletedSessions;
                 totalRefresh += deletedRefresh;

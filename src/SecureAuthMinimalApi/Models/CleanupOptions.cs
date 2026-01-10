@@ -9,4 +9,5 @@ public sealed class CleanupOptions
     public int IntervalSeconds { get; set; } = 300;
     public int BatchSize { get; set; } = 200;
     public int? MaxIterationsPerRun { get; set; }
+    public int? PasswordResetRetentionDays { get; set; }
 }

@@ -85,19 +85,19 @@ WHERE id = @id AND used_at_utc IS NULL;";
     }
 
     /// <summary>
-    /// Elimina reset scaduti o già usati in batch.
+    /// Elimina reset scaduti o già usati in batch, con cutoff di retention.
     /// </summary>
-    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct)
+    public async Task<int> DeleteExpiredAsync(string cutoffIso, int batchSize, CancellationToken ct)
     {
         const string sql = @"
 DELETE FROM password_resets
 WHERE rowid IN (
     SELECT rowid FROM password_resets
-    WHERE expires_at_utc <= @nowIso OR used_at_utc IS NOT NULL
+    WHERE expires_at_utc <= @cutoffIso OR (used_at_utc IS NOT NULL AND used_at_utc <= @cutoffIso)
     LIMIT @batchSize
 );";
 
         using var db = Open();
-        return await db.ExecuteAsync(new CommandDefinition(sql, new { nowIso, batchSize }, cancellationToken: ct));
+        return await db.ExecuteAsync(new CommandDefinition(sql, new { cutoffIso, batchSize }, cancellationToken: ct));
     }
 }
