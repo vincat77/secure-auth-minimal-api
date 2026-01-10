@@ -220,6 +220,7 @@ app.MapConfirmEmail(logger);
 app.MapLogoutAll(logger);
 app.MapRefresh(logger);
 app.MapIntrospect(logger);
+app.MapPasswordReset(logger, resetRequireConfirmed, resetExpirationMinutes, resetIncludeToken);
 
 var shutdownCts = new CancellationTokenSource();
 var appTask = app.RunAsync(shutdownCts.Token);
