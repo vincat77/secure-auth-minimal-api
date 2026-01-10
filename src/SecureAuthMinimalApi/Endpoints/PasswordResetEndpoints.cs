@@ -10,7 +10,9 @@ using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 namespace SecureAuthMinimalApi.Endpoints;
 
     /// <summary>
-    /// Endpoint MVP per richiesta/conferma reset password (solo logica base, token restituito solo in dev/test se configurato).
+    /// Endpoint MVP per richiesta/conferma reset password (token restituito solo in dev/test se configurato).
+    /// Richiede email confermata se configurato, risponde sempre 200 alla request per evitare enumeration
+    /// e usa hash del token in DB. La conferma è transazionale e revoca sessioni/refresh.
     /// </summary>
     public static class PasswordResetEndpoints
     {
@@ -22,6 +24,7 @@ namespace SecureAuthMinimalApi.Endpoints;
 
             app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
             {
+                // Input essenziale: email normalizzata; risposta sempre 200 per non leakare esistenza account/stato conferma.
                 var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
                 if (string.IsNullOrWhiteSpace(req?.Email))
                 {
@@ -90,6 +93,7 @@ namespace SecureAuthMinimalApi.Endpoints;
 
         app.MapPost("/password-reset/confirm", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, SessionRepository sessions, RefreshTokenRepository refreshRepo) =>
         {
+            // Valida payload; rifiuta token vuoti e mismatch password con 400 uniforme.
             var req = await ctx.Request.ReadFromJsonAsync<PasswordResetConfirmRequest>();
             if (string.IsNullOrWhiteSpace(req?.Token) || string.IsNullOrWhiteSpace(req.NewPassword) || string.IsNullOrWhiteSpace(req.ConfirmPassword) || !string.Equals(req.NewPassword, req.ConfirmPassword, StringComparison.Ordinal))
             {

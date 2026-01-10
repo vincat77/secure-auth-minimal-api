@@ -12,6 +12,11 @@ using Xunit;
 
 namespace SecureAuthMinimalApi.Tests;
 
+/// <summary>
+/// Copertura minima del flusso reset password end-to-end: generazione token (solo in dev/test)
+/// e conferma con cambio password. I test usano un DB SQLite temporaneo, configurazione in-memory
+/// e bypassano cookie/redirect per restare focalizzati sulle API JSON.
+/// </summary>
 public class PasswordResetTests : IAsyncLifetime
 {
     private WebApplicationFactory<Program> _factory = null!;
@@ -20,6 +25,9 @@ public class PasswordResetTests : IAsyncLifetime
 
     public Task InitializeAsync()
     {
+        // Setup: crea un DB temporaneo e fornisce override di configurazione per
+        // abilitare il token in risposta, evitare cookie Secure forzati e fissare
+        // i segreti JWT/ID token per i test.
         _dbPath = Path.Combine(Path.GetTempPath(), $"reset-tests-{Guid.NewGuid():N}.db");
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -59,6 +67,7 @@ public class PasswordResetTests : IAsyncLifetime
 
     public Task DisposeAsync()
     {
+        // Teardown: chiude il client/factory e rimuove il file SQLite temporaneo.
         _client.Dispose();
         _factory.Dispose();
         if (!string.IsNullOrWhiteSpace(_dbPath) && File.Exists(_dbPath))
