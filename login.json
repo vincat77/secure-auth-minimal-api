@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Sun, 11 Jan 2026 02:34:56 GMT
+Server: Kestrel
+Cache-Control: no-store
+Set-Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmVkZWQ0NGY2OWQ0OGRlOGJlNjM4N2FlOTk5MmYwNCIsImp0aSI6IjFmMjNhOGM1OTIwZDQxYTZiODNhZDViYTI1ZjE1YjFiIiwiaWF0IjoxNzY4MDk4ODk3LCJuYmYiOjE3NjgwOTg4OTcsImV4cCI6MTc2ODA5ODk1NywiaXNzIjoiU2VjdXJlQXV0aE1pbmltYWxBcGkiLCJhdWQiOiJTZWN1cmVBdXRoTWluaW1hbEFwaUNsaWVudCJ9.84Is1kWYi3L35iSgcZxjeDGPcCgbb_sSpqr_3qxCjyM; max-age=59; path=/; secure; samesite=strict; httponly
+Set-Cookie: refresh_token=bswoQhBmrBBFQKGpA9uqrieIcRAkRiF-L3_VAO06lFI; max-age=1209599; path=/refresh; secure; samesite=strict; httponly
+Set-Cookie: device_id=xm_43mNp9NYEuUez8s0-YvTsVHP-0YPIODYwgLirQjM; max-age=1209600; path=/; samesite=strict; httponly
+Transfer-Encoding: chunked
+
+{"ok":true,"csrfToken":"ITVL5IkoOFr8TXfgpHtS6R0wKrbMdBr7g2hgrd8hwCQ","rememberIssued":true,"deviceIssued":true,"deviceId":"xm_43mNp9NYEuUez8s0-YvTsVHP-0YPIODYwgLirQjM","refreshExpiresAtUtc":"2026-01-25T02:34:57.4096412Z","idToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vLXVzZXIiLCJpYXQiOjE3NjgwOTg4OTcsImF1dGhfdGltZSI6MTc2ODA5ODg5NywiYW1yIjoicHdkIiwiZW1haWwiOiJkZW1vQGV4YW1wbGUuY29tIiwibmFtZSI6IkRlbW8gVXNlciIsImdpdmVuX25hbWUiOiJEZW1vIiwiZmFtaWx5X25hbWUiOiJVc2VyIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiZGVtbyIsInBpY3R1cmUiOiJodHRwczovL2FwaS5kaWNlYmVhci5jb20vOS54L2FkdmVudHVyZXIvc3ZnP3NlZWQ9TWFzb24iLCJuYmYiOjE3NjgwOTg4OTcsImV4cCI6MTc2ODEwMDY5NywiaXNzIjoiU2VjdXJlQXV0aE1pbmltYWxBcGkuSWQuRGV2IiwiYXVkIjoiU2VjdXJlQXV0aE1pbmltYWxBcGlDbGllbnQifQ._AKCIWW8xPDHf50EEabrK-E08ejUXlZho2naxPwAJQY","refreshCsrfToken":"orVu_clriMsGuaSwy0i_9TWo-DYPSwMalJGKWXzFtKU"}

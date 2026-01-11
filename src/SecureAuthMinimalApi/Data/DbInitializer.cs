@@ -190,6 +190,9 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @
         });
       }
     }
+
+    // Seed utenti smoke test (es. utente non confermato) se mancano.
+    SmokeTestSeeder.Seed(conn);
   }
 
   private static void EnsureColumn(SqliteConnection conn, string table, string column, string? typeOverride = null)

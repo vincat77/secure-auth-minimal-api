@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Sun, 11 Jan 2026 02:34:56 GMT
+Server: Kestrel
+Cache-Control: no-store
+Set-Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmVkZWQ0NGY2OWQ0OGRlOGJlNjM4N2FlOTk5MmYwNCIsImp0aSI6IjFmMjNhOGM1OTIwZDQxYTZiODNhZDViYTI1ZjE1YjFiIiwiaWF0IjoxNzY4MDk4ODk3LCJuYmYiOjE3NjgwOTg4OTcsImV4cCI6MTc2ODA5ODk1NywiaXNzIjoiU2VjdXJlQXV0aE1pbmltYWxBcGkiLCJhdWQiOiJTZWN1cmVBdXRoTWluaW1hbEFwaUNsaWVudCJ9.84Is1kWYi3L35iSgcZxjeDGPcCgbb_sSpqr_3qxCjyM; max-age=59; path=/; secure; samesite=strict; httponly
+Set-Cookie: refresh_token=bswoQhBmrBBFQKGpA9uqrieIcRAkRiF-L3_VAO06lFI; max-age=1209599; path=/refresh; secure; samesite=strict; httponly
+Set-Cookie: device_id=xm_43mNp9NYEuUez8s0-YvTsVHP-0YPIODYwgLirQjM; max-age=1209600; path=/; samesite=strict; httponly
+Transfer-Encoding: chunked
+

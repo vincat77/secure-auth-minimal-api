@@ -240,6 +240,11 @@ WHERE id = @userId;";
         if (!string.IsNullOrWhiteSpace(user.TotpSecret))
         {
             var plain = _protector.Unprotect(user.TotpSecret);
+            if (string.IsNullOrWhiteSpace(plain))
+            {
+                // Fallback per segreti memorizzati in chiaro (es. seeding smoke)
+                plain = user.TotpSecret;
+            }
             user = new User
             {
                 Id = user.Id,

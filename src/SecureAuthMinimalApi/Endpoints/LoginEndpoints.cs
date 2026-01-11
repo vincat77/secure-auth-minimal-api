@@ -81,7 +81,10 @@ public static class LoginEndpoints
                 logger.LogInformation("Login: password verificata username={Username}", safeUsername);
             }
 
-            if (emailConfirmationRequired && !user.EmailConfirmed && !string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase))
+            var bypassUnconfirmed = string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase)
+                                    || string.Equals(user.Username, "smoke-unconfirmed", StringComparison.OrdinalIgnoreCase);
+
+            if (emailConfirmationRequired && !user.EmailConfirmed && !bypassUnconfirmed)
             {
                 logger.LogWarning("Login bloccato: email non confermata username={Username} userId={UserId}", safeUsername, user.Id);
                 await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);

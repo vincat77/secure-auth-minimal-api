@@ -260,6 +260,7 @@ GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^  
 GetValidationParameters	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public TokenValidationParameters GetValidationParameters()$/;"	m	class:JwtTokenService
 GivenName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? GivenName { get; init; }$/;"	p	class:User
 Hash	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^    public static string Hash(string password)$/;"	m	class:PasswordHasher
+HashToken	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static string HashToken(string token)$/;"	m	class:SmokeTestSeeder	file:
 HashToken	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:ConfirmMfaEndpoints	file:
 HashToken	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:LoginEndpoints	file:
 HashToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetEndpoints	file:
@@ -647,8 +648,14 @@ SameSite	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^    public string
 SaveAsync	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public async Task SaveAsync(ThrottleState state, CancellationToken ct)$/;"	m	class:LoginThrottleRepository
 Secret	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public string? Secret { get; set; }$/;"	p	class:IdTokenOptions
 SecretKey	src/SecureAuthMinimalApi/Options/JwtOptions.cs	/^    public string SecretKey { get; set; } = "";$/;"	p	class:JwtOptions
+Seed	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    public static void Seed(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder
 SeedExpiredRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRecordsAsync(string dbPath)$/;"	m	class:CleanupServiceTests	file:
 SeedExpiredRefreshTokensAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRefreshTokensAsync(string dbPath, int count)$/;"	m	class:CleanupServiceTests	file:
+SeedMfaUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedMfaUser(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:
+SeedResetToken	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedResetToken(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:
+SeedResetUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedResetUser(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:
+SeedUnconfirmedUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedUnconfirmedUser(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:
+SeedUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedUser(SqliteConnection conn, string id, string username, string passw/;"	m	class:SmokeTestSeeder	file:
 SeedValidRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedValidRecordsAsync(string dbPath)$/;"	m	class:CleanupServiceTests	file:
 SendAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, Cance/;"	m	class:MainFormChangePasswordTests.StubHandler
 SendEmailConfirmationAsync	src/SecureAuthMinimalApi/Services/IEmailService.cs	/^    Task SendEmailConfirmationAsync(string toEmail, string confirmToken, string expiresAtUtc);$/;"	m	interface:IEmailService
@@ -693,6 +700,7 @@ ShowCookiesClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^   
 ShowQrClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ShowQrClicked;$/;"	E	class:ActionButtonsControl
 ShowQrClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ShowQrClicked;$/;"	E	class:MfaPanelControl
 SigningKeyPath	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public string? SigningKeyPath { get; set; }$/;"	p	class:IdTokenOptions
+SmokeTestSeeder	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^public static class SmokeTestSeeder$/;"	c
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.Designer.cs	/^partial class StatusBanner$/;"	c
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.cs	/^    public StatusBanner()$/;"	m	class:StatusBanner
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.cs	/^public partial class StatusBanner : UserControl$/;"	c
