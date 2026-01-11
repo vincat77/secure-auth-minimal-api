@@ -31,7 +31,7 @@ public static class ChangePasswordEndpoints
             IWebHostEnvironment env,
             ILogger<ChangePasswordLoggerMarker> logger) =>
         {
-            var policy = LoadPasswordPolicy(passwordPolicyOptions.Value);
+            var policy = passwordPolicyOptions.Value;
             var body = await ctx.Request.ReadFromJsonAsync<ChangePasswordRequest>();
             var current = body?.CurrentPassword ?? "";
             var newPassword = body?.NewPassword ?? "";
@@ -73,7 +73,7 @@ public static class ChangePasswordEndpoints
                 return Results.BadRequest(new ChangePasswordResponse(false, "password_reused"));
             }
 
-            var policyErrors = AuthHelpers.ValidatePassword(newPassword.Trim(), policy.MinLength, policy.RequireUpper, policy.RequireLower, policy.RequireDigit, policy.RequireSymbol);
+            var policyErrors = AuthHelpers.ValidatePassword(newPassword.Trim(), policy.EffectiveMinLength, policy.RequireUpper, policy.RequireLower, policy.RequireDigit, policy.RequireSymbol);
             if (policyErrors.Any())
             {
                 logger.LogWarning("Cambio password fallito: policy non rispettata userId={UserId} errors={Errors}", user.Id, string.Join(",", policyErrors));
@@ -152,12 +152,6 @@ public static class ChangePasswordEndpoints
         })
         .RequireSession()
         .RequireCsrf();
-    }
-
-    private static PasswordPolicySettings LoadPasswordPolicy(PasswordPolicyOptions options)
-    {
-        var minPasswordLength = options.MinLength < 1 ? 12 : options.MinLength;
-        return new PasswordPolicySettings(minPasswordLength, options.RequireUpper, options.RequireLower, options.RequireDigit, options.RequireSymbol);
     }
 
     /// <summary>

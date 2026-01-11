@@ -9,6 +9,11 @@ public sealed class PasswordPolicyOptions
     /// Lunghezza minima password (consigliato >=12).
     /// </summary>
     public int MinLength { get; set; } = 12;
+
+    /// <summary>
+    /// Ritorna MinLength normalizzato (almeno 12).
+    /// </summary>
+    public int EffectiveMinLength => MinLength < 1 ? 12 : MinLength;
     /// <summary>
     /// Richiede almeno una maiuscola.
     /// </summary>
