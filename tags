@@ -122,6 +122,8 @@ ClientIp	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public string? Cl
 ClientIp	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:PasswordReset
 ClientIp	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:RefreshToken
 ComputeHash	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^    public string ComputeHash(string token)$/;"	m	class:RefreshTokenHasher
+Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<EmailConfirmationOptions>().Configure(options =>$/;"	m
+Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<LoginOptions>().Configure(options =>$/;"	m
 ConfirmAndFetchMeAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmAndFetchMeAsync(string challengeId, string totp)$/;"	m	class:MainForm	file:
 ConfirmEmailAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmEmailAsync(string confirmToken)$/;"	m	class:MainForm	file:
 ConfirmEmailAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task ConfirmEmailAsync()$/;"	m	class:MainForm	file:
@@ -424,7 +426,7 @@ LogEvent	clients/WinFormsClient/MainForm.cs	/^  private void LogEvent(string lev
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.Designer.cs	/^partial class LogPanelControl$/;"	c
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public LogPanelControl()$/;"	m	class:LogPanelControl
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^public partial class LogPanelControl : UserControl$/;"	c
-LogStartupInfo	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void LogStartupInfo(WebApplication app, ILogger logger)$/;"	m	class:StartupValidation
+LogStartupInfo	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void LogStartupInfo(this WebApplication app, ILogger logger)$/;"	m	class:StartupValidation
 LogTestStart	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private void LogTestStart([CallerMemberName] string name = "")$/;"	m	class:ApiTests	file:
 LoginAndGetSessionAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string usernam/;"	m	class:ApiTests	file:
 LoginAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<LoginResult> LoginAsync(string username, string password, bool rememberMe /;"	m	class:SecureAuthApiClient
@@ -510,11 +512,11 @@ MainFormChangePasswordTests	tests/WinFormsClient.Tests/MainFormChangePasswordTes
 MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static void MapChangeEmail(this WebApplication app)$/;"	m	class:ChangeEmailEndpoints
 MapChangePassword	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    public static void MapChangePassword(this WebApplication app)$/;"	m	class:ChangePasswordEndpoints
 MapConfirmEmail	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    public static void MapConfirmEmail(this WebApplication app)$/;"	m	class:ConfirmEmailEndpoints
-MapConfirmMfa	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    public static void MapConfirmMfa($/;"	m	class:ConfirmMfaEndpoints
+MapConfirmMfa	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    public static void MapConfirmMfa(this WebApplication app)$/;"	m	class:ConfirmMfaEndpoints
 MapHealth	src/SecureAuthMinimalApi/Endpoints/HealthEndpoints.cs	/^    public static void MapHealth(this WebApplication app)$/;"	m	class:HealthEndpoints
 MapIntrospect	src/SecureAuthMinimalApi/Endpoints/IntrospectEndpoints.cs	/^    public static void MapIntrospect(this WebApplication app)$/;"	m	class:IntrospectEndpoints
 MapLive	src/SecureAuthMinimalApi/Endpoints/LiveEndpoints.cs	/^    public static void MapLive(this WebApplication app)$/;"	m	class:LiveEndpoints
-MapLogin	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    public static void MapLogin($/;"	m	class:LoginEndpoints
+MapLogin	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    public static void MapLogin(this WebApplication app)$/;"	m	class:LoginEndpoints
 MapLogout	src/SecureAuthMinimalApi/Endpoints/LogoutEndpoints.cs	/^    public static void MapLogout(this WebApplication app)$/;"	m	class:LogoutEndpoints
 MapLogoutAll	src/SecureAuthMinimalApi/Endpoints/LogoutAllEndpoints.cs	/^    public static void MapLogoutAll(this WebApplication app)$/;"	m	class:LogoutAllEndpoints
 MapMe	src/SecureAuthMinimalApi/Endpoints/MeEndpoints.cs	/^    public static void MapMe(this WebApplication app)$/;"	m	class:MeEndpoints
@@ -578,8 +580,11 @@ Open	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    private IDbC
 Open	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:RefreshTokenRepository	file:
 Open	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:SessionRepository	file:
 Open	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:UserRepository	file:
+OptionParsers	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^public static class OptionParsers$/;"	c
 Outcome	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required string Outcome { get; init; }$/;"	p	class:LoginAudit
 OutputBox	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public TextBox OutputBox => _output;$/;"	f	class:LogPanelControl
+ParseBool	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static bool ParseBool(string? raw, bool defaultValue, string key, ILogger logger)$/;"	m	class:OptionParsers
+ParseInt	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static int ParseInt(string? raw, int defaultValue, int minValue, string key, ILogger /;"	m	class:OptionParsers
 ParseSameSite	src/SecureAuthMinimalApi/Utilities/CookieUtils.cs	/^    public static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, /;"	m	class:CookieUtils
 PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string PasswordHash { get; init; }$/;"	p	class:User
 PasswordHasher	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
@@ -813,9 +818,6 @@ SmokeFlowClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    p
 SmokeTestSeeder	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^public static class SmokeTestSeeder$/;"	c
 Sqlite	src/SecureAuthMinimalApi/Options/ConnectionStringsOptions.cs	/^    public string? Sqlite { get; set; }$/;"	p	class:ConnectionStringsOptions
 StartupValidation	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^public static class StartupValidation$/;"	c
-StartupValidation.LogStartupInfo	src/SecureAuthMinimalApi/Program.cs	/^StartupValidation.LogStartupInfo(app, logger);$/;"	m
-StartupValidation.ValidateCookieSecurity	src/SecureAuthMinimalApi/Program.cs	/^StartupValidation.ValidateCookieSecurity(app, cookieOptions, logger);$/;"	m
-StartupValidation.ValidateJwt	src/SecureAuthMinimalApi/Program.cs	/^StartupValidation.ValidateJwt(app, jwtOptions, logger);$/;"	m
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.Designer.cs	/^partial class StatusBanner$/;"	c
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.cs	/^    public StatusBanner()$/;"	m	class:StatusBanner
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.cs	/^public partial class StatusBanner : UserControl$/;"	c
@@ -896,9 +898,23 @@ Username	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required str
 Username	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string Username { get; init; }$/;"	p	class:User
 UsernamePolicyOptions	src/SecureAuthMinimalApi/Options/UsernamePolicyOptions.cs	/^public sealed class UsernamePolicyOptions$/;"	c
 Username_lowercase_policy_allows_case_insensitive_login	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Username_lowercase_policy_allows_case_insensitive_login()$/;"	m	class:ApiTests
-ValidateCookieSecurity	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void ValidateCookieSecurity(WebApplication app, CookieConfigOptions cookieOption/;"	m	class:StartupValidation
+ValidateCookieSecurity	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void ValidateCookieSecurity(this WebApplication app, ILogger logger)$/;"	m	class:StartupValidation
 ValidateIdToken	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private static JwtSecurityToken ValidateIdToken(string token, TokenValidationParameters tvp)$/;"	m	class:ApiTests	file:
-ValidateJwt	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void ValidateJwt(WebApplication app, JwtOptions jwtOptions, ILogger logger)$/;"	m	class:StartupValidation
+ValidateJwt	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void ValidateJwt(this WebApplication app, ILogger logger)$/;"	m	class:StartupValidation
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<CleanupOptions>().Bind(builder.Configuration.GetSection("Cleanup"))./;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<ConnectionStringsOptions>().Bind(builder.Configuration.GetSection("C/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<CookieConfigOptions>().Bind(builder.Configuration.GetSection("Cookie/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<DeviceOptions>().Bind(builder.Configuration.GetSection("Device")).Va/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<IdTokenOptions>().Bind(builder.Configuration.GetSection("IdToken"))./;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<JwtOptions>().Bind(builder.Configuration.GetSection("Jwt")).Validate/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<LoginThrottleOptions>().Bind(builder.Configuration.GetSection("Login/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<MfaOptions>().Bind(builder.Configuration.GetSection("Mfa")).Validate/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<PasswordPolicyOptions>().Bind(builder.Configuration.GetSection("Pass/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<PasswordResetOptions>().Bind(builder.Configuration.GetSection("Passw/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<RefreshOptions>().Bind(builder.Configuration.GetSection("Refresh"))./;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<RememberMeOptions>().Bind(builder.Configuration.GetSection("Remember/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<SessionConfigOptions>().Bind(builder.Configuration.GetSection("Sessi/;"	m
+ValidateOnStart	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<UsernamePolicyOptions>().Bind(builder.Configuration.GetSection("User/;"	m
 ValidatePassword	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static List<string> ValidatePassword(string password, int minLength, bool requireUppe/;"	m	class:AuthHelpers
 ValueText	clients/WinFormsClient/Controls/LabeledTextBoxControl.cs	/^    public string ValueText$/;"	p	class:LabeledTextBoxControl
 Verify	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^    public static bool Verify(string password, string hash)$/;"	m	class:PasswordHasher
@@ -1094,9 +1110,11 @@ _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private re
 app.MapChangeEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangeEmail();$/;"	m
 app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
 app.MapConfirmEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmEmail();$/;"	m
+app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa();$/;"	m
 app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
 app.MapIntrospect	src/SecureAuthMinimalApi/Program.cs	/^app.MapIntrospect();$/;"	m
 app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
+app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin();$/;"	m
 app.MapLogout	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogout();$/;"	m
 app.MapLogoutAll	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogoutAll();$/;"	m
 app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m
@@ -1105,7 +1123,7 @@ app.MapMfaSetup	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaSetup();$/;"	m
 app.MapPasswordReset	src/SecureAuthMinimalApi/Program.cs	/^app.MapPasswordReset();$/;"	m
 app.MapReady	src/SecureAuthMinimalApi/Program.cs	/^app.MapReady();$/;"	m
 app.MapRefresh	src/SecureAuthMinimalApi/Program.cs	/^app.MapRefresh();$/;"	m
-app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister(passwordPolicyOptions, usernamePolicyOptions);$/;"	m
+app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister();$/;"	m
 app.UseCookieJwtAuth	src/SecureAuthMinimalApi/Program.cs	/^app.UseCookieJwtAuth();$/;"	m
 app.UseCsrfProtection	src/SecureAuthMinimalApi/Program.cs	/^app.UseCsrfProtection();$/;"	m
 app.UsePauseMiddleware	src/SecureAuthMinimalApi/Program.cs	/^app.UsePauseMiddleware(new Func<bool>(() => pauseController.IsPaused));$/;"	m
@@ -1152,7 +1170,6 @@ builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Serv
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<UserRepository>();$/;"	m
 builder.Services.AddTransient	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddTransient<CookieJwtAuthMiddleware>();$/;"	m
 builder.Services.AddTransient	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddTransient<CsrfMiddleware>();$/;"	m
-builder.Services.Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.Configure<EmailConfirmationOptions>(options =>$/;"	m
 components	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private IContainer components = null!;$/;"	f	class:MainForm	file:
 components	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private IContainer components = null!;$/;"	f	class:ActionButtonsControl	file:
 components	clients/WinFormsClient/Controls/DeviceAlertControl.Designer.cs	/^    private IContainer components = null!;$/;"	f	class:DeviceAlertControl	file:

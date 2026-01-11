@@ -24,15 +24,6 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());
 var logger = loggerFactory.CreateLogger<Program>();
-var cleanupOptions = builder.Configuration.GetSection("Cleanup").Get<CleanupOptions>() ?? new CleanupOptions();
-var resetOptions = builder.Configuration.GetSection("PasswordReset").Get<PasswordResetOptions>() ?? new PasswordResetOptions();
-
-logger.LogInformation(
-    "Cleanup configurazione: enabled={Enabled}, intervalSeconds={Interval}, batchSize={Batch}, maxIterations={MaxIterations}",
-    cleanupOptions.Enabled,
-    cleanupOptions.IntervalSeconds,
-    cleanupOptions.BatchSize,
-    cleanupOptions.MaxIterationsPerRun?.ToString() ?? "null");
 
 // L'errore di configurazione per secret mancante o troppo corto viene gestito da JwtTokenService.
 builder.Services.AddSingleton<JwtTokenService>();
@@ -62,21 +53,21 @@ builder.Services.AddSingleton<IEmailService, NoopEmailService>();
 builder.Services.AddSingleton<PauseController>();
 builder.Services.AddSingleton<ConsoleControlService>();
 
-builder.Services.Configure<PasswordResetOptions>(builder.Configuration.GetSection("PasswordReset"));
-builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
-builder.Services.Configure<RefreshOptions>(builder.Configuration.GetSection("Refresh"));
-builder.Services.Configure<CookieConfigOptions>(builder.Configuration.GetSection("Cookie"));
-builder.Services.Configure<SessionConfigOptions>(builder.Configuration.GetSection("Session"));
-builder.Services.Configure<ConnectionStringsOptions>(builder.Configuration.GetSection("ConnectionStrings"));
-builder.Services.Configure<PasswordPolicyOptions>(builder.Configuration.GetSection("PasswordPolicy"));
-builder.Services.Configure<RememberMeOptions>(builder.Configuration.GetSection("RememberMe"));
-builder.Services.Configure<DeviceOptions>(builder.Configuration.GetSection("Device"));
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-builder.Services.Configure<IdTokenOptions>(builder.Configuration.GetSection("IdToken"));
-builder.Services.Configure<UsernamePolicyOptions>(builder.Configuration.GetSection("UsernamePolicy"));
-builder.Services.Configure<MfaOptions>(builder.Configuration.GetSection("Mfa"));
-builder.Services.Configure<LoginThrottleOptions>(builder.Configuration.GetSection("LoginThrottle"));
-builder.Services.Configure<EmailConfirmationOptions>(options =>
+builder.Services.AddOptions<PasswordResetOptions>().Bind(builder.Configuration.GetSection("PasswordReset")).ValidateOnStart();
+builder.Services.AddOptions<CleanupOptions>().Bind(builder.Configuration.GetSection("Cleanup")).ValidateOnStart();
+builder.Services.AddOptions<RefreshOptions>().Bind(builder.Configuration.GetSection("Refresh")).ValidateOnStart();
+builder.Services.AddOptions<CookieConfigOptions>().Bind(builder.Configuration.GetSection("Cookie")).ValidateOnStart();
+builder.Services.AddOptions<SessionConfigOptions>().Bind(builder.Configuration.GetSection("Session")).ValidateOnStart();
+builder.Services.AddOptions<ConnectionStringsOptions>().Bind(builder.Configuration.GetSection("ConnectionStrings")).ValidateOnStart();
+builder.Services.AddOptions<PasswordPolicyOptions>().Bind(builder.Configuration.GetSection("PasswordPolicy")).ValidateOnStart();
+builder.Services.AddOptions<RememberMeOptions>().Bind(builder.Configuration.GetSection("RememberMe")).ValidateOnStart();
+builder.Services.AddOptions<DeviceOptions>().Bind(builder.Configuration.GetSection("Device")).ValidateOnStart();
+builder.Services.AddOptions<JwtOptions>().Bind(builder.Configuration.GetSection("Jwt")).ValidateOnStart();
+builder.Services.AddOptions<IdTokenOptions>().Bind(builder.Configuration.GetSection("IdToken")).ValidateOnStart();
+builder.Services.AddOptions<UsernamePolicyOptions>().Bind(builder.Configuration.GetSection("UsernamePolicy")).ValidateOnStart();
+builder.Services.AddOptions<MfaOptions>().Bind(builder.Configuration.GetSection("Mfa")).ValidateOnStart();
+builder.Services.AddOptions<LoginThrottleOptions>().Bind(builder.Configuration.GetSection("LoginThrottle")).ValidateOnStart();
+builder.Services.AddOptions<EmailConfirmationOptions>().Configure(options =>
 {
   var raw = builder.Configuration["EmailConfirmation:Required"];
   if (string.IsNullOrWhiteSpace(raw))
@@ -93,6 +84,15 @@ builder.Services.Configure<EmailConfirmationOptions>(options =>
   }
 
   options.Required = parsed;
+});
+builder.Services.AddOptions<LoginOptions>().Configure(options =>
+{
+  options.ForceLowerUsername = OptionParsers.ParseBool(builder.Configuration["UsernamePolicy:Lowercase"], false, "UsernamePolicy:Lowercase", logger);
+  options.EmailConfirmationRequired = OptionParsers.ParseBool(builder.Configuration["EmailConfirmation:Required"], true, "EmailConfirmation:Required", logger);
+  options.MfaChallengeMinutes = OptionParsers.ParseInt(builder.Configuration["Mfa:ChallengeMinutes"], 10, 1, "Mfa:ChallengeMinutes", logger);
+  options.MfaRequireUaMatch = OptionParsers.ParseBool(builder.Configuration["Mfa:RequireUaMatch"], true, "Mfa:RequireUaMatch", logger);
+  options.MfaRequireIpMatch = OptionParsers.ParseBool(builder.Configuration["Mfa:RequireIpMatch"], false, "Mfa:RequireIpMatch", logger);
+  options.MfaMaxAttempts = OptionParsers.ParseInt(builder.Configuration["Mfa:MaxAttemptsPerChallenge"], 5, 1, "Mfa:MaxAttemptsPerChallenge", logger);
 });
 
 builder.Services.AddHostedService<ExpiredCleanupService>();
@@ -122,16 +122,6 @@ if (mfaOptions.ChallengeMinutes <= 0)
 {
   throw new InvalidOperationException("Mfa:ChallengeMinutes deve essere >= 1");
 }
-
-var loginOptions = new LoginOptions
-{
-  ForceLowerUsername = usernamePolicyOptions.Lowercase,
-  EmailConfirmationRequired = emailConfirmationOptions.Required,
-  MfaChallengeMinutes = mfaOptions.ChallengeMinutes,
-  MfaRequireUaMatch = mfaOptions.RequireUaMatch,
-  MfaRequireIpMatch = mfaOptions.RequireIpMatch,
-  MfaMaxAttempts = mfaOptions.MaxAttemptsPerChallenge
-};
 
 app.EnsureDatabaseInitialized(logger);
 
@@ -205,10 +195,7 @@ else
   }
 }
 
-
-
 /// <summary>
 /// Classe parziale necessaria per abilitare i test/integrazione di WebApplicationFactory.
 /// </summary>
 public partial class Program { }
-
