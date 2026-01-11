@@ -4,6 +4,7 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
+using SecureAuthMinimalApi.Logging;
 using SecureAuthMinimalApi.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -178,7 +179,3 @@ public static class ChangePasswordEndpoints
     }
 }
 
-/// <summary>
-/// Marker vuoto utilizzato per loggatore del cambio password.
-/// </summary>
-public sealed class ChangePasswordLoggerMarker;
