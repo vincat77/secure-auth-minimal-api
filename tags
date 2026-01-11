@@ -414,6 +414,7 @@ LogEvent	clients/WinFormsClient/MainForm.cs	/^  private void LogEvent(string lev
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.Designer.cs	/^partial class LogPanelControl$/;"	c
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public LogPanelControl()$/;"	m	class:LogPanelControl
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^public partial class LogPanelControl : UserControl$/;"	c
+LogStartupInfo	src/SecureAuthMinimalApi/Program.cs	/^LogStartupInfo($/;"	m
 LogStartupInfo	src/SecureAuthMinimalApi/Program.cs	/^static void LogStartupInfo($/;"	m
 LogTestStart	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private void LogTestStart([CallerMemberName] string name = "")$/;"	m	class:ApiTests	file:
 LoginAndGetSessionAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string usernam/;"	m	class:ApiTests	file:
@@ -1056,6 +1057,28 @@ _user	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    privat
 _userInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _userInput = null!;$/;"	f	class:MainForm	file:
 _username	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _username;$/;"	f	class:MainForm	file:
 _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly TokenValidationParameters _validation;$/;"	f	class:IdTokenService	file:
+app.Lifetime.ApplicationStarted.Register	src/SecureAuthMinimalApi/Program.cs	/^app.Lifetime.ApplicationStarted.Register(() =>$/;"	m
+app.MapChangeEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangeEmail();$/;"	m
+app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
+app.MapConfirmEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmEmail();$/;"	m
+app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
+app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
+app.MapIntrospect	src/SecureAuthMinimalApi/Program.cs	/^app.MapIntrospect();$/;"	m
+app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
+app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMat/;"	m
+app.MapLogout	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogout();$/;"	m
+app.MapLogoutAll	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogoutAll();$/;"	m
+app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m
+app.MapMfaDisable	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaDisable();$/;"	m
+app.MapMfaSetup	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaSetup();$/;"	m
+app.MapPasswordReset	src/SecureAuthMinimalApi/Program.cs	/^app.MapPasswordReset();$/;"	m
+app.MapReady	src/SecureAuthMinimalApi/Program.cs	/^app.MapReady();$/;"	m
+app.MapRefresh	src/SecureAuthMinimalApi/Program.cs	/^app.MapRefresh();$/;"	m
+app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister(passwordPolicyOptions, forceLowerUsername);$/;"	m
+app.UseCookieJwtAuth	src/SecureAuthMinimalApi/Program.cs	/^app.UseCookieJwtAuth();$/;"	m
+app.UseCsrfProtection	src/SecureAuthMinimalApi/Program.cs	/^app.UseCsrfProtection();$/;"	m
+app.UsePauseMiddleware	src/SecureAuthMinimalApi/Program.cs	/^app.UsePauseMiddleware(new Func<bool>(() => Volatile.Read(ref pauseFlag) == 1));$/;"	m
+app.UseRequestLoggingWithUnauthorizedHandling	src/SecureAuthMinimalApi/Program.cs	/^app.UseRequestLoggingWithUnauthorizedHandling();$/;"	m
 btnConfirmEmail	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnConfirmEmail = null!;$/;"	f	class:MainForm	file:
 btnConfirmEmail_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnConfirmEmail_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
 btnConfirmMfa	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnConfirmMfa = null!;$/;"	f	class:MainForm	file:

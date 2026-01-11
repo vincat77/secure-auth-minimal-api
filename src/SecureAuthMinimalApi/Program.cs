@@ -85,11 +85,6 @@ var isDevelopment = app.Environment.IsDevelopment();
 var pauseFlag = 0;
 
 var passwordPolicyOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordPolicyOptions>>().Value;
-var minPasswordLength = passwordPolicyOptions.MinLength < 1 ? 12 : passwordPolicyOptions.MinLength;
-var requireUpper = passwordPolicyOptions.RequireUpper;
-var requireLower = passwordPolicyOptions.RequireLower;
-var requireDigit = passwordPolicyOptions.RequireDigit;
-var requireSymbol = passwordPolicyOptions.RequireSymbol;
 var forceLowerUsername = app.Configuration.GetValue<bool?>("UsernamePolicy:Lowercase") ?? false;
 var emailRequiredRaw = app.Configuration["EmailConfirmation:Required"];
 bool emailConfirmationRequired;
@@ -163,11 +158,11 @@ LogStartupInfo(
     cleanupInterval,
     cleanupBatch,
     cleanupMaxIterations,
-    minPasswordLength,
-    requireUpper,
-    requireLower,
-    requireDigit,
-    requireSymbol,
+    passwordPolicyOptions.EffectiveMinLength,
+    passwordPolicyOptions.RequireUpper,
+    passwordPolicyOptions.RequireLower,
+    passwordPolicyOptions.RequireDigit,
+    passwordPolicyOptions.RequireSymbol,
     forceLowerUsername,
     emailConfirmationRequired,
     mfaChallengeMinutes,
@@ -211,7 +206,7 @@ app.UseCsrfProtection();
 app.MapHealth();
 app.MapLive();
 app.MapReady();
-app.MapRegister(minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol, forceLowerUsername);
+app.MapRegister(passwordPolicyOptions, forceLowerUsername);
 app.MapLogin(forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
 app.MapConfirmMfa(mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
 app.MapMe();

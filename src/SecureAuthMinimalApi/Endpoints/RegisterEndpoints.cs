@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
@@ -15,11 +16,7 @@ public static class RegisterEndpoints
     /// </summary>
     public static void MapRegister(
         this WebApplication app,
-        int minPasswordLength,
-        bool requireUpper,
-        bool requireLower,
-        bool requireDigit,
-        bool requireSymbol,
+        PasswordPolicyOptions passwordPolicy,
         bool forceLowerUsername)
     {
         app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger logger, IEmailService emailService) =>
@@ -60,7 +57,8 @@ public static class RegisterEndpoints
             var fullName = string.IsNullOrWhiteSpace(nameInput) ? $"{givenName} {familyName}".Trim() : nameInput;
             var pictureUrl = string.IsNullOrWhiteSpace(pictureUrlInput) ? $"https://example.com/avatar/{safeUsername}.png" : pictureUrlInput;
 
-            var policyErrors = AuthHelpers.ValidatePassword(password, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol);
+            var effectiveMin = passwordPolicy.EffectiveMinLength;
+            var policyErrors = AuthHelpers.ValidatePassword(password, effectiveMin, passwordPolicy.RequireUpper, passwordPolicy.RequireLower, passwordPolicy.RequireDigit, passwordPolicy.RequireSymbol);
             if (policyErrors.Any())
             {
                 logger.LogWarning("Registrazione fallita: password non conforme username={Username} errors={Errors}", safeUsername, string.Join(",", policyErrors));
