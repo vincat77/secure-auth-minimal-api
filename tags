@@ -145,6 +145,7 @@ CreateIdToken_allows_missing_email_and_picture	tests/SecureAuthMinimalApi.Tests/
 CreateIdToken_includes_profile_claims	tests/SecureAuthMinimalApi.Tests/IdTokenServiceTests.cs	/^    public void CreateIdToken_includes_profile_claims()$/;"	m	class:IdTokenServiceTests
 CreateIdToken_throws_on_short_secret	tests/SecureAuthMinimalApi.Tests/IdTokenServiceTests.cs	/^    public void CreateIdToken_throws_on_short_secret()$/;"	m	class:IdTokenServiceTests
 CreateIdToken_uses_rsa_when_keypath_present	tests/SecureAuthMinimalApi.Tests/IdTokenServiceTests.cs	/^    public void CreateIdToken_uses_rsa_when_keypath_present()$/;"	m	class:IdTokenServiceTests
+CreateInvocationContext	tests/SecureAuthMinimalApi.Tests/Filters/FilterTestHelpers.cs	/^    internal static EndpointFilterInvocationContext CreateInvocationContext(HttpContext httpCont/;"	m	class:FilterTestHelpers	file:
 CreateRsaCredentials	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private static SigningCredentials CreateRsaCredentials(string keyText)$/;"	m	class:IdTokenService	file:
 CreateUserAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private async Task<(string UserId, string Email, string Password, string ConfirmToken)> Crea/;"	m	class:PasswordResetTests	file:
 Create_and_get_by_token_returns_record	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    public async Task Create_and_get_by_token_returns_record()$/;"	m	class:RefreshTokenRepositoryTests
@@ -154,6 +155,12 @@ CreatedAtUtc	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public requir
 CreatedAtUtc	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string CreatedAtUtc { get; init; }$/;"	p	class:User
 CreatedAtUtc	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public required string CreatedAtUtc { get; init; }        \/\/ ISO 8601 (DateTime.UtcNow.ToS/;"	p	class:UserSession
 CsrfExtensions	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^public static class CsrfExtensions$/;"	c
+CsrfFilter	src/SecureAuthMinimalApi/Filters/CsrfFilter.cs	/^public sealed class CsrfFilter : IEndpointFilter$/;"	c
+CsrfFilterTests	tests/SecureAuthMinimalApi.Tests/Filters/CsrfFilterTests.cs	/^public class CsrfFilterTests$/;"	c
+CsrfFilter_NoHeader_Returns403	tests/SecureAuthMinimalApi.Tests/Filters/CsrfFilterTests.cs	/^    public async Task CsrfFilter_NoHeader_Returns403()$/;"	m	class:CsrfFilterTests
+CsrfFilter_NoSession_Returns401	tests/SecureAuthMinimalApi.Tests/Filters/CsrfFilterTests.cs	/^    public async Task CsrfFilter_NoSession_Returns401()$/;"	m	class:CsrfFilterTests
+CsrfFilter_ValidToken_CallsNext	tests/SecureAuthMinimalApi.Tests/Filters/CsrfFilterTests.cs	/^    public async Task CsrfFilter_ValidToken_CallsNext()$/;"	m	class:CsrfFilterTests
+CsrfFilter_WrongToken_Returns403	tests/SecureAuthMinimalApi.Tests/Filters/CsrfFilterTests.cs	/^    public async Task CsrfFilter_WrongToken_Returns403()$/;"	m	class:CsrfFilterTests
 CsrfMiddleware	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    public CsrfMiddleware(ILogger<CsrfMiddleware> logger)$/;"	m	class:CsrfMiddleware
 CsrfMiddleware	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^public sealed class CsrfMiddleware : IMiddleware$/;"	c
 CsrfToken	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public required string CsrfToken { get; init; }           \/\/ token CSRF sincronizzato, sol/;"	p	class:UserSession
@@ -215,6 +222,7 @@ EmailConfirmed	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool EmailCo
 EmailNormalized	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailNormalized { get; init; }$/;"	p	class:User
 Email_confirmation_required_fallbacks_to_true_on_invalid_config	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Email_confirmation_required_fallbacks_to_true_on_invalid_config()$/;"	m	class:ApiTests
 Enabled	src/SecureAuthMinimalApi/Models/CleanupOptions.cs	/^    public bool Enabled { get; set; } = true;$/;"	p	class:CleanupOptions
+EndpointFilterExtensions	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^public static class EndpointFilterExtensions$/;"	c
 EndpointUtilities	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^internal static class EndpointUtilities$/;"	c
 EnsureColumn	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  private static void EnsureColumn(SqliteConnection conn, string table, string column, string? t/;"	m	class:DbInitializer	file:
 EnsureCreated	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  public static void EnsureCreated(IConfiguration config)$/;"	m	class:DbInitializer
@@ -230,6 +238,8 @@ ExpiresAtUtc	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^    public strin
 ExpiresAtUtc	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public required string ExpiresAtUtc { get; init; }$/;"	p	class:RefreshToken
 ExpiresAtUtc	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public required string ExpiresAtUtc { get; init; }        \/\/ ISO 8601$/;"	p	class:UserSession
 FamilyName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? FamilyName { get; init; }$/;"	p	class:User
+FilterTestHelpers	tests/SecureAuthMinimalApi.Tests/Filters/FilterTestHelpers.cs	/^internal static class FilterTestHelpers$/;"	c
+FixedTimeEquals	src/SecureAuthMinimalApi/Filters/CsrfFilter.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfFilter	file:
 FixedTimeEquals	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfMiddleware	file:
 Full_auth_flow_with_remember_and_mfa	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Full_auth_flow_with_remember_and_mfa()$/;"	m	class:ApiTests
 GenerateToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string GenerateToken()$/;"	m	class:PasswordResetEndpoints	file:
@@ -313,6 +323,9 @@ IntrospectEndpoints	src/SecureAuthMinimalApi/Endpoints/IntrospectEndpoints.cs	/^
 IntrospectResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record IntrospectResponse(bool Active, string? Reason, string? SessionId, str/;"	m	class:ApiTests	file:
 Introspect_reports_revoked_after_logout	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Introspect_reports_revoked_after_logout()$/;"	m	class:ApiTests
 InvalidatePreviousForUserAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task InvalidatePreviousForUserAsync(string userId, string nowIso, CancellationT/;"	m	class:PasswordResetRepository
+InvokeAsync	src/SecureAuthMinimalApi/Filters/CsrfFilter.cs	/^    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, Endpoin/;"	m	class:CsrfFilter
+InvokeAsync	src/SecureAuthMinimalApi/Filters/MfaFilter.cs	/^    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, Endpoin/;"	m	class:MfaFilter
+InvokeAsync	src/SecureAuthMinimalApi/Filters/SessionFilter.cs	/^    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, Endpoin/;"	m	class:SessionFilter
 InvokeAsync	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context, RequestDelegate next)$/;"	m	class:CookieJwtAuthMiddleware
 InvokeAsync	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context, RequestDelegate next)$/;"	m	class:CsrfMiddleware
 InvokeChangePasswordAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static Task InvokeChangePasswordAsync(MainForm form)$/;"	m	class:MainFormChangePasswordTests	file:
@@ -454,6 +467,10 @@ MfaChallengeRepository	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/
 MfaConfirmResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, str/;"	m	class:MainForm	file:
 MfaConfirmResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, s/;"	m	class:ApiTests	file:
 MfaDisableEndpoints	src/SecureAuthMinimalApi/Endpoints/MfaDisableEndpoints.cs	/^public static class MfaDisableEndpoints$/;"	c
+MfaFilter	src/SecureAuthMinimalApi/Filters/MfaFilter.cs	/^public sealed class MfaFilter : IEndpointFilter$/;"	c
+MfaFilterTests	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^public class MfaFilterTests$/;"	c
+MfaFilter_NoSession_Returns401	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^    public async Task MfaFilter_NoSession_Returns401()$/;"	m	class:MfaFilterTests
+MfaFilter_WithSession_CallsNext	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^    public async Task MfaFilter_WithSession_CallsNext()$/;"	m	class:MfaFilterTests
 MfaPanelControl	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^partial class MfaPanelControl$/;"	c
 MfaPanelControl	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public MfaPanelControl()$/;"	m	class:MfaPanelControl
 MfaPanelControl	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^public partial class MfaPanelControl : UserControl$/;"	c
@@ -463,6 +480,9 @@ MfaSetupResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private seal
 MinLength	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public int MinLength { get; set; } = 12;$/;"	p	class:PasswordPolicyOptions
 Minutes	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public int Minutes { get; set; } = 30;$/;"	p	class:IdTokenOptions
 Name	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? Name { get; init; }$/;"	p	class:User
+NewSession	tests/SecureAuthMinimalApi.Tests/Filters/CsrfFilterTests.cs	/^    private static UserSession NewSession(string csrf) => new()$/;"	m	class:CsrfFilterTests	file:
+NewSession	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^    private static UserSession NewSession() => new()$/;"	m	class:MfaFilterTests	file:
+NewSession	tests/SecureAuthMinimalApi.Tests/Filters/SessionFilterTests.cs	/^    private static UserSession NewSession() => new()$/;"	m	class:SessionFilterTests	file:
 NewToken	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    private static RefreshToken NewToken(string userId, string? sessionId = null, string? parent/;"	m	class:RefreshTokenRepositoryTests	file:
 NoopEmailService	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    public NoopEmailService(ILogger<NoopEmailService> logger)$/;"	m	class:NoopEmailService
 NoopEmailService	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^public sealed class NoopEmailService : IEmailService$/;"	c
@@ -577,11 +597,14 @@ RememberChecked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    pu
 RememberMeOptions	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^public sealed class RememberMeOptions$/;"	c
 RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	class:MainForm	file:
 RequireConfirmed	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetConfig
+RequireCsrf	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireCsrf(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireDigit	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireDigit { get; set; }$/;"	p	class:PasswordPolicyOptions
 RequireLower	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireLower { get; set; }$/;"	p	class:PasswordPolicyOptions
+RequireMfa	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireMfa(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireSecure	src/SecureAuthMinimalApi/Options/DeviceOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:DeviceOptions
 RequireSecure	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:RememberMeOptions
 RequireSecure	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:RefreshOptions
+RequireSession	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireSession(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireSymbol	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireSymbol { get; set; }$/;"	p	class:PasswordPolicyOptions
 RequireUpper	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireUpper { get; set; }$/;"	p	class:PasswordPolicyOptions
 RequireUserAgentMatch	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^    public bool RequireUserAgentMatch { get; set; } = false;$/;"	p	class:RefreshOptions
@@ -630,9 +653,14 @@ SerilogSmokeTests	tests/SecureAuthMinimalApi.Tests/SerilogSmokeTests.cs	/^public
 SessionCard	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^partial class SessionCard$/;"	c
 SessionCard	clients/WinFormsClient/Controls/SessionCard.cs	/^    public SessionCard()$/;"	m	class:SessionCard
 SessionCard	clients/WinFormsClient/Controls/SessionCard.cs	/^public partial class SessionCard : UserControl$/;"	c
+SessionContext	src/SecureAuthMinimalApi/Filters/SessionContext.cs	/^public sealed record SessionContext(UserSession Session);$/;"	m
 SessionCountdownControl	clients/WinFormsClient/Controls/SessionCountdownControl.Designer.cs	/^partial class SessionCountdownControl$/;"	c
 SessionCountdownControl	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    public SessionCountdownControl()$/;"	m	class:SessionCountdownControl
 SessionCountdownControl	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^public partial class SessionCountdownControl : UserControl$/;"	c
+SessionFilter	src/SecureAuthMinimalApi/Filters/SessionFilter.cs	/^public sealed class SessionFilter : IEndpointFilter$/;"	c
+SessionFilterTests	tests/SecureAuthMinimalApi.Tests/Filters/SessionFilterTests.cs	/^public class SessionFilterTests$/;"	c
+SessionFilter_NoSession_Returns401	tests/SecureAuthMinimalApi.Tests/Filters/SessionFilterTests.cs	/^    public async Task SessionFilter_NoSession_Returns401()$/;"	m	class:SessionFilterTests
+SessionFilter_WithSession_CallsNext	tests/SecureAuthMinimalApi.Tests/Filters/SessionFilterTests.cs	/^    public async Task SessionFilter_WithSession_CallsNext()$/;"	m	class:SessionFilterTests
 SessionId	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? SessionId { get; init; }$/;"	p	class:RefreshToken
 SessionId	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public required string SessionId { get; init; }           \/\/ sub nel JWT (reference token)$/;"	p	class:UserSession
 SessionRepository	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public SessionRepository(IConfiguration config)$/;"	m	class:SessionRepository
