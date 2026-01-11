@@ -245,6 +245,7 @@ Dump	clients/SecureAuthClient.Console/Program.cs	/^static void Dump(object obj)$
 DumpCookies	clients/WinFormsClient/MainForm.cs	/^  private void DumpCookies()$/;"	m	class:MainForm	file:
 Email	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? Email { get; init; }$/;"	p	class:User
 EmailChangeContext	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^internal readonly record struct EmailChangeContext($/;"	m
+EmailChangeInput	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^internal readonly record struct EmailChangeInput(string Raw, string Normalized);$/;"	m
 EmailChangeTests	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^public class EmailChangeTests : IAsyncLifetime$/;"	c
 EmailConfirmExpiresUtc	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmExpiresUtc { get; init; }$/;"	p	class:User
 EmailConfirmToken	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmToken { get; init; }$/;"	p	class:User

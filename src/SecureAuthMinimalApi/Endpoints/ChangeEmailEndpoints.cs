@@ -35,8 +35,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             var context = new EmailChangeContext(
                 Users: users,
                 User: user,
-                RawEmail: emailInput.Raw!,
-                NormalizedEmail: emailInput.Normalized!,
+                Email: new EmailChangeInput(emailInput.Raw!, emailInput.Normalized!),
                 IsDevelopment: env.IsDevelopment(),
                 Logger: logger,
                 CancellationToken: ctx.RequestAborted);
@@ -91,11 +90,11 @@ namespace SecureAuthMinimalApi.Endpoints;
     {
         var confirmToken = Guid.NewGuid().ToString("N");
         var confirmExp = DateTime.UtcNow.AddHours(24).ToString("O");
-        await context.Users.UpdateEmailAsync(context.User.Id, context.RawEmail.Trim(), context.NormalizedEmail, confirmToken, confirmExp, context.CancellationToken);
+        await context.Users.UpdateEmailAsync(context.User.Id, context.Email.Raw.Trim(), context.Email.Normalized, confirmToken, confirmExp, context.CancellationToken);
 
         try
         {
-            await emailService.SendEmailConfirmationAsync(context.RawEmail.Trim(), confirmToken, confirmExp);
+            await emailService.SendEmailConfirmationAsync(context.Email.Raw.Trim(), confirmToken, confirmExp);
         }
         catch (Exception ex)
         {
@@ -116,8 +115,9 @@ internal sealed record ChangeEmailRequest(string? NewEmail);
 internal readonly record struct EmailChangeContext(
     UserRepository Users,
     User User,
-    string RawEmail,
-    string NormalizedEmail,
+    EmailChangeInput Email,
     bool IsDevelopment,
     ILogger Logger,
     CancellationToken CancellationToken);
+
+internal readonly record struct EmailChangeInput(string Raw, string Normalized);
