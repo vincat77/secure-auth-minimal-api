@@ -1,21 +1,21 @@
-using SecureAuthMinimalApi.Data;
 using Microsoft.Extensions.Logging;
-using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Filters;
-using SecureAuthMinimalApi.Utilities;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
-    /// <summary>
-    /// Endpoint per cambiare email a un account non confermato (richiede sessione autenticata).
-    /// </summary>
-    public static class ChangeEmailEndpoints
+/// <summary>
+/// Endpoint per cambiare email a un account non confermato (richiede sessione autenticata).
+/// </summary>
+public static class ChangeEmailEndpoints
+{
+    public static void MapChangeEmail(this WebApplication app, ILogger logger)
     {
-        public static void MapChangeEmail(this WebApplication app, ILogger logger)
-        {
-            var env = app.Environment;
+        var env = app.Environment;
 
         app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService) =>
         {
@@ -28,14 +28,14 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (user is null)
                 return Results.Unauthorized();
 
-            var eligibility = await users.EnsureUserEligibleAsync(user, emailInput.Email!.Normalized, ctx.RequestAborted);
+            var eligibility = await users.EnsureUserEligibleAsync(user, emailInput.Email!.Value.Normalized, ctx.RequestAborted);
             if (eligibility is not null)
                 return eligibility;
 
             var context = new EmailChangeContext(
                 Users: users,
                 User: user,
-                Email: emailInput.Email!.Value,
+                Email: emailInput.Email.Value,
                 IsDevelopment: env.IsDevelopment(),
                 Logger: logger,
                 CancellationToken: ctx.RequestAborted);

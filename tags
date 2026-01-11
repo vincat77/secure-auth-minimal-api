@@ -73,7 +73,7 @@ BusyScope	clients/WinFormsClient/MainForm.cs	/^    public BusyScope(Action onDis
 BusyScope	clients/WinFormsClient/MainForm.cs	/^  private sealed class BusyScope : IDisposable$/;"	c	class:MainForm
 ChallengeId	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public string? ChallengeId$/;"	p	class:MfaPanelControl
 ChangeEmailAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<ApiResult> ChangeEmailAsync(string newEmail)$/;"	m	class:SecureAuthApiClient
-ChangeEmailEndpoints	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static class ChangeEmailEndpoints$/;"	c
+ChangeEmailEndpoints	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^public static class ChangeEmailEndpoints$/;"	c
 ChangeEmailRequest	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^internal sealed record ChangeEmailRequest(string? NewEmail);$/;"	m
 ChangeEmailResponse	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    private sealed record ChangeEmailResponse(bool Ok, string? ConfirmToken, string? ConfirmExpi/;"	m	class:EmailChangeTests	file:
 ChangeEmail_UnconfirmedUser_SucceedsAndGeneratesNewToken	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    public async Task ChangeEmail_UnconfirmedUser_SucceedsAndGeneratesNewToken()$/;"	m	class:EmailChangeTests
@@ -490,7 +490,7 @@ MainForm	clients/WinFormsClient/MainForm.Designer.cs	/^public partial class Main
 MainForm	clients/WinFormsClient/MainForm.cs	/^  public MainForm()$/;"	m	class:MainForm
 MainForm	clients/WinFormsClient/MainForm.cs	/^public sealed partial class MainForm : Form$/;"	c
 MainFormChangePasswordTests	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^public class MainFormChangePasswordTests$/;"	c
-MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^        public static void MapChangeEmail(this WebApplication app, ILogger logger)$/;"	m	class:ChangeEmailEndpoints
+MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static void MapChangeEmail(this WebApplication app, ILogger logger)$/;"	m	class:ChangeEmailEndpoints
 MapChangePassword	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    public static void MapChangePassword(this WebApplication app)$/;"	m	class:ChangePasswordEndpoints
 MapConfirmEmail	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    public static void MapConfirmEmail(this WebApplication app, ILogger logger)$/;"	m	class:ConfirmEmailEndpoints
 MapConfirmMfa	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    public static void MapConfirmMfa($/;"	m	class:ConfirmMfaEndpoints
