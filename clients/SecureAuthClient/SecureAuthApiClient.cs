@@ -163,9 +163,16 @@ public sealed class SecureAuthApiClient : IDisposable
         }
 
         var resp = await _http.SendAsync(req);
-        resp.EnsureSuccessStatusCode();
         var content = await resp.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<T>(content, _jsonOptions)!;
+
+        // Anche per status non-200 (es. mfa_required 401) proviamo a deserializzare e ritorniamo l'oggetto.
+        var parsed = JsonSerializer.Deserialize<T>(content, _jsonOptions);
+        if (parsed is not null)
+            return parsed;
+
+        // Se parsing fallisce e la response è errore, lancia eccezione esplicita.
+        resp.EnsureSuccessStatusCode();
+        throw new InvalidOperationException($"Impossibile deserializzare la risposta per {path}: {content}");
     }
 
     private void UpdateTokens(LoginResult res)
