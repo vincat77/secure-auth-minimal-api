@@ -109,7 +109,12 @@ public static class RegisterEndpoints
             };
 
             await users.CreateAsync(user, ctx.RequestAborted);
+            // In release non logghiamo il token di conferma email.
+#if DEBUG
             logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created} emailToken={EmailToken} exp={EmailExp}", user.Username, user.Id, user.CreatedAtUtc, emailConfirmToken, emailConfirmExpires.ToString("O"));
+#else
+            logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created} emailToken=omesso exp={EmailExp}", user.Username, user.Id, user.CreatedAtUtc, emailConfirmExpires.ToString("O"));
+#endif
 
             if (!string.IsNullOrWhiteSpace(user.Email))
             {
@@ -123,7 +128,12 @@ public static class RegisterEndpoints
                 }
             }
 
+#if DEBUG
             return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email, emailConfirmToken, emailConfirmExpiresUtc = emailConfirmExpires.ToString("O") });
+#else
+            // In release non includiamo il token di conferma email nella response.
+            return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email, emailConfirmExpiresUtc = emailConfirmExpires.ToString("O") });
+#endif
         });
     }
 }

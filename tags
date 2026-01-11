@@ -580,11 +580,11 @@ Open	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    private IDbC
 Open	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:RefreshTokenRepository	file:
 Open	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:SessionRepository	file:
 Open	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:UserRepository	file:
-OptionParsers	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^public static class OptionParsers$/;"	c
+OptionParsers	src/SecureAuthMinimalApi/Utilities/OptionParsers.cs	/^public static class OptionParsers$/;"	c
 Outcome	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required string Outcome { get; init; }$/;"	p	class:LoginAudit
 OutputBox	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public TextBox OutputBox => _output;$/;"	f	class:LogPanelControl
-ParseBool	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static bool ParseBool(string? raw, bool defaultValue, string key, ILogger logger)$/;"	m	class:OptionParsers
-ParseInt	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static int ParseInt(string? raw, int defaultValue, int minValue, string key, ILogger /;"	m	class:OptionParsers
+ParseBool	src/SecureAuthMinimalApi/Utilities/OptionParsers.cs	/^    public static bool ParseBool(string? raw, bool defaultValue, string key, ILogger logger)$/;"	m	class:OptionParsers
+ParseInt	src/SecureAuthMinimalApi/Utilities/OptionParsers.cs	/^    public static int ParseInt(string? raw, int defaultValue, int minValue, string key, ILogger /;"	m	class:OptionParsers
 ParseSameSite	src/SecureAuthMinimalApi/Utilities/CookieUtils.cs	/^    public static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, /;"	m	class:CookieUtils
 PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string PasswordHash { get; init; }$/;"	p	class:User
 PasswordHasher	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
