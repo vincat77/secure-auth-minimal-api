@@ -19,7 +19,7 @@ namespace SecureAuthMinimalApi.Endpoints;
 
         app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService) =>
         {
-            var emailInput = await ReadAndValidateEmailAsync(ctx, logger);
+            var emailInput = await ctx.ReadAndValidateEmailAsync(logger);
             if (emailInput.ErrorResult is not null)
                 return emailInput.ErrorResult;
 
@@ -28,13 +28,12 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (user is null)
                 return Results.Unauthorized();
 
-            var eligibility = await EnsureUserEligibleAsync(users, user, emailInput.Normalized!, ctx.RequestAborted);
+            var eligibility = await users.EnsureUserEligibleAsync(user, emailInput.Normalized!, ctx.RequestAborted);
             if (eligibility is not null)
                 return eligibility;
 
-            return await UpdateAndSendConfirmationAsync(
+            return await emailService.UpdateAndSendConfirmationAsync(
                 users,
-                emailService,
                 user,
                 emailInput.Raw!,
                 emailInput.Normalized!,
@@ -46,7 +45,7 @@ namespace SecureAuthMinimalApi.Endpoints;
         .RequireCsrf();
     }
 
-    private static async Task<(string? Raw, string? Normalized, IResult? ErrorResult)> ReadAndValidateEmailAsync(HttpContext ctx, ILogger logger)
+    private static async Task<(string? Raw, string? Normalized, IResult? ErrorResult)> ReadAndValidateEmailAsync(this HttpContext ctx, ILogger logger)
     {
         var req = await ctx.Request.ReadFromJsonAsync<ChangeEmailRequest>();
         var newEmailRaw = req?.NewEmail;
@@ -65,7 +64,7 @@ namespace SecureAuthMinimalApi.Endpoints;
         return (newEmailRaw, normalized, null);
     }
 
-    private static async Task<IResult?> EnsureUserEligibleAsync(UserRepository users, User user, string normalizedEmail, CancellationToken ct)
+    private static async Task<IResult?> EnsureUserEligibleAsync(this UserRepository users, User user, string normalizedEmail, CancellationToken ct)
     {
         if (user.EmailConfirmed)
         {
@@ -87,8 +86,8 @@ namespace SecureAuthMinimalApi.Endpoints;
     }
 
     private static async Task<IResult> UpdateAndSendConfirmationAsync(
+        this IEmailService emailService,
         UserRepository users,
-        IEmailService emailService,
         User user,
         string rawEmail,
         string normalizedEmail,

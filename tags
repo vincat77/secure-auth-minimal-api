@@ -259,7 +259,7 @@ EnsureCreated	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  public static v
 EnsureCsrf	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void EnsureCsrf()$/;"	m	class:SecureAuthApiClient	file:
 EnsureHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void EnsureHttpClient()$/;"	m	class:MainForm	file:
 EnsureRefreshCsrf	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void EnsureRefreshCsrf()$/;"	m	class:SecureAuthApiClient	file:
-EnsureUserEligibleAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult?> EnsureUserEligibleAsync(UserRepository users, User user,/;"	m	class:ChangeEmailEndpoints	file:
+EnsureUserEligibleAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult?> EnsureUserEligibleAsync(this UserRepository users, User /;"	m	class:ChangeEmailEndpoints	file:
 EnvironmentName	tests/SecureAuthMinimalApi.Tests/TestHostEnvironment.cs	/^    public string EnvironmentName { get; set; } = Environments.Development;$/;"	p	class:TestEnv
 ExecuteAsync	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    protected override async Task ExecuteAsync(CancellationToken stoppingToken)$/;"	m	class:ExpiredCleanupService
 ExpirationMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int ExpirationMinutes { get; set; } = 30;$/;"	p	class:PasswordResetOptions
