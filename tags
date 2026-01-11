@@ -816,7 +816,7 @@ TryDeleteDb	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    privat
 TryGetToken	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static bool TryGetToken(HttpContext ctx, out string token)$/;"	m	class:AuthHelpers
 Unprotect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Unprotect(string cipherText)$/;"	m	class:TotpSecretProtector
 UnsafeMethods	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static readonly HashSet<string> UnsafeMethods = new(StringComparer.OrdinalIgnoreCase/;"	f	class:CsrfMiddleware	file:
-UpdateAndSendConfirmationAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult> UpdateAndSendConfirmationAsync(EmailChangeContext context/;"	m	class:ChangeEmailEndpoints	file:
+UpdateAndSendConfirmationAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult> UpdateAndSendConfirmationAsync(this IEmailService emailSe/;"	m	class:ChangeEmailEndpoints	file:
 UpdateCountdown	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public void UpdateCountdown()$/;"	m	class:RefreshCountdownControl
 UpdateCountdown	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    public void UpdateCountdown(TimeSpan elapsedSinceUpdate)$/;"	m	class:SessionCountdownControl
 UpdateDevice	clients/WinFormsClient/Controls/DeviceInfoControl.cs	/^    public void UpdateDevice(string? deviceId, bool? issuedNow = null)$/;"	m	class:DeviceInfoControl
