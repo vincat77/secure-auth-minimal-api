@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SecureAuthClient;
 using WinFormsClient.Controls;
 
 namespace WinFormsClient;
@@ -28,6 +29,7 @@ public sealed partial class MainForm : Form
   private string? _refreshCsrfToken;
   private string _rememberText = "-";
   private bool _isAuthenticated;
+  private SecureAuthApiClient? _api;
   private const string DefaultUserAgent = "WinFormsClient/1.0";
 
   public MainForm()
@@ -108,38 +110,31 @@ public sealed partial class MainForm : Form
     using var busy = BeginBusy("Login in corso...");
     try
     {
-      var payload = new { username = _userInput.ValueText, password = _passwordControl.ValueText, rememberMe = _actions.RememberChecked };
-      var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login"), payload);
-      var body = await response.Content.ReadAsStringAsync();
-
-      if (!response.IsSuccessStatusCode)
+      if (_api is null)
       {
-        // Gestione MFA required
-        try
-        {
-          var mfa = JsonSerializer.Deserialize<MfaRequiredResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-          if (mfa?.Error == "mfa_required")
-          {
-            _challengeId = mfa.ChallengeId;
-            _mfaPanel.ChallengeId = mfa.ChallengeId ?? "";
-            _actions.SetMfaEnabled(!string.IsNullOrWhiteSpace(_challengeId));
-            SetMfaState("MFA richiesta: inserisci TOTP e conferma");
-            Append($"Login richiede MFA: challengeId={mfa.ChallengeId}");
-            LogEvent("Info", "MFA richiesta, procedi con la conferma");
-            return;
-          }
-        }
-        catch
-        {
-          // ignore parse errors, gestisci come errore generico
-        }
-
-        Append($"Login fallito: {(int)response.StatusCode} {response.ReasonPhrase}\n{body}");
-        LogEvent("Errore", $"Login fallito status={(int)response.StatusCode}");
+        Append("API client non inizializzato.");
         return;
       }
 
-      var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      var login = await _api.LoginAsync(_userInput.ValueText, _passwordControl.ValueText, rememberMe: _actions.RememberChecked);
+      if (login.Error == "mfa_required")
+      {
+        _challengeId = login.ChallengeId;
+        _mfaPanel.ChallengeId = _challengeId ?? "";
+        _actions.SetMfaEnabled(!string.IsNullOrWhiteSpace(_challengeId));
+        SetMfaState("MFA richiesta: inserisci TOTP e conferma");
+        Append($"Login richiede MFA: challengeId={_challengeId}");
+        LogEvent("Info", "MFA richiesta, procedi con la conferma");
+        return;
+      }
+
+      if (!login.Ok)
+      {
+        Append($"Login fallito: {login.Error}");
+        LogEvent("Errore", $"Login fallito error={login.Error}");
+        return;
+      }
+
       _csrfToken = login?.CsrfToken;
       _refreshCsrfToken = login?.RefreshCsrfToken ?? _refreshCsrfToken;
       _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
@@ -158,7 +153,7 @@ public sealed partial class MainForm : Form
       ClearMfa();
       if (string.IsNullOrWhiteSpace(_csrfToken))
       {
-        Append($"Login riuscito ma csrfToken non presente: body={body}");
+        Append($"Login riuscito ma csrfToken non presente");
         LogEvent("Info", "Login OK");
       }
       else
@@ -188,6 +183,11 @@ public sealed partial class MainForm : Form
     using var busy = BeginBusy("Conferma MFA in corso...");
     try
     {
+      if (_api is null)
+      {
+        Append("API client non inizializzato.");
+        return;
+      }
       if (string.IsNullOrWhiteSpace(_challengeId))
       {
         Append("Nessun challenge MFA salvato: esegui prima il login.");
@@ -201,18 +201,13 @@ public sealed partial class MainForm : Form
         return;
       }
 
-      var payload = new { challengeId = _challengeId, totpCode = _mfaPanel.TotpCode, rememberMe = _actions.RememberChecked };
-      var response = await _http.PostAsJsonAsync(new Uri(BaseUri, "/login/confirm-mfa"), payload);
-      var body = await response.Content.ReadAsStringAsync();
-      Append($"POST /login/confirm-mfa -> {(int)response.StatusCode}\n{body}");
-      if (!response.IsSuccessStatusCode)
+      var confirm = await _api.ConfirmMfaAsync(_challengeId, _mfaPanel.TotpCode, rememberMe: _actions.RememberChecked);
+      if (!confirm.Ok)
       {
-        LogEvent("Errore", $"Confirm MFA fallita status={(int)response.StatusCode}");
+        LogEvent("Errore", $"Confirm MFA fallita error={confirm.Error}");
         SetMfaState("MFA fallita: controlla codice/challenge");
         return;
       }
-
-      var confirm = JsonSerializer.Deserialize<MfaConfirmResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
       _csrfToken = confirm?.CsrfToken ?? _csrfToken;
       _refreshCsrfToken = confirm?.RefreshCsrfToken ?? _refreshCsrfToken;
       _rememberText = confirm?.RememberIssued == true ? "Emesso" : "Non emesso";
@@ -251,31 +246,28 @@ public sealed partial class MainForm : Form
     using var busy = BeginBusy("Refresh in corso...");
     try
     {
-      var req = new HttpRequestMessage(HttpMethod.Post, new Uri(BaseUri, "/refresh"));
-      if (!string.IsNullOrWhiteSpace(_refreshCsrfToken))
-        req.Headers.Add("X-Refresh-Csrf", _refreshCsrfToken);
-
-      var response = await _http.SendAsync(req);
-      var body = await response.Content.ReadAsStringAsync();
-      Append($"POST /refresh -> {(int)response.StatusCode}\n{body}");
-      if (!response.IsSuccessStatusCode)
+      if (_api is null)
       {
-        var reason = response.StatusCode == HttpStatusCode.Unauthorized
-            ? "Refresh negato (token o device mancante/non valido)"
-            : $"Refresh fallito status={(int)response.StatusCode}";
-        _deviceAlert.SetStatus(false, reason);
-        LogEvent("Errore", reason);
-        LogEvent("Errore", $"Refresh fallito status={(int)response.StatusCode}");
+        Append("API client non inizializzato.");
         return;
       }
-      var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-      _csrfToken = login?.CsrfToken ?? _csrfToken;
-      _refreshCsrfToken = login?.RefreshCsrfToken ?? _refreshCsrfToken;
-      _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
+
+      var refresh = await _api.RefreshAsync();
+      Append($"Refresh -> ok={refresh.Ok} csrf={refresh.CsrfToken}");
+      if (!refresh.Ok)
+      {
+        var reason = "Refresh fallito";
+        _deviceAlert.SetStatus(false, reason);
+        LogEvent("Errore", reason);
+        return;
+      }
+      _csrfToken = refresh?.CsrfToken ?? _csrfToken;
+      _refreshCsrfToken = refresh?.RefreshCsrfToken ?? _refreshCsrfToken;
+      _rememberText = refresh?.RememberIssued == true ? "Emesso" : "Non emesso";
       // /refresh non restituisce id_token; manteniamo l'ultimo ricevuto
-      _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
+      _deviceInfo.UpdateDevice(refresh?.DeviceId, refresh?.DeviceIssued);
       _deviceAlert.SetStatus(true, "Refresh/Device OK");
-      if (login?.RefreshExpiresAtUtc is not null && DateTime.TryParse(login.RefreshExpiresAtUtc, out var refreshExp))
+      if (refresh?.RefreshExpiresAtUtc is not null && DateTime.TryParse(refresh.RefreshExpiresAtUtc, out var refreshExp))
       {
         _refreshExpiresUtc = refreshExp.ToUniversalTime();
       }
@@ -643,6 +635,12 @@ public sealed partial class MainForm : Form
     _http = new HttpClient(_handler);
     _http.DefaultRequestHeaders.UserAgent.ParseAdd(DefaultUserAgent);
     _http.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+    _api = new SecureAuthApiClient(new SecureAuthClientOptions
+    {
+      BaseUrl = BaseUri.ToString(),
+      UserAgent = DefaultUserAgent
+    }, _handler);
   }
 
   private async Task RefreshSessionInfoAsync()

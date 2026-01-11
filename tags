@@ -824,6 +824,7 @@ WeakPasswords	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^
 _accessTokenMinutes	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    private readonly int _accessTokenMinutes;$/;"	f	class:JwtTokenService	file:
 _actions	clients/WinFormsClient/MainForm.Designer.cs	/^    private ActionButtonsControl _actions = null!;$/;"	f	class:MainForm	file:
 _actions_Load	clients/WinFormsClient/MainForm.cs	/^  private void _actions_Load(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+_api	clients/WinFormsClient/MainForm.cs	/^  private SecureAuthApiClient? _api;$/;"	f	class:MainForm	file:
 _audience	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly string _audience;$/;"	f	class:IdTokenService	file:
 _audience	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    private readonly string _audience;$/;"	f	class:JwtTokenService	file:
 _avatar	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^    private PictureBox _avatar = null!;$/;"	f	class:SessionCard	file:
