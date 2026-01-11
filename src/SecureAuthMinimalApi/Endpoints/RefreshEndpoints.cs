@@ -5,6 +5,8 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -50,6 +52,12 @@ public static class RefreshEndpoints
             if (refreshOptions.RequireUserAgentMatch && !string.Equals(ua, stored.UserAgent, StringComparison.Ordinal))
                 return Results.Unauthorized();
 
+            // CSRF refresh token: header obbligatorio
+            if (!ctx.Request.Headers.TryGetValue("X-Refresh-Csrf", out var refreshCsrf) || string.IsNullOrWhiteSpace(refreshCsrf))
+                return Results.StatusCode(StatusCodes.Status403Forbidden);
+            if (string.IsNullOrWhiteSpace(stored.RefreshCsrfHash) || !FixedTimeEquals(HashToken(refreshCsrf!), stored.RefreshCsrfHash))
+                return Results.StatusCode(StatusCodes.Status403Forbidden);
+
             var user = await users.GetByIdAsync(stored.UserId, ctx.RequestAborted);
             if (user is null)
                 return Results.Unauthorized();
@@ -59,6 +67,8 @@ public static class RefreshEndpoints
             var (access, expiresUtc) = jwt.CreateAccessToken(sessionId);
             var nowIso = DateTime.UtcNow.ToString("O");
             var expIso = expiresUtc.ToString("O");
+            var refreshCsrfToken = Base64Url(RandomBytes(32));
+            var refreshCsrfHash = HashToken(refreshCsrfToken);
 
             var session = new UserSession
             {
@@ -100,6 +110,7 @@ public static class RefreshEndpoints
                 SessionId = sessionId,
                 Token = newRefreshToken,
                 TokenHash = null,
+                RefreshCsrfHash = refreshCsrfHash,
                 CreatedAtUtc = nowIso,
                 ExpiresAtUtc = refreshExpires.ToString("O"),
                 RevokedAtUtc = null,
@@ -152,7 +163,7 @@ public static class RefreshEndpoints
                     });
             }
 
-            return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, deviceIssued = false, deviceId = newRt.DeviceId, refreshExpiresAtUtc = refreshExpires.ToString("O") });
+            return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, deviceIssued = false, deviceId = newRt.DeviceId, refreshExpiresAtUtc = refreshExpires.ToString("O"), refreshCsrfToken });
         });
     }
 
@@ -174,5 +185,22 @@ public static class RefreshEndpoints
         }
 
         return sameSite;
+    }
+
+    private static string HashToken(string token)
+    {
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(token);
+        var hash = sha.ComputeHash(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static bool FixedTimeEquals(string a, string b)
+    {
+        var aBytes = Encoding.UTF8.GetBytes(a);
+        var bBytes = Encoding.UTF8.GetBytes(b);
+        if (aBytes.Length != bBytes.Length)
+            return false;
+        return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 }

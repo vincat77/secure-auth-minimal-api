@@ -255,7 +255,7 @@ public class ApiTests : IAsyncLifetime
     }
 
     private sealed record HealthResponse(bool Ok);
-    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
+    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken, string? RefreshCsrfToken);
     private sealed record MeResponse(bool Ok, string SessionId, string UserId);
     private sealed record LogoutResponse(bool Ok);
     private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
@@ -2455,9 +2455,12 @@ CREATE TABLE IF NOT EXISTS users (
         var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
         var refreshCookie = setCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
         var deviceCookie = setCookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.False(string.IsNullOrWhiteSpace(loginPayload!.RefreshCsrfToken));
 
         using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
         refreshReq.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
+        refreshReq.Headers.Add("X-Refresh-Csrf", loginPayload.RefreshCsrfToken!);
         var refreshResp = await _client.SendAsync(refreshReq);
         Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
         var newSetCookies = refreshResp.Headers.GetValues("Set-Cookie").ToList();
@@ -2470,6 +2473,57 @@ CREATE TABLE IF NOT EXISTS users (
         var refreshHash = _hasher.ComputeHash(refreshValue);
         var revoked = await db.ExecuteScalarAsync<string>("SELECT revoked_at_utc FROM refresh_tokens WHERE token_hash = @h", new { h = refreshHash });
         Assert.False(string.IsNullOrWhiteSpace(revoked));
+    }
+
+    [Fact]
+    public async Task Refresh_missing_csrf_header_returns_403()
+    {
+        LogTestStart();
+        var username = $"refresh_missing_csrf_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var refreshCookie = setCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var deviceCookie = setCookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
+        var refreshResp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Forbidden, refreshResp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_invalid_csrf_header_returns_403()
+    {
+        LogTestStart();
+        var username = $"refresh_invalid_csrf_{Guid.NewGuid():N}";
+        var password = "P@ssw0rd!Long";
+        var email = $"{username}@example.com";
+
+        var register = await _client.PostAsJsonAsync("/register", new { Username = username, Password = password, Email = email });
+        Assert.Equal(HttpStatusCode.Created, register.StatusCode);
+        var regPayload = await register.Content.ReadFromJsonAsync<RegisterResponse>();
+        await ConfirmEmailAsync(regPayload!.EmailConfirmToken!);
+
+        var login = await _client.PostAsJsonAsync("/login", new { Username = username, Password = password, RememberMe = true });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var setCookies = login.Headers.GetValues("Set-Cookie").ToList();
+        var refreshCookie = setCookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+        var deviceCookie = setCookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/refresh");
+        refreshReq.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
+        refreshReq.Headers.Add("X-Refresh-Csrf", "wrong");
+        var refreshResp = await _client.SendAsync(refreshReq);
+        Assert.Equal(HttpStatusCode.Forbidden, refreshResp.StatusCode);
     }
 
     [Fact]
@@ -3292,10 +3346,13 @@ CREATE TABLE IF NOT EXISTS users (
             var cookies = login.Headers.GetValues("Set-Cookie").ToList();
             var refreshCookie = cookies.First(c => c.StartsWith("refresh_token", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
             var deviceCookie = cookies.First(c => c.StartsWith("device_id", StringComparison.OrdinalIgnoreCase)).Split(';', 2)[0];
+            var loginPayload = await login.Content.ReadFromJsonAsync<LoginResponse>();
+            Assert.False(string.IsNullOrWhiteSpace(loginPayload!.RefreshCsrfToken));
 
             using var req = new HttpRequestMessage(HttpMethod.Post, "/refresh");
             req.Headers.Add("Cookie", $"{refreshCookie}; {deviceCookie}");
             req.Headers.TryAddWithoutValidation("User-Agent", "Custom-UA-Changed");
+            req.Headers.Add("X-Refresh-Csrf", loginPayload.RefreshCsrfToken!);
             var refreshResp = await client.SendAsync(req);
             Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
             var payload = await refreshResp.Content.ReadFromJsonAsync<RefreshResponse>();

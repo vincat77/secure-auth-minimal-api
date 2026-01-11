@@ -239,6 +239,7 @@ ExpiresAtUtc	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public requir
 ExpiresAtUtc	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public required string ExpiresAtUtc { get; init; }        \/\/ ISO 8601$/;"	p	class:UserSession
 FamilyName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? FamilyName { get; init; }$/;"	p	class:User
 FilterTestHelpers	tests/SecureAuthMinimalApi.Tests/Filters/FilterTestHelpers.cs	/^internal static class FilterTestHelpers$/;"	c
+FixedTimeEquals	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:RefreshEndpoints	file:
 FixedTimeEquals	src/SecureAuthMinimalApi/Filters/CsrfFilter.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfFilter	file:
 FixedTimeEquals	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfMiddleware	file:
 Full_auth_flow_with_remember_and_mfa	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Full_auth_flow_with_remember_and_mfa()$/;"	m	class:ApiTests
@@ -262,6 +263,7 @@ Hash	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^    public static str
 HashToken	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:ConfirmMfaEndpoints	file:
 HashToken	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:LoginEndpoints	file:
 HashToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetEndpoints	file:
+HashToken	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:RefreshEndpoints	file:
 HashToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetTests	file:
 HeadersDump	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        public string? HeadersDump { get; private set; }$/;"	p	class:MainFormChangePasswordTests.StubHandler
 Headers_expose_expiry_and_idle_remaining	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    public async Task Headers_expose_expiry_and_idle_remaining()$/;"	m	class:IdleTimeoutTests
@@ -561,6 +563,8 @@ RefreshTokenHasher	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^   
 RefreshTokenRepository	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public RefreshTokenRepository(IConfiguration config, RefreshTokenHasher hasher)$/;"	m	class:RefreshTokenRepository
 RefreshTokenRepository	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^public sealed class RefreshTokenRepository$/;"	c
 RefreshTokenRepositoryTests	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^public class RefreshTokenRepositoryTests : IAsyncLifetime$/;"	c
+Refresh_invalid_csrf_header_returns_403	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_invalid_csrf_header_returns_403()$/;"	m	class:ApiTests
+Refresh_missing_csrf_header_returns_403	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_missing_csrf_header_returns_403()$/;"	m	class:ApiTests
 Refresh_with_different_user_agent_fails_when_match_enabled	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_different_user_agent_fails_when_match_enabled()$/;"	m	class:ApiTests
 Refresh_with_different_user_agent_succeeds_when_match_disabled	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_different_user_agent_succeeds_when_match_disabled()$/;"	m	class:ApiTests
 Refresh_with_expired_token_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Refresh_with_expired_token_returns_unauthorized()$/;"	m	class:ApiTests
