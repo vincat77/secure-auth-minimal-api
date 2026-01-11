@@ -125,7 +125,7 @@ public class ApiTests : IAsyncLifetime
             HandleCookies = false,
             AllowAutoRedirect = false
         });
-        var refreshOpts = _factory.Services.GetRequiredService<IOptions<SecureAuthMinimalApi.Services.RefreshOptions>>();
+        var refreshOpts = _factory.Services.GetRequiredService<IOptions<SecureAuthMinimalApi.Options.RefreshOptions>>();
         var jwtOpts = _factory.Services.GetRequiredService<IOptions<JwtOptions>>();
         _hasher = new RefreshTokenHasher(refreshOpts, jwtOpts);
 

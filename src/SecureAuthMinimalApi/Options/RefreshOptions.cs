@@ -1,4 +1,4 @@
-namespace SecureAuthMinimalApi.Services;
+namespace SecureAuthMinimalApi.Options;
 
 /// <summary>
 /// Opzioni per il binding e la sicurezza dei refresh token.

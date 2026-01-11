@@ -28,7 +28,7 @@ public static class LoginEndpoints
         var isDevelopment = app.Environment.IsDevelopment();
         var rememberOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
         var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
-        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<SecureAuthMinimalApi.Services.RefreshOptions>>().Value;
+        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RefreshOptions>>().Value;
 
         app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo) =>
         {

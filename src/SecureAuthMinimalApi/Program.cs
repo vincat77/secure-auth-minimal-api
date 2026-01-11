@@ -69,6 +69,8 @@ builder.Services.AddSingleton<IEmailService, NoopEmailService>();
 builder.Services.Configure<PasswordResetConfig>(builder.Configuration.GetSection("PasswordReset"));
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.Configure<RefreshOptions>(builder.Configuration.GetSection("Refresh"));
+builder.Services.Configure<CookieConfigOptions>(builder.Configuration.GetSection("Cookie"));
+builder.Services.Configure<SessionConfigOptions>(builder.Configuration.GetSection("Session"));
 builder.Services.Configure<PasswordPolicyOptions>(builder.Configuration.GetSection("PasswordPolicy"));
 builder.Services.Configure<RememberMeOptions>(builder.Configuration.GetSection("RememberMe"));
 builder.Services.Configure<DeviceOptions>(builder.Configuration.GetSection("Device"));
