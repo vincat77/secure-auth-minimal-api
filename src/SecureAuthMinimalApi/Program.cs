@@ -68,6 +68,13 @@ builder.Services.AddOptions<IdTokenOptions>().Bind(builder.Configuration.GetSect
 builder.Services.AddOptions<UsernamePolicyOptions>().Bind(builder.Configuration.GetSection("UsernamePolicy")).ValidateOnStart();
 builder.Services.AddOptions<MfaOptions>().Bind(builder.Configuration.GetSection("Mfa")).ValidateOnStart();
 builder.Services.AddOptions<LoginThrottleOptions>().Bind(builder.Configuration.GetSection("LoginThrottle")).ValidateOnStart();
+builder.Services.AddOptions<TokenHashingOptions>()
+    .Configure(options =>
+    {
+      options.EmailConfirmPepper = builder.Configuration["TokenHashing:EmailConfirmPepper"]
+        ?? builder.Configuration["Jwt:SecretKey"]
+        ?? options.EmailConfirmPepper;
+    });
 builder.Services.AddOptions<EmailConfirmationOptions>().Configure(options =>
 {
   var raw = builder.Configuration["EmailConfirmation:Required"];

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_normalized TEXT NULL,
   email_confirmed INTEGER DEFAULT 0,
   email_confirm_token TEXT NULL,
+  email_confirm_token_hash TEXT NULL,
   email_confirm_expires_utc TEXT NULL,
   picture_url TEXT NULL
 );
@@ -121,6 +122,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
   EnsureColumn(conn, "users", "email_normalized");
   EnsureColumn(conn, "users", "email_confirmed", "INTEGER DEFAULT 0");
   EnsureColumn(conn, "users", "email_confirm_token");
+  EnsureColumn(conn, "users", "email_confirm_token_hash");
   EnsureColumn(conn, "users", "email_confirm_expires_utc");
   EnsureColumn(conn, "users", "picture_url");
   EnsureColumn(conn, "users", "is_locked", "INTEGER NOT NULL DEFAULT 0");
@@ -133,6 +135,8 @@ CREATE TABLE IF NOT EXISTS password_resets (
     conn.Execute("UPDATE user_sessions SET last_seen_utc = created_at_utc WHERE last_seen_utc IS NULL;");
     const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
     conn.Execute(idxEmail);
+    const string idxEmailTokenHash = "CREATE INDEX IF NOT EXISTS idx_users_email_confirm_token_hash ON users(email_confirm_token_hash);";
+    conn.Execute(idxEmailTokenHash);
     const string idxRefreshTokenHash = "CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);";
     const string idxRefreshUser = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);";
     const string idxRefreshSession = "CREATE INDEX IF NOT EXISTS idx_refresh_tokens_session ON refresh_tokens(session_id);";

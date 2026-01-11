@@ -3,6 +3,8 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Data;
 
@@ -32,8 +34,8 @@ public sealed class UserRepository
     public async Task CreateAsync(User user, CancellationToken ct)
     {
         const string sql = @"
-INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, email_confirm_token, email_confirm_expires_utc, picture_url)
-VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, @EmailConfirmed, @EmailConfirmToken, @EmailConfirmExpiresUtc, @PictureUrl);";
+INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, email_confirm_token, email_confirm_token_hash, email_confirm_expires_utc, picture_url)
+VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, @EmailConfirmed, @EmailConfirmToken, @EmailConfirmTokenHash, @EmailConfirmExpiresUtc, @PictureUrl);";
 
         using var db = Open();
         await db.ExecuteAsync(new CommandDefinition(sql, new
@@ -50,6 +52,7 @@ VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, @TotpSecret, @Name, @Given
             user.EmailNormalized,
             user.EmailConfirmed,
             user.EmailConfirmToken,
+            user.EmailConfirmTokenHash,
             user.EmailConfirmExpiresUtc,
             user.PictureUrl
         }, cancellationToken: ct));
@@ -65,7 +68,7 @@ SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at
        is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       email_confirm_token AS EmailConfirmToken, email_confirm_token_hash AS EmailConfirmTokenHash, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
        picture_url AS PictureUrl
 FROM users
 WHERE username = @username OR username = @normalized
@@ -85,7 +88,7 @@ SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at
        is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       email_confirm_token AS EmailConfirmToken, email_confirm_token_hash AS EmailConfirmTokenHash, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
        picture_url AS PictureUrl
 FROM users
 WHERE id = @userId
@@ -106,7 +109,7 @@ SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at
        is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       email_confirm_token AS EmailConfirmToken, email_confirm_token_hash AS EmailConfirmTokenHash, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
        picture_url AS PictureUrl
 FROM users
 WHERE email_normalized = @email
@@ -118,16 +121,37 @@ LIMIT 1;";
     }
 
     /// <summary>
-    /// Recupera l'utente in base al token di conferma email.
+    /// Recupera l'utente in base all'hash del token di conferma email.
     /// </summary>
-    public async Task<User?> GetByEmailTokenAsync(string token, CancellationToken ct)
+    public async Task<User?> GetByEmailTokenHashAsync(string tokenHash, CancellationToken ct)
     {
         const string sql = @"
 SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
        is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
        name AS Name, given_name AS GivenName, family_name AS FamilyName,
        email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
-       email_confirm_token AS EmailConfirmToken, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       email_confirm_token AS EmailConfirmToken, email_confirm_token_hash AS EmailConfirmTokenHash, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
+       picture_url AS PictureUrl
+FROM users
+WHERE email_confirm_token_hash = @tokenHash
+LIMIT 1;";
+
+        using var db = Open();
+        var row = await db.QuerySingleOrDefaultAsync<User>(new CommandDefinition(sql, new { tokenHash }, cancellationToken: ct));
+        return DecryptTotp(row);
+    }
+
+    /// <summary>
+    /// Recupera l'utente in base al token di conferma email legacy (in chiaro).
+    /// </summary>
+    public async Task<User?> GetByEmailTokenLegacyAsync(string token, CancellationToken ct)
+    {
+        const string sql = @"
+SELECT id AS Id, username AS Username, password_hash AS PasswordHash, created_at_utc AS CreatedAtUtc, totp_secret AS TotpSecret,
+       is_locked AS IsLocked, deleted_at_utc AS DeletedAtUtc,
+       name AS Name, given_name AS GivenName, family_name AS FamilyName,
+       email AS Email, email_normalized AS EmailNormalized, email_confirmed AS EmailConfirmed,
+       email_confirm_token AS EmailConfirmToken, email_confirm_token_hash AS EmailConfirmTokenHash, email_confirm_expires_utc AS EmailConfirmExpiresUtc,
        picture_url AS PictureUrl
 FROM users
 WHERE email_confirm_token = @token
@@ -147,6 +171,7 @@ LIMIT 1;";
 UPDATE users
 SET email_confirmed = 1,
     email_confirm_token = NULL,
+    email_confirm_token_hash = NULL,
     email_confirm_expires_utc = NULL
 WHERE id = @userId;";
 
@@ -186,17 +211,18 @@ WHERE id = @userId;";
     /// <summary>
     /// Rigenera il token di conferma email e la relativa scadenza.
     /// </summary>
-    public async Task UpdateEmailConfirmTokenAsync(string userId, string token, string expiresUtcIso, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
+    public async Task UpdateEmailConfirmTokenAsync(string userId, string tokenHash, string expiresUtcIso, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null, string? tokenPlain = null)
     {
         const string sql = @"
 UPDATE users
-SET email_confirm_token = @token,
+SET email_confirm_token = @tokenPlain,
+    email_confirm_token_hash = @tokenHash,
     email_confirm_expires_utc = @expiresUtcIso,
     email_confirmed = 0
 WHERE id = @userId;";
 
         var db = connection ?? Open();
-        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, token, expiresUtcIso }, transaction: tx, cancellationToken: ct));
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, tokenHash, expiresUtcIso, tokenPlain }, transaction: tx, cancellationToken: ct));
     }
 
     /// <summary>
@@ -216,7 +242,7 @@ WHERE id = @userId;";
     /// <summary>
     /// Aggiorna l'email per un utente non confermato rigenerando token e scadenza.
     /// </summary>
-    public async Task UpdateEmailAsync(string userId, string email, string emailNormalized, string confirmToken, string confirmExpiresUtc, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null)
+    public async Task UpdateEmailAsync(string userId, string email, string emailNormalized, string confirmTokenHash, string confirmExpiresUtc, CancellationToken ct, IDbConnection? connection = null, IDbTransaction? tx = null, string? confirmToken = null)
     {
         const string sql = @"
 UPDATE users
@@ -224,11 +250,12 @@ SET email = @email,
     email_normalized = @emailNormalized,
     email_confirmed = 0,
     email_confirm_token = @confirmToken,
+    email_confirm_token_hash = @confirmTokenHash,
     email_confirm_expires_utc = @confirmExpiresUtc
 WHERE id = @userId;";
 
         var db = connection ?? Open();
-        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, email, emailNormalized, confirmToken, confirmExpiresUtc }, transaction: tx, cancellationToken: ct));
+        await db.ExecuteAsync(new CommandDefinition(sql, new { userId, email, emailNormalized, confirmTokenHash, confirmExpiresUtc, confirmToken }, transaction: tx, cancellationToken: ct));
     }
 
     private User? DecryptTotp(User? user)
@@ -258,6 +285,7 @@ WHERE id = @userId;";
                 EmailNormalized = user.EmailNormalized,
                 EmailConfirmed = user.EmailConfirmed,
                 EmailConfirmToken = user.EmailConfirmToken,
+                EmailConfirmTokenHash = user.EmailConfirmTokenHash,
                 EmailConfirmExpiresUtc = user.EmailConfirmExpiresUtc,
                 PictureUrl = user.PictureUrl
             };

@@ -4,6 +4,8 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
 using SecureAuthMinimalApi.Logging;
+using SecureAuthMinimalApi.Options;
+using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -17,7 +19,7 @@ public static class ChangeEmailEndpoints
     {
         var env = app.Environment;
 
-        app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService, ILogger<ChangeEmailLogger> logger) =>
+        app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService, IOptions<TokenHashingOptions> tokenHashing, ILogger<ChangeEmailLogger> logger) =>
         {
             // 1) Input parsing/normalizzazione email
             var emailInput = await ctx.ReadAndValidateEmailAsync(logger);
@@ -41,6 +43,7 @@ public static class ChangeEmailEndpoints
                 User: user,
                 Email: emailInput.Email.Value,
                 IsDevelopment: env.IsDevelopment(),
+                TokenHashing: tokenHashing.Value,
                 Logger: logger,
                 CancellationToken: ctx.RequestAborted);
 
@@ -94,7 +97,20 @@ public static class ChangeEmailEndpoints
     {
         var confirmToken = Guid.NewGuid().ToString("N");
         var confirmExp = DateTime.UtcNow.AddHours(24).ToString("O");
-        await context.Users.UpdateEmailAsync(context.User.Id, context.Email.Raw.Trim(), context.Email.Normalized, confirmToken, confirmExp, context.CancellationToken);
+        var confirmTokenHash = TokenHasher.HmacSha256Base64Url(context.TokenHashing.EmailConfirmPepper, confirmToken);
+#if DEBUG
+        var confirmTokenPlain = confirmToken;
+#else
+        string? confirmTokenPlain = null;
+#endif
+        await context.Users.UpdateEmailAsync(
+            context.User.Id,
+            context.Email.Raw.Trim(),
+            context.Email.Normalized,
+            confirmTokenHash,
+            confirmExp,
+            context.CancellationToken,
+            confirmToken: confirmTokenPlain);
 
         try
         {
@@ -121,6 +137,7 @@ internal readonly record struct EmailChangeContext(
     User User,
     EmailChangeInput Email,
     bool IsDevelopment,
+    TokenHashingOptions TokenHashing,
     ILogger Logger,
     CancellationToken CancellationToken);
 

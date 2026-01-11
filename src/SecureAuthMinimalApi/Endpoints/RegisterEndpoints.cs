@@ -20,7 +20,7 @@ public static class RegisterEndpoints
         app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger<RegisterLogger> logger,
           IOptions< PasswordPolicyOptions> passwordPolicy,
           IOptions<UsernamePolicyOptions> usernamePolicy,
-
+          IOptions<TokenHashingOptions> tokenHashing,
           IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
@@ -74,6 +74,7 @@ public static class RegisterEndpoints
 
             var emailConfirmToken = Guid.NewGuid().ToString("N");
             var emailConfirmExpires = DateTime.UtcNow.AddHours(24);
+            var emailConfirmTokenHash = TokenHasher.HmacSha256Base64Url(tokenHashing.Value.EmailConfirmPepper, emailConfirmToken);
 
             var existing = await users.GetByUsernameAsync(safeUsername, ctx.RequestAborted);
             if (existing is not null)
@@ -103,7 +104,12 @@ public static class RegisterEndpoints
                 Email = req!.Email!,
                 EmailNormalized = safeEmail,
                 EmailConfirmed = false,
+#if DEBUG
                 EmailConfirmToken = emailConfirmToken,
+#else
+                EmailConfirmToken = null,
+#endif
+                EmailConfirmTokenHash = emailConfirmTokenHash,
                 EmailConfirmExpiresUtc = emailConfirmExpires.ToString("O"),
                 PictureUrl = pictureUrl
             };

@@ -33,6 +33,8 @@ public sealed class User
     public bool EmailConfirmed { get; init; }
     /// <summary>Token conferma email.</summary>
     public string? EmailConfirmToken { get; init; }
+    /// <summary>Hash HMAC del token conferma email.</summary>
+    public string? EmailConfirmTokenHash { get; init; }
     /// <summary>Scadenza token conferma email (UTC ISO).</summary>
     public string? EmailConfirmExpiresUtc { get; init; }
     /// <summary>URL immagine profilo.</summary>

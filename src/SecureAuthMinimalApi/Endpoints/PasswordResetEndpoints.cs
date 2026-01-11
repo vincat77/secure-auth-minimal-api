@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
-using SecureAuthMinimalApi.Options;
-using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using SecureAuthMinimalApi.Utilities;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Logging;
+using SecureAuthMinimalApi.Options;
+using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -21,6 +21,7 @@ namespace SecureAuthMinimalApi.Endpoints;
         public static void MapPasswordReset(this WebApplication app)
         {
             var resetOptions = app.Services.GetRequiredService<IOptions<PasswordResetOptions>>().Value;
+            var tokenHashingOptions = app.Services.GetRequiredService<IOptions<TokenHashingOptions>>().Value;
             var env = app.Services.GetRequiredService<IHostEnvironment>();
             var includeTokenInResponse = resetOptions.IncludeTokenInResponseForTesting && env.IsDevelopment();
             var rateLimitEnabled = resetOptions.RateLimitRequests > 0 && resetOptions.RateLimitWindowMinutes > 0;
@@ -29,8 +30,8 @@ namespace SecureAuthMinimalApi.Endpoints;
             var sqliteConnString = connStrings.Sqlite
                 ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite for password reset");
 
-            app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService, ILogger<PasswordResetLogger> logger) =>
-            {
+        app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService, ILogger<PasswordResetLogger> logger) =>
+        {
                 // Input essenziale: email normalizzata; risposta sempre 200 per non leakare esistenza account/stato conferma.
                 var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
                 if (string.IsNullOrWhiteSpace(req?.Email))
@@ -86,7 +87,13 @@ namespace SecureAuthMinimalApi.Endpoints;
                     confirmExp = DateTime.UtcNow.AddHours(24);
                 }
 
-                await users.UpdateEmailConfirmTokenAsync(user.Id, confirmToken, confirmExp.ToString("O"), ctx.RequestAborted);
+                var confirmHash = TokenHasher.HmacSha256Base64Url(tokenHashingOptions.EmailConfirmPepper, confirmToken);
+#if DEBUG
+                var confirmTokenPlain = confirmToken;
+#else
+                string? confirmTokenPlain = null;
+#endif
+                await users.UpdateEmailConfirmTokenAsync(user.Id, confirmHash, confirmExp.ToString("O"), ctx.RequestAborted, tokenPlain: confirmTokenPlain);
                 if (!string.IsNullOrWhiteSpace(user.Email))
                 {
                     try

@@ -1,4 +1,6 @@
-namespace SecureAuthMinimalApi.Utilities;
+using Microsoft.Extensions.Logging;
+
+namespace SecureAuthMinimalApi.Services;
 
 /// <summary>
 /// Helper per parsing sicuro di valori di configurazione.

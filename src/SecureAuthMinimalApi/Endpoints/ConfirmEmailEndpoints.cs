@@ -1,6 +1,9 @@
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Logging;
+using SecureAuthMinimalApi.Options;
+using SecureAuthMinimalApi.Utilities;
+using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -11,7 +14,7 @@ public static class ConfirmEmailEndpoints
     /// </summary>
     public static void MapConfirmEmail(this WebApplication app)
     {
-        app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users, ILogger<ConfirmEmailLogger> logger) =>
+        app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users, IOptions<TokenHashingOptions> tokenHashing, ILogger<ConfirmEmailLogger> logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
             if (string.IsNullOrWhiteSpace(req?.Token))
@@ -19,15 +22,26 @@ public static class ConfirmEmailEndpoints
                 logger.LogWarning("Conferma email fallita: token mancante");
                 return Results.BadRequest(new { ok = false, error = "invalid_input", errors = new[] { "token_required" } });
             }
-            else
+
+            string tokenHash;
+            try
             {
-                logger.LogInformation("Conferma email richiesta token={Token}", req.Token);
+                tokenHash = TokenHasher.HmacSha256Base64Url(tokenHashing.Value.EmailConfirmPepper, req.Token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Errore hashing token conferma email");
+                return Results.BadRequest(new { ok = false, error = "invalid_token" });
             }
 
-            var user = await users.GetByEmailTokenAsync(req.Token, ctx.RequestAborted);
+            var user = await users.GetByEmailTokenHashAsync(tokenHash, ctx.RequestAborted);
             if (user is null)
             {
-                logger.LogWarning("Conferma email fallita: token non trovato token={Token}", req.Token);
+                user = await users.GetByEmailTokenLegacyAsync(req.Token, ctx.RequestAborted);
+            }
+            if (user is null)
+            {
+                logger.LogWarning("Conferma email fallita: token non trovato");
                 return Results.BadRequest(new { ok = false, error = "invalid_token" });
             }
             logger.LogInformation("Conferma email: utente trovato userId={UserId} emailConfirmed={EmailConfirmed} tokenExp={TokenExp}", user.Id, user.EmailConfirmed, user.EmailConfirmExpiresUtc);
@@ -41,7 +55,7 @@ public static class ConfirmEmailEndpoints
 
             if (string.IsNullOrWhiteSpace(user.EmailConfirmExpiresUtc) || DateTime.Parse(user.EmailConfirmExpiresUtc).ToUniversalTime() <= DateTime.UtcNow)
             {
-                logger.LogWarning("Conferma email fallita: token scaduto userId={UserId} token={Token} exp={Exp}", user.Id, user.EmailConfirmToken, user.EmailConfirmExpiresUtc);
+                logger.LogWarning("Conferma email fallita: token scaduto userId={UserId} exp={Exp}", user.Id, user.EmailConfirmExpiresUtc);
                 return Results.Json(new { ok = false, error = "token_expired" }, statusCode: StatusCodes.Status410Gone);
             }
 
