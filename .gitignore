@@ -12,6 +12,7 @@ obj/
 _ReSharper*/
 *.DotSettings.user
 *.sln.docstates
+.dpkeys/
 
 # Build artifacts
 *.exe

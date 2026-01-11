@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.IO;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Middleware;
 using SecureAuthMinimalApi.Models;
@@ -8,6 +9,7 @@ using SecureAuthMinimalApi.Endpoints;
 using Serilog;
 using Microsoft.Extensions.Logging;
 using System.Threading;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,7 +49,16 @@ builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<LoginThrottleRepository>();
 builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();
 builder.Services.AddSingleton<LoginAuditRepository>();
-builder.Services.AddDataProtection();
+// DataProtection con chiavi persistenti (evita invalidazioni dopo restart/deploy)
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (string.IsNullOrWhiteSpace(dpKeysPath))
+{
+    dpKeysPath = Path.Combine(builder.Environment.ContentRootPath, ".dpkeys");
+}
+
+builder.Services.AddDataProtection()
+    .SetApplicationName("SecureAuthMinimalApi")
+    .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));
 builder.Services.AddSingleton<TotpSecretProtector>();
 builder.Services.AddSingleton<RefreshTokenHasher>();
 builder.Services.AddSingleton<RefreshTokenRepository>();
@@ -107,12 +118,28 @@ if (skipDbInit)
 }
 else
 {
-    DbInitializer.EnsureCreated(app.Configuration);
+    DbInitializer.EnsureCreated(app.Configuration, app.Environment, logger);
 }
 
 // Validazioni config in ambiente non Development.
 if (!isDevelopment)
 {
+    var secret = app.Configuration["Jwt:SecretKey"];
+    if (string.IsNullOrWhiteSpace(secret))
+    {
+        throw new InvalidOperationException("Configurazione mancante: Jwt:SecretKey");
+    }
+    if (secret.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) ||
+        secret.Contains("CHANGEME", StringComparison.OrdinalIgnoreCase) ||
+        secret.Contains("REPLACE_ME", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException("Jwt:SecretKey è un placeholder. Impostare un segreto reale in produzione.");
+    }
+    if (secret.Length < 32)
+    {
+        throw new InvalidOperationException("Jwt:SecretKey troppo corto (min 32 caratteri consigliati).");
+    }
+
     var iss = app.Configuration["Jwt:Issuer"] ?? "";
     var aud = app.Configuration["Jwt:Audience"] ?? "";
     if (!iss.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || !aud.StartsWith("https://", StringComparison.OrdinalIgnoreCase))

@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using SecureAuthMinimalApi.Services;
 
 namespace SecureAuthMinimalApi.Data;
@@ -16,7 +17,7 @@ public static class DbInitializer
   /// <summary>
   /// Assicura l'esistenza delle tabelle richieste nello schema SQLite.
   /// </summary>
-  public static void EnsureCreated(IConfiguration config)
+  public static void EnsureCreated(IConfiguration config, IHostEnvironment env, ILogger logger)
   {
     var cs = config.GetConnectionString("Sqlite")
         ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite in appsettings.json");
@@ -164,7 +165,14 @@ CREATE TABLE IF NOT EXISTS password_resets (
     conn.Execute(idxPasswordResetUser);
     conn.Execute(idxPasswordResetExpires);
 
-    var seedEnabled = (config.GetValue<bool?>("Seed:Enabled") ?? true);
+    // Seed demo: disabilitato di default e consentito solo in Development a meno di opt-in esplicito.
+    var seedEnabled = config.GetValue<bool?>("Seed:Enabled") ?? false;
+    if (seedEnabled && !env.IsDevelopment())
+    {
+      logger.LogWarning("Seed:Enabled=true ignorato fuori da Development (sicurezza).");
+      seedEnabled = false;
+    }
+
     if (seedEnabled)
     {
       const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";

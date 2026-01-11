@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Dapper;
 using Xunit;
@@ -1398,7 +1400,7 @@ public class ApiTests : IAsyncLifetime
         // Act
         // Assert
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-        var ex = Assert.Throws<InvalidOperationException>(() => DbInitializer.EnsureCreated(config));
+        var ex = Assert.Throws<InvalidOperationException>(() => DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance));
         Assert.Contains("Missing ConnectionStrings:Sqlite", ex.Message);
     }
 
@@ -1419,8 +1421,8 @@ public class ApiTests : IAsyncLifetime
 
         try
         {
-            DbInitializer.EnsureCreated(config);
-            DbInitializer.EnsureCreated(config); // seconda chiamata non deve fallire
+            DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance);
+            DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance); // seconda chiamata non deve fallire
 
             using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
             conn.Open();
@@ -1714,7 +1716,7 @@ CREATE TABLE IF NOT EXISTS users (
                 await conn.ExecuteAsync(ddlOld);
             }
 
-            DbInitializer.EnsureCreated(config); // deve aggiungere la colonna mancante
+            DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance); // deve aggiungere la colonna mancante
 
             using var connCheck = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
             connCheck.Open();
