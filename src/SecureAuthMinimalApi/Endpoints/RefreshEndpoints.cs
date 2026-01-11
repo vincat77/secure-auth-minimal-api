@@ -7,6 +7,7 @@ using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -18,9 +19,10 @@ public static class RefreshEndpoints
     public static void MapRefresh(this WebApplication app, ILogger logger)
     {
         var isDevelopment = app.Environment.IsDevelopment();
-        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RefreshOptions>>().Value;
-        var rememberOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
-        var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
+        var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
+        var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
+        var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
+        var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 
         app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users) =>
         {
@@ -87,15 +89,17 @@ public static class RefreshEndpoints
             var refreshSameSiteValue = string.IsNullOrWhiteSpace(refreshOptions.SameSite) ? rememberOptions.SameSite : refreshOptions.SameSite;
             var rememberSameSite = ParseSameSite(refreshSameSiteValue, refreshOptions.AllowSameSiteNone || rememberOptions.AllowSameSiteNone, isDevelopment, logger, "Refresh");
             var rememberPath = refreshOptions.Path ?? rememberOptions.Path ?? "/refresh";
-            var requireSecure = isDevelopment ? refreshOptions.RequireSecure : true;
-            if (!isDevelopment && !refreshOptions.RequireSecure)
+            var requireSecureConfig = refreshOptions.RequireSecure || cookieConfig.RequireSecure;
+            var requireSecure = isDevelopment ? requireSecureConfig : true;
+            if (!isDevelopment && !requireSecureConfig)
             {
                 logger.LogWarning("Refresh:RequireSecure=false in ambiente non Development: forzato a true");
             }
 
             var deviceSameSite = ParseSameSite(deviceOptions.SameSite, deviceOptions.AllowSameSiteNone, isDevelopment, logger, "Device");
-            var deviceRequireSecure = isDevelopment ? deviceOptions.RequireSecure : true;
-            if (!isDevelopment && !deviceOptions.RequireSecure)
+            var deviceRequireSecureConfig = deviceOptions.RequireSecure || cookieConfig.RequireSecure;
+            var deviceRequireSecure = isDevelopment ? deviceRequireSecureConfig : true;
+            if (!isDevelopment && !deviceRequireSecureConfig)
             {
                 logger.LogWarning("Device:RequireSecure=false in ambiente non Development: forzato a true");
             }
