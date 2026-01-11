@@ -548,6 +548,7 @@ RefreshClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    pub
 RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.Designer.cs	/^partial class RefreshCountdownControl$/;"	c
 RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public RefreshCountdownControl()$/;"	m	class:RefreshCountdownControl
 RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^public partial class RefreshCountdownControl : UserControl$/;"	c
+RefreshCsrfHash	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? RefreshCsrfHash { get; init; }$/;"	p	class:RefreshToken
 RefreshEndpoints	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^public static class RefreshEndpoints$/;"	c
 RefreshOptions	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^public sealed class RefreshOptions$/;"	c
 RefreshResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record RefreshResponse(bool Ok, string? CsrfToken, bool? RememberIssued, bool/;"	m	class:ApiTests	file:

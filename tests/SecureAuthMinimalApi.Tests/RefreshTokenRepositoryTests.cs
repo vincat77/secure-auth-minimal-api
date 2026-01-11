@@ -58,6 +58,7 @@ public class RefreshTokenRepositoryTests : IAsyncLifetime
             SessionId = sessionId,
             Token = $"tok_{Guid.NewGuid():N}",
             TokenHash = null,
+            RefreshCsrfHash = null,
             CreatedAtUtc = now.ToString("O"),
             ExpiresAtUtc = now.AddDays(7).ToString("O"),
             RevokedAtUtc = null,

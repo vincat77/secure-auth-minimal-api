@@ -19,4 +19,5 @@ public sealed class RefreshToken
     public string? RotationParentId { get; init; }
     public string? RotationReason { get; init; }
     public string? TokenHash { get; init; }
+    public string? RefreshCsrfHash { get; init; }
 }

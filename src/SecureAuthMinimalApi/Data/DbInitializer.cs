@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   user_id TEXT NOT NULL,
   session_id TEXT NULL,
   token_hash TEXT NULL,
+  refresh_csrf_hash TEXT NULL,
   created_at_utc TEXT NOT NULL,
   expires_at_utc TEXT NOT NULL,
   revoked_at_utc TEXT NULL,
@@ -130,6 +131,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
   EnsureColumn(conn, "refresh_tokens", "device_id");
   EnsureColumn(conn, "refresh_tokens", "device_label");
   EnsureColumn(conn, "refresh_tokens", "token_hash");
+  EnsureColumn(conn, "refresh_tokens", "refresh_csrf_hash");
     conn.Execute("UPDATE user_sessions SET last_seen_utc = created_at_utc WHERE last_seen_utc IS NULL;");
     const string idxEmail = "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);";
     conn.Execute(idxEmail);
