@@ -372,6 +372,9 @@ InvokeAsync	src/SecureAuthMinimalApi/Filters/MfaFilter.cs	/^    public async Val
 InvokeAsync	src/SecureAuthMinimalApi/Filters/SessionFilter.cs	/^    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, Endpoin/;"	m	class:SessionFilter
 InvokeAsync	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context, RequestDelegate next)$/;"	m	class:CookieJwtAuthMiddleware
 InvokeAsync	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context, RequestDelegate next)$/;"	m	class:CsrfMiddleware
+InvokeAsync	src/SecureAuthMinimalApi/Middleware/PauseMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context)$/;"	m	class:PauseMiddleware
+InvokeAsync	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context)$/;"	m	class:RequestLoggingMiddleware
+InvokeAsync	src/SecureAuthMinimalApi/Middleware/SecurityHeadersMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context)$/;"	m	class:SecurityHeadersMiddleware
 InvokeChangePasswordAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static Task InvokeChangePasswordAsync(MainForm form)$/;"	m	class:MainFormChangePasswordTests	file:
 InvokePrivate	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static void InvokePrivate(object target, string name, params object[] args)$/;"	m	class:MainFormChangePasswordTests	file:
 IsLocked	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool IsLocked { get; init; }$/;"	p	class:User
@@ -588,6 +591,8 @@ PasswordReset_WeakPassword_FailsPolicy	tests/SecureAuthMinimalApi.Tests/Password
 Path	src/SecureAuthMinimalApi/Options/CookieConfigOptions.cs	/^    public string? Path { get; set; }$/;"	p	class:CookieConfigOptions
 Path	src/SecureAuthMinimalApi/Options/RefreshOptions.cs	/^    public string Path { get; set; } = "\/refresh";$/;"	p	class:RefreshOptions
 Path	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^    public string Path { get; set; } = "\/refresh";$/;"	p	class:RememberMeOptions
+PauseMiddleware	src/SecureAuthMinimalApi/Middleware/PauseMiddleware.cs	/^    public PauseMiddleware(RequestDelegate next, Func<bool> isPaused, ILogger<PauseMiddleware> l/;"	m	class:PauseMiddleware
+PauseMiddleware	src/SecureAuthMinimalApi/Middleware/PauseMiddleware.cs	/^public sealed class PauseMiddleware$/;"	c
 PersistDays	src/SecureAuthMinimalApi/Options/DeviceOptions.cs	/^    public int PersistDays { get; set; } = 90;$/;"	p	class:DeviceOptions
 PersistKeysToFileSystem	src/SecureAuthMinimalApi/Program.cs	/^    .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));$/;"	m
 PictureUrl	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? PictureUrl { get; init; }$/;"	p	class:User
@@ -670,6 +675,8 @@ Register_with_short_password_returns_bad_request	tests/SecureAuthMinimalApi.Test
 RememberChecked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public bool RememberChecked$/;"	p	class:ActionButtonsControl
 RememberMeOptions	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^public sealed class RememberMeOptions$/;"	c
 RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	class:MainForm	file:
+RequestLoggingMiddleware	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^    public RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logg/;"	m	class:RequestLoggingMiddleware
+RequestLoggingMiddleware	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^public sealed class RequestLoggingMiddleware$/;"	c
 RequireConfirmed	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetOptions
 RequireCsrf	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireCsrf(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireMfa	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireMfa(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
@@ -718,6 +725,8 @@ SecretKey	src/SecureAuthMinimalApi/Options/JwtOptions.cs	/^    public string Sec
 SecureAuthApiClient	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public SecureAuthApiClient(SecureAuthClientOptions options, HttpMessageHandler? handler = nu/;"	m	class:SecureAuthApiClient
 SecureAuthApiClient	clients/SecureAuthClient/SecureAuthApiClient.cs	/^public sealed class SecureAuthApiClient : IDisposable$/;"	c
 SecureAuthClientOptions	clients/SecureAuthClient/SecureAuthClientOptions.cs	/^public sealed class SecureAuthClientOptions$/;"	c
+SecurityHeadersMiddleware	src/SecureAuthMinimalApi/Middleware/SecurityHeadersMiddleware.cs	/^    public SecurityHeadersMiddleware(RequestDelegate next)$/;"	m	class:SecurityHeadersMiddleware
+SecurityHeadersMiddleware	src/SecureAuthMinimalApi/Middleware/SecurityHeadersMiddleware.cs	/^public sealed class SecurityHeadersMiddleware$/;"	c
 SecurityUtils	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^public static class SecurityUtils$/;"	c
 Seed	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    public static void Seed(SqliteConnection conn, bool seedDemo, bool isDevelopment, ILogger lo/;"	m	class:SmokeTestSeeder
 SeedDemoUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedDemoUser(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:
@@ -942,6 +951,7 @@ _http	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private readonly Htt
 _http	clients/WinFormsClient/MainForm.cs	/^  private HttpClient _http = null!;$/;"	f	class:MainForm	file:
 _idTokenViewer	clients/WinFormsClient/MainForm.Designer.cs	/^    private IdTokenViewerControl _idTokenViewer = null!;$/;"	f	class:MainForm	file:
 _isAuthenticated	clients/WinFormsClient/MainForm.cs	/^  private bool _isAuthenticated;$/;"	f	class:MainForm	file:
+_isPaused	src/SecureAuthMinimalApi/Middleware/PauseMiddleware.cs	/^    private readonly Func<bool> _isPaused;$/;"	f	class:PauseMiddleware	file:
 _issuedAt	clients/WinFormsClient/Controls/DeviceInfoControl.Designer.cs	/^    private Label _issuedAt = null!;$/;"	f	class:DeviceInfoControl	file:
 _issuer	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly string _issuer;$/;"	f	class:IdTokenService	file:
 _issuer	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    private readonly string _issuer;$/;"	f	class:JwtTokenService	file:
@@ -960,6 +970,8 @@ _log	clients/WinFormsClient/Controls/LogPanelControl.Designer.cs	/^    private L
 _logPanel	clients/WinFormsClient/MainForm.Designer.cs	/^    private LogPanelControl _logPanel = null!;$/;"	f	class:MainForm	file:
 _logger	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^    private readonly ILogger<CookieJwtAuthMiddleware> _logger;$/;"	f	class:CookieJwtAuthMiddleware	file:
 _logger	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private readonly ILogger<CsrfMiddleware> _logger;$/;"	f	class:CsrfMiddleware	file:
+_logger	src/SecureAuthMinimalApi/Middleware/PauseMiddleware.cs	/^    private readonly ILogger<PauseMiddleware> _logger;$/;"	f	class:PauseMiddleware	file:
+_logger	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^    private readonly ILogger<RequestLoggingMiddleware> _logger;$/;"	f	class:RequestLoggingMiddleware	file:
 _logger	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly ILogger<ExpiredCleanupService> _logger;$/;"	f	class:ExpiredCleanupService	file:
 _logger	src/SecureAuthMinimalApi/Services/NoopEmailService.cs	/^    private readonly ILogger<NoopEmailService> _logger;$/;"	f	class:NoopEmailService	file:
 _loginButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^  private Button _loginButton = null!;$/;"	f	class:ActionButtonsControl	file:
@@ -971,6 +983,9 @@ _mfaPanel	clients/WinFormsClient/MainForm.Designer.cs	/^    private MfaPanelCont
 _mfaStatus	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^    private Label _mfaStatus = null!;$/;"	f	class:MfaPanelControl	file:
 _nameInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _nameInput = null!;$/;"	f	class:MainForm	file:
 _newPasswordInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _newPasswordInput = null!;$/;"	f	class:MainForm	file:
+_next	src/SecureAuthMinimalApi/Middleware/PauseMiddleware.cs	/^    private readonly RequestDelegate _next;$/;"	f	class:PauseMiddleware	file:
+_next	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^    private readonly RequestDelegate _next;$/;"	f	class:RequestLoggingMiddleware	file:
+_next	src/SecureAuthMinimalApi/Middleware/SecurityHeadersMiddleware.cs	/^    private readonly RequestDelegate _next;$/;"	f	class:SecurityHeadersMiddleware	file:
 _note	clients/WinFormsClient/Controls/DeviceInfoControl.Designer.cs	/^    private Label _note = null!;$/;"	f	class:DeviceInfoControl	file:
 _onDispose	clients/WinFormsClient/MainForm.cs	/^    private readonly Action _onDispose;$/;"	f	class:MainForm.BusyScope	file:
 _options	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly CleanupOptions _options;$/;"	f	class:ExpiredCleanupService	file:
@@ -1037,26 +1052,6 @@ _user	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    privat
 _userInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _userInput = null!;$/;"	f	class:MainForm	file:
 _username	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _username;$/;"	f	class:MainForm	file:
 _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly TokenValidationParameters _validation;$/;"	f	class:IdTokenService	file:
-app.MapChangeEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangeEmail();$/;"	m
-app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
-app.MapConfirmEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmEmail();$/;"	m
-app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
-app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
-app.MapIntrospect	src/SecureAuthMinimalApi/Program.cs	/^app.MapIntrospect();$/;"	m
-app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
-app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMat/;"	m
-app.MapLogout	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogout();$/;"	m
-app.MapLogoutAll	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogoutAll();$/;"	m
-app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m
-app.MapMfaDisable	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaDisable();$/;"	m
-app.MapMfaSetup	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaSetup();$/;"	m
-app.MapPasswordReset	src/SecureAuthMinimalApi/Program.cs	/^app.MapPasswordReset();$/;"	m
-app.MapReady	src/SecureAuthMinimalApi/Program.cs	/^app.MapReady();$/;"	m
-app.MapRefresh	src/SecureAuthMinimalApi/Program.cs	/^app.MapRefresh();$/;"	m
-app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister(minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol, forc/;"	m
-app.UseCookieJwtAuth	src/SecureAuthMinimalApi/Program.cs	/^app.UseCookieJwtAuth();$/;"	m
-app.UseCsrfProtection	src/SecureAuthMinimalApi/Program.cs	/^app.UseCsrfProtection();$/;"	m
-async	src/SecureAuthMinimalApi/Program.cs	/^app.Use(async (ctx, next) =>$/;"	m
 btnConfirmEmail	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnConfirmEmail = null!;$/;"	f	class:MainForm	file:
 btnConfirmEmail_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnConfirmEmail_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
 btnConfirmMfa	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnConfirmMfa = null!;$/;"	f	class:MainForm	file:

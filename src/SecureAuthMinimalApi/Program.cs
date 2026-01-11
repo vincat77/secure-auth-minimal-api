@@ -186,52 +186,19 @@ app.Lifetime.ApplicationStarted.Register(() =>
     logger.LogInformation("SecureAuthMinimalApi in ascolto su: {Urls}", string.Join(", ", addresses));
 });
 
+// Middleware ordine personalizzato
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 // Hardening header solo fuori da Development.
 if (!isDevelopment)
 {
     app.UseHsts();
     app.UseHttpsRedirection();
-    app.Use(async (ctx, next) =>
-    {
-        ctx.Response.Headers["X-Frame-Options"] = "DENY";
-        ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
-        ctx.Response.Headers["Referrer-Policy"] = "no-referrer";
-        ctx.Response.Headers["X-XSS-Protection"] = "0";
-        ctx.Response.Headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
-        await next();
-    });
+    app.UseMiddleware<SecurityHeadersMiddleware>();
 }
 
-// Converte UnauthorizedAccessException in 401 (sollevata solo dagli helper degli endpoint protetti).
-app.Use(async (ctx, next) =>
-{
-    try
-    {
-        logger.LogInformation("Richiesta inizio {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
-        await next();
-        logger.LogInformation("Richiesta fine {Status} {Method} {Path}", ctx.Response.StatusCode, ctx.Request.Method, ctx.Request.Path);
-    }
-    catch (UnauthorizedAccessException)
-    {
-        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        ctx.Response.ContentType = "application/json";
-        await ctx.Response.WriteAsJsonAsync(new { ok = false, error = "unauthorized" });
-        logger.LogWarning("Richiesta fine 401 Non Autorizzato {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
-    }
-});
-
-app.Use(async (ctx, next) =>
-{
-    if (Volatile.Read(ref pauseFlag) == 1)
-    {
-        logger.LogWarning("Richiesta respinta: applicazione in pausa {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
-        ctx.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-        await ctx.Response.WriteAsJsonAsync(new { ok = false, error = "paused" });
-        return;
-    }
-
-    await next();
-});
+// Middleware pausa basato su flag condiviso
+app.UseMiddleware<PauseMiddleware>(new Func<bool>(() => Volatile.Read(ref pauseFlag) == 1));
 
 // --- ORDINE DEI MIDDLEWARE (OBBLIGATORIO) ---
 // 1) Cookie JWT auth popola HttpContext.Items["session"]
