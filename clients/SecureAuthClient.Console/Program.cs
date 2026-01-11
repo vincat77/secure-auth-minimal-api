@@ -9,6 +9,8 @@ var demoUser = Environment.GetEnvironmentVariable("SECUREAUTH_DEMO_USER") ?? "de
 var demoPass = Environment.GetEnvironmentVariable("SECUREAUTH_DEMO_PASS") ?? "123456789012";
 var unconfUser = Environment.GetEnvironmentVariable("SECUREAUTH_UNCONF_USER") ?? "smoke-unconfirmed";
 var unconfPass = Environment.GetEnvironmentVariable("SECUREAUTH_UNCONF_PASS") ?? "Unconfirmed123!";
+var perfLoginCount = int.TryParse(Environment.GetEnvironmentVariable("SECUREAUTH_PERF_LOGIN"), out var l) ? l : 20;
+var perfRegisterCount = int.TryParse(Environment.GetEnvironmentVariable("SECUREAUTH_PERF_REGISTER"), out var r) ? r : 20;
 
 var handler = new HttpClientHandler
 {
@@ -70,6 +72,9 @@ var logoutUnconf = await api.LogoutAsync();
 Assert(logoutUnconf.Ok, "Logout unconfirmed");
 Dump(logoutUnconf);
 
+Console.WriteLine($"\n== Perf test (registrations={perfRegisterCount}, logins={perfLoginCount}) ==");
+await RunPerfAsync(baseUrl, perfRegisterCount, perfLoginCount, options.UserAgent);
+
 Console.WriteLine("\nSmoke console completato.");
 
 static async Task GetHealthAsync(HttpClient http)
@@ -107,5 +112,49 @@ static void Assert(bool condition, string name)
     if (!condition)
     {
         throw new InvalidOperationException($"Assertion failed: {name}");
+    }
+}
+
+static async Task RunPerfAsync(string baseUrl, int registrations, int logins, string userAgent)
+{
+    using var handler = new HttpClientHandler
+    {
+        CookieContainer = new CookieContainer(),
+        UseCookies = true,
+        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+    using var http = new HttpClient(handler) { BaseAddress = new Uri(baseUrl) };
+    http.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+    http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+    if (registrations > 0)
+    {
+        var tasks = Enumerable.Range(0, registrations).Select(i =>
+        {
+            var username = $"perfuser{i}_{Guid.NewGuid():N}".Substring(0, 20);
+            var payload = new
+            {
+                username,
+                password = "PerfUser123!",
+                email = $"{username}@example.com"
+            };
+            return http.PostAsync("/register", new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+        }).ToArray();
+
+        await Task.WhenAll(tasks);
+        var ok = tasks.Count(t => t.Result.IsSuccessStatusCode);
+        Console.WriteLine($"Registrazioni completate: {ok}/{registrations}");
+    }
+
+    if (logins > 0)
+    {
+        var loginPayload = new { username = "demo", password = "123456789012", rememberMe = false };
+        var tasks = Enumerable.Range(0, logins).Select(_ =>
+            http.PostAsync("/login", new StringContent(JsonSerializer.Serialize(loginPayload), Encoding.UTF8, "application/json"))
+        ).ToArray();
+        await Task.WhenAll(tasks);
+        var ok = tasks.Count(t => t.Result.IsSuccessStatusCode);
+        Console.WriteLine($"Login completati: {ok}/{logins}");
     }
 }

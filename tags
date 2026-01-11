@@ -678,6 +678,8 @@ Rotate_revokes_old_and_inserts_new	tests/SecureAuthMinimalApi.Tests/RefreshToken
 RotationParentId	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? RotationParentId { get; init; }$/;"	p	class:RefreshToken
 RotationReason	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? RotationReason { get; init; }$/;"	p	class:RefreshToken
 RunOnceAsync	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private async Task RunOnceAsync(int batchSize, int maxIterations, CancellationToken ct)$/;"	m	class:ExpiredCleanupService	file:
+RunPerfAsync	clients/SecureAuthClient.Console/Program.cs	/^await RunPerfAsync(baseUrl, perfRegisterCount, perfLoginCount, options.UserAgent);$/;"	m
+RunPerfAsync	clients/SecureAuthClient.Console/Program.cs	/^static async Task RunPerfAsync(string baseUrl, int registrations, int logins, string userAgent)$/;"	m
 RunStaAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static Task RunStaAsync(Func<Task> action)$/;"	m	class:MainFormChangePasswordTests	file:
 SameSite	src/SecureAuthMinimalApi/Options/DeviceOptions.cs	/^    public string SameSite { get; set; } = "Strict";$/;"	p	class:DeviceOptions
 SameSite	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^    public string SameSite { get; set; } = "Strict";$/;"	p	class:RememberMeOptions
