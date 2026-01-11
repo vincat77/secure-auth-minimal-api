@@ -601,7 +601,7 @@ RandomBytes	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^    public sta
 RateLimitRequests	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetOptions
 RateLimitWindowMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetOptions
 RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints
-ReadAndValidateEmailAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<(string? Raw, string? Normalized, IResult? ErrorResult)> ReadAndVa/;"	m	class:ChangeEmailEndpoints	file:
+ReadAndValidateEmailAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<(EmailChangeInput? Email, IResult? ErrorResult)> ReadAndValidateEm/;"	m	class:ChangeEmailEndpoints	file:
 ReadyEndpoints	src/SecureAuthMinimalApi/Endpoints/ReadyEndpoints.cs	/^public static class ReadyEndpoints$/;"	c
 Ready_endpoint_returns_200_when_db_and_jwt_are_valid	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_200_when_db_and_jwt_are_valid()$/;"	m	class:ApiTests
 Ready_endpoint_returns_503_when_db_unreachable	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_503_when_db_unreachable()$/;"	m	class:ApiTests

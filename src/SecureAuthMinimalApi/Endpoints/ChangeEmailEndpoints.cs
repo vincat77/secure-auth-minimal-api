@@ -28,14 +28,14 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (user is null)
                 return Results.Unauthorized();
 
-            var eligibility = await users.EnsureUserEligibleAsync(user, emailInput.Normalized!, ctx.RequestAborted);
+            var eligibility = await users.EnsureUserEligibleAsync(user, emailInput.Email!.Normalized, ctx.RequestAborted);
             if (eligibility is not null)
                 return eligibility;
 
             var context = new EmailChangeContext(
                 Users: users,
                 User: user,
-                Email: new EmailChangeInput(emailInput.Raw!, emailInput.Normalized!),
+                Email: emailInput.Email!.Value,
                 IsDevelopment: env.IsDevelopment(),
                 Logger: logger,
                 CancellationToken: ctx.RequestAborted);
@@ -46,23 +46,23 @@ namespace SecureAuthMinimalApi.Endpoints;
         .RequireCsrf();
     }
 
-    private static async Task<(string? Raw, string? Normalized, IResult? ErrorResult)> ReadAndValidateEmailAsync(this HttpContext ctx, ILogger logger)
+    private static async Task<(EmailChangeInput? Email, IResult? ErrorResult)> ReadAndValidateEmailAsync(this HttpContext ctx, ILogger logger)
     {
         var req = await ctx.Request.ReadFromJsonAsync<ChangeEmailRequest>();
         var newEmailRaw = req?.NewEmail;
         if (string.IsNullOrWhiteSpace(newEmailRaw))
         {
-            return (null, null, Results.BadRequest(new { ok = false, error = "invalid_input" }));
+            return (null, Results.BadRequest(new { ok = false, error = "invalid_input" }));
         }
 
         var normalized = NormalizeEmail(newEmailRaw);
         if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('@'))
         {
-            return (null, null, Results.BadRequest(new { ok = false, error = "email_invalid" }));
+            return (null, Results.BadRequest(new { ok = false, error = "email_invalid" }));
         }
 
         logger.LogDebug("Cambio email: input normalizzato {Email}", normalized);
-        return (newEmailRaw, normalized, null);
+        return (new EmailChangeInput(newEmailRaw, normalized), null);
     }
 
     private static async Task<IResult?> EnsureUserEligibleAsync(this UserRepository users, User user, string normalizedEmail, CancellationToken ct)
