@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
@@ -26,6 +25,9 @@ namespace SecureAuthMinimalApi.Endpoints;
             var includeTokenInResponse = resetConfig.IncludeTokenInResponseForTesting && env.IsDevelopment();
             var rateLimitEnabled = resetConfig.RateLimitRequests > 0 && resetConfig.RateLimitWindowMinutes > 0;
             var rateLimitWindow = TimeSpan.FromMinutes(resetConfig.RateLimitWindowMinutes <= 0 ? 15 : resetConfig.RateLimitWindowMinutes);
+            var connStrings = app.Services.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
+            var sqliteConnString = connStrings.Sqlite
+                ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite for password reset");
 
             app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
             {
@@ -191,7 +193,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             var nowIso = DateTime.UtcNow.ToString("O");
 
             // Transazione best-effort: MarkUsed + Update password + revoke session/refresh.
-            await using var db = new Microsoft.Data.Sqlite.SqliteConnection(ctx.RequestServices.GetRequiredService<IConfiguration>().GetConnectionString("Sqlite"));
+            await using var db = new Microsoft.Data.Sqlite.SqliteConnection(sqliteConnString);
             await db.OpenAsync(ctx.RequestAborted);
             await using var tx = await db.BeginTransactionAsync(ctx.RequestAborted);
             try

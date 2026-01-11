@@ -1,4 +1,6 @@
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
+using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -9,17 +11,17 @@ public static class ReadyEndpoints
     /// </summary>
     public static void MapReady(this WebApplication app)
     {
-        app.MapGet("/ready", async (IConfiguration config) =>
+        app.MapGet("/ready", async (IOptions<ConnectionStringsOptions> connOpts, IOptions<JwtOptions> jwtOpts) =>
         {
             try
             {
-                var connString = config.GetConnectionString("Sqlite");
+                var connString = connOpts.Value.Sqlite;
                 if (string.IsNullOrWhiteSpace(connString))
                     return Results.Json(new { ok = false, error = "db_config_missing" }, statusCode: StatusCodes.Status503ServiceUnavailable);
 
-                var iss = config["Jwt:Issuer"];
-                var aud = config["Jwt:Audience"];
-                var secret = config["Jwt:SecretKey"];
+                var iss = jwtOpts.Value.Issuer;
+                var aud = jwtOpts.Value.Audience;
+                var secret = jwtOpts.Value.SecretKey;
                 if (string.IsNullOrWhiteSpace(iss) || string.IsNullOrWhiteSpace(aud) || string.IsNullOrWhiteSpace(secret) || secret.Trim().Length < 32)
                     return Results.Json(new { ok = false, error = "invalid_config" }, statusCode: StatusCodes.Status503ServiceUnavailable);
 

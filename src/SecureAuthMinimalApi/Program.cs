@@ -71,6 +71,7 @@ builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cle
 builder.Services.Configure<RefreshOptions>(builder.Configuration.GetSection("Refresh"));
 builder.Services.Configure<CookieConfigOptions>(builder.Configuration.GetSection("Cookie"));
 builder.Services.Configure<SessionConfigOptions>(builder.Configuration.GetSection("Session"));
+builder.Services.Configure<ConnectionStringsOptions>(builder.Configuration.GetSection("ConnectionStrings"));
 builder.Services.Configure<PasswordPolicyOptions>(builder.Configuration.GetSection("PasswordPolicy"));
 builder.Services.Configure<RememberMeOptions>(builder.Configuration.GetSection("RememberMe"));
 builder.Services.Configure<DeviceOptions>(builder.Configuration.GetSection("Device"));
