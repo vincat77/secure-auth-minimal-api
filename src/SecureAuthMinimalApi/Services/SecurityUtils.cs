@@ -19,4 +19,15 @@ public static class SecurityUtils
             return false;
         return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
+
+    /// <summary>
+    /// Calcola l'hash SHA256 in hex lower-case del token.
+    /// </summary>
+    public static string HashToken(string token)
+    {
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(token ?? string.Empty);
+        var hash = sha.ComputeHash(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
 }

@@ -107,7 +107,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             var expMinutes = resetConfig.ExpirationMinutes <= 0 ? 30 : resetConfig.ExpirationMinutes;
             var expires = now.AddMinutes(expMinutes);
             var token = GenerateToken();
-            var tokenHash = HashToken(token);
+            var tokenHash = SecurityUtils.HashToken(token);
             var reset = new PasswordReset
             {
                 Id = Guid.NewGuid().ToString("N"),
@@ -153,7 +153,7 @@ namespace SecureAuthMinimalApi.Endpoints;
                 return Results.BadRequest(new { ok = false, error = "invalid_input" });
             }
 
-            var tokenHash = HashToken(req.Token!);
+            var tokenHash = SecurityUtils.HashToken(req.Token!);
             var reset = await resets.GetByTokenHashAsync(tokenHash, ctx.RequestAborted);
             if (reset is null || !DateTime.TryParse(reset.ExpiresAtUtc, out var exp) || exp.ToUniversalTime() <= DateTime.UtcNow || !string.IsNullOrWhiteSpace(reset.UsedAtUtc))
             {
@@ -229,14 +229,6 @@ namespace SecureAuthMinimalApi.Endpoints;
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
-    }
-
-    private static string HashToken(string token)
-    {
-        using var sha = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(token);
-        var hash = sha.ComputeHash(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     private static class RateLimiter

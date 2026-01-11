@@ -166,7 +166,7 @@ public static class ConfirmMfaEndpoints
                 var rememberPath = refreshOptions.Path ?? rememberOptions.Path ?? "/refresh";
                 var refreshToken = Base64Url(RandomBytes(32));
                 refreshCsrfToken = Base64Url(RandomBytes(32));
-                var refreshCsrfHash = HashToken(refreshCsrfToken);
+                var refreshCsrfHash = SecurityUtils.HashToken(refreshCsrfToken);
                 var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
                 var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
 
@@ -263,11 +263,4 @@ public static class ConfirmMfaEndpoints
         return sameSite;
     }
 
-    private static string HashToken(string token)
-    {
-        using var sha = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(token);
-        var hash = sha.ComputeHash(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
-    }
 }
