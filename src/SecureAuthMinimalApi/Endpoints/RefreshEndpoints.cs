@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
@@ -14,7 +15,7 @@ public static class RefreshEndpoints
     /// <summary>
     /// Mappa l'endpoint di refresh che ruota il token di refresh e rilascia nuova sessione/access token.
     /// </summary>
-    public static void MapRefresh(this WebApplication app, ILogger logger)
+    public static void MapRefresh(this WebApplication app)
     {
         var isDevelopment = app.Environment.IsDevelopment();
         var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
@@ -22,7 +23,7 @@ public static class RefreshEndpoints
         var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 
-        app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users) =>
+        app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users, ILogger logger) =>
         {
             var cookieName = refreshOptions.CookieName ?? rememberOptions.CookieName ?? "refresh_token";
             var deviceCookieName = deviceOptions.CookieName ?? "device_id";

@@ -9,11 +9,11 @@ public static class LogoutEndpoints
     /// <summary>
     /// Mappa l'endpoint di logout che revoca la sessione corrente e pulisce i cookie.
     /// </summary>
-    public static void MapLogout(this WebApplication app, ILogger logger)
+    public static void MapLogout(this WebApplication app)
     {
         var isDevelopment = app.Environment.IsDevelopment();
 
-        app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions) =>
+        app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions, ILogger logger) =>
         {
             var session = ctx.GetRequiredSession();
 

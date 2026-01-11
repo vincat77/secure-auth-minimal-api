@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
@@ -9,11 +10,11 @@ public static class LogoutAllEndpoints
     /// <summary>
     /// Mappa l'endpoint di logout globale che revoca refresh e sessione corrente.
     /// </summary>
-    public static void MapLogoutAll(this WebApplication app, ILogger logger)
+    public static void MapLogoutAll(this WebApplication app)
     {
         var isDevelopment = app.Environment.IsDevelopment();
 
-        app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo) =>
+        app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo, ILogger logger) =>
         {
             var session = ctx.GetRequiredSession();  
 

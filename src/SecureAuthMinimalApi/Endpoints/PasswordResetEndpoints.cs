@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
@@ -17,7 +18,7 @@ namespace SecureAuthMinimalApi.Endpoints;
     /// </summary>
     public static class PasswordResetEndpoints
     {
-        public static void MapPasswordReset(this WebApplication app, ILogger logger)
+        public static void MapPasswordReset(this WebApplication app)
         {
             var resetOptions = app.Services.GetRequiredService<IOptions<PasswordResetOptions>>().Value;
             var env = app.Services.GetRequiredService<IHostEnvironment>();
@@ -28,7 +29,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             var sqliteConnString = connStrings.Sqlite
                 ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite for password reset");
 
-            app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService) =>
+            app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService, ILogger logger) =>
             {
                 // Input essenziale: email normalizzata; risposta sempre 200 per non leakare esistenza account/stato conferma.
                 var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
@@ -143,7 +144,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             return Results.Ok(new { ok = true });
         });
 
-        app.MapPost("/password-reset/confirm", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, SessionRepository sessions, RefreshTokenRepository refreshRepo) =>
+        app.MapPost("/password-reset/confirm", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, SessionRepository sessions, RefreshTokenRepository refreshRepo, ILogger logger) =>
         {
             // Valida payload; rifiuta token vuoti e mismatch password con 400 uniforme.
             var req = await ctx.Request.ReadFromJsonAsync<PasswordResetConfirmRequest>();

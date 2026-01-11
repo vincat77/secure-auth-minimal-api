@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
@@ -18,7 +19,6 @@ public static class LoginEndpoints
     /// </summary>
     public static void MapLogin(
         this WebApplication app,
-        ILogger logger,
         bool forceLowerUsername,
         bool emailConfirmationRequired,
         int mfaChallengeMinutes,
@@ -33,7 +33,7 @@ public static class LoginEndpoints
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
         var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
 
-        app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo) =>
+        app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo, ILogger logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
             var username = NormalizeUsername(req?.Username, forceLowerUsername);

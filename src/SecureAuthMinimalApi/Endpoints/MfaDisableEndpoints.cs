@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Utilities;
 namespace SecureAuthMinimalApi.Endpoints;
@@ -7,9 +8,9 @@ public static class MfaDisableEndpoints
     /// <summary>
     /// Mappa l'endpoint di disabilitazione MFA che azzera il segreto TOTP.
     /// </summary>
-    public static void MapMfaDisable(this WebApplication app, ILogger logger)
+    public static void MapMfaDisable(this WebApplication app)
     {
-        app.MapPost("/mfa/disable", async (HttpContext ctx, UserRepository users) =>
+        app.MapPost("/mfa/disable", async (HttpContext ctx, UserRepository users, ILogger logger) =>
         {
             var session = ctx.GetRequiredSession();
             var user = await users.GetByIdAsync(session.UserId, ctx.RequestAborted);

@@ -1,5 +1,8 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
@@ -12,7 +15,6 @@ public static class RegisterEndpoints
     /// </summary>
     public static void MapRegister(
         this WebApplication app,
-        ILogger logger,
         int minPasswordLength,
         bool requireUpper,
         bool requireLower,
@@ -20,7 +22,7 @@ public static class RegisterEndpoints
         bool requireSymbol,
         bool forceLowerUsername)
     {
-        app.MapPost("/register", async (HttpContext ctx, UserRepository users) =>
+        app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger logger, IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
             var username = NormalizeUsername(req?.Username, forceLowerUsername);
@@ -107,6 +109,19 @@ public static class RegisterEndpoints
 
             await users.CreateAsync(user, ctx.RequestAborted);
             logger.LogInformation("Registrazione OK username={Username} userId={UserId} created={Created} emailToken={EmailToken} exp={EmailExp}", user.Username, user.Id, user.CreatedAtUtc, emailConfirmToken, emailConfirmExpires.ToString("O"));
+
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                try
+                {
+                    await emailService.SendEmailConfirmationAsync(user.Email!, emailConfirmToken, emailConfirmExpires.ToString("O"));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Errore invio email conferma per registrazione userId={UserId}", user.Id);
+                }
+            }
+
             return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email, emailConfirmToken, emailConfirmExpiresUtc = emailConfirmExpires.ToString("O") });
         });
     }

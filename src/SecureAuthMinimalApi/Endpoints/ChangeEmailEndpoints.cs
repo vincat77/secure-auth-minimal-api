@@ -13,11 +13,11 @@ namespace SecureAuthMinimalApi.Endpoints;
 /// </summary>
 public static class ChangeEmailEndpoints
 {
-    public static void MapChangeEmail(this WebApplication app, ILogger logger)
+    public static void MapChangeEmail(this WebApplication app)
     {
         var env = app.Environment;
 
-        app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService) =>
+        app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService, ILogger logger) =>
         {
             // 1) Input parsing/normalizzazione email
             var emailInput = await ctx.ReadAndValidateEmailAsync(logger);

@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Services;
@@ -11,9 +12,9 @@ public static class IntrospectEndpoints
     /// <summary>
     /// Mappa l'endpoint di introspezione che restituisce lo stato della sessione associata al token.
     /// </summary>
-    public static void MapIntrospect(this WebApplication app, ILogger logger)
+    public static void MapIntrospect(this WebApplication app)
     {
-        app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions) =>
+        app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions, ILogger logger) =>
         {
             if (!AuthHelpers.TryGetToken(ctx, out var token))
                 return Results.Unauthorized();

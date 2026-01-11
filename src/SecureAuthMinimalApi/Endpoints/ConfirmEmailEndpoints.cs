@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 
@@ -8,9 +9,9 @@ public static class ConfirmEmailEndpoints
     /// <summary>
     /// Mappa l'endpoint di conferma email che valida il token e marca l'utente come confermato.
     /// </summary>
-    public static void MapConfirmEmail(this WebApplication app, ILogger logger)
+    public static void MapConfirmEmail(this WebApplication app)
     {
-        app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users) =>
+        app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users, ILogger logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
             if (string.IsNullOrWhiteSpace(req?.Token))

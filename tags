@@ -490,22 +490,22 @@ MainForm	clients/WinFormsClient/MainForm.Designer.cs	/^public partial class Main
 MainForm	clients/WinFormsClient/MainForm.cs	/^  public MainForm()$/;"	m	class:MainForm
 MainForm	clients/WinFormsClient/MainForm.cs	/^public sealed partial class MainForm : Form$/;"	c
 MainFormChangePasswordTests	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^public class MainFormChangePasswordTests$/;"	c
-MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static void MapChangeEmail(this WebApplication app, ILogger logger)$/;"	m	class:ChangeEmailEndpoints
+MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static void MapChangeEmail(this WebApplication app)$/;"	m	class:ChangeEmailEndpoints
 MapChangePassword	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    public static void MapChangePassword(this WebApplication app)$/;"	m	class:ChangePasswordEndpoints
-MapConfirmEmail	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    public static void MapConfirmEmail(this WebApplication app, ILogger logger)$/;"	m	class:ConfirmEmailEndpoints
+MapConfirmEmail	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    public static void MapConfirmEmail(this WebApplication app)$/;"	m	class:ConfirmEmailEndpoints
 MapConfirmMfa	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    public static void MapConfirmMfa($/;"	m	class:ConfirmMfaEndpoints
 MapHealth	src/SecureAuthMinimalApi/Endpoints/HealthEndpoints.cs	/^    public static void MapHealth(this WebApplication app)$/;"	m	class:HealthEndpoints
-MapIntrospect	src/SecureAuthMinimalApi/Endpoints/IntrospectEndpoints.cs	/^    public static void MapIntrospect(this WebApplication app, ILogger logger)$/;"	m	class:IntrospectEndpoints
+MapIntrospect	src/SecureAuthMinimalApi/Endpoints/IntrospectEndpoints.cs	/^    public static void MapIntrospect(this WebApplication app)$/;"	m	class:IntrospectEndpoints
 MapLive	src/SecureAuthMinimalApi/Endpoints/LiveEndpoints.cs	/^    public static void MapLive(this WebApplication app)$/;"	m	class:LiveEndpoints
 MapLogin	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    public static void MapLogin($/;"	m	class:LoginEndpoints
-MapLogout	src/SecureAuthMinimalApi/Endpoints/LogoutEndpoints.cs	/^    public static void MapLogout(this WebApplication app, ILogger logger)$/;"	m	class:LogoutEndpoints
-MapLogoutAll	src/SecureAuthMinimalApi/Endpoints/LogoutAllEndpoints.cs	/^    public static void MapLogoutAll(this WebApplication app, ILogger logger)$/;"	m	class:LogoutAllEndpoints
+MapLogout	src/SecureAuthMinimalApi/Endpoints/LogoutEndpoints.cs	/^    public static void MapLogout(this WebApplication app)$/;"	m	class:LogoutEndpoints
+MapLogoutAll	src/SecureAuthMinimalApi/Endpoints/LogoutAllEndpoints.cs	/^    public static void MapLogoutAll(this WebApplication app)$/;"	m	class:LogoutAllEndpoints
 MapMe	src/SecureAuthMinimalApi/Endpoints/MeEndpoints.cs	/^    public static void MapMe(this WebApplication app)$/;"	m	class:MeEndpoints
-MapMfaDisable	src/SecureAuthMinimalApi/Endpoints/MfaDisableEndpoints.cs	/^    public static void MapMfaDisable(this WebApplication app, ILogger logger)$/;"	m	class:MfaDisableEndpoints
+MapMfaDisable	src/SecureAuthMinimalApi/Endpoints/MfaDisableEndpoints.cs	/^    public static void MapMfaDisable(this WebApplication app)$/;"	m	class:MfaDisableEndpoints
 MapMfaSetup	src/SecureAuthMinimalApi/Endpoints/MfaSetupEndpoints.cs	/^    public static void MapMfaSetup(this WebApplication app)$/;"	m	class:MfaSetupEndpoints
-MapPasswordReset	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        public static void MapPasswordReset(this WebApplication app, ILogger logger)$/;"	m	class:PasswordResetEndpoints
+MapPasswordReset	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        public static void MapPasswordReset(this WebApplication app)$/;"	m	class:PasswordResetEndpoints
 MapReady	src/SecureAuthMinimalApi/Endpoints/ReadyEndpoints.cs	/^    public static void MapReady(this WebApplication app)$/;"	m	class:ReadyEndpoints
-MapRefresh	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    public static void MapRefresh(this WebApplication app, ILogger logger)$/;"	m	class:RefreshEndpoints
+MapRefresh	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    public static void MapRefresh(this WebApplication app)$/;"	m	class:RefreshEndpoints
 MapRegister	src/SecureAuthMinimalApi/Endpoints/RegisterEndpoints.cs	/^    public static void MapRegister($/;"	m	class:RegisterEndpoints
 MarkUsedAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task MarkUsedAsync(string id, CancellationToken ct)$/;"	m	class:MfaChallengeRepository
 MarkUsedAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> MarkUsedAsync(string id, string usedAtIso, CancellationToken ct, IDbT/;"	m	class:PasswordResetRepository
@@ -1037,15 +1037,23 @@ _user	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    privat
 _userInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _userInput = null!;$/;"	f	class:MainForm	file:
 _username	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _username;$/;"	f	class:MainForm	file:
 _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly TokenValidationParameters _validation;$/;"	f	class:IdTokenService	file:
+app.MapChangeEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangeEmail();$/;"	m
 app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
-app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(logger, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
+app.MapConfirmEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmEmail();$/;"	m
+app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
 app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
+app.MapIntrospect	src/SecureAuthMinimalApi/Program.cs	/^app.MapIntrospect();$/;"	m
 app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
-app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(logger, forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequ/;"	m
+app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMat/;"	m
+app.MapLogout	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogout();$/;"	m
+app.MapLogoutAll	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogoutAll();$/;"	m
 app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m
+app.MapMfaDisable	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaDisable();$/;"	m
 app.MapMfaSetup	src/SecureAuthMinimalApi/Program.cs	/^app.MapMfaSetup();$/;"	m
+app.MapPasswordReset	src/SecureAuthMinimalApi/Program.cs	/^app.MapPasswordReset();$/;"	m
 app.MapReady	src/SecureAuthMinimalApi/Program.cs	/^app.MapReady();$/;"	m
-app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister(logger, minPasswordLength, requireUpper, requireLower, requireDigit, requireSymb/;"	m
+app.MapRefresh	src/SecureAuthMinimalApi/Program.cs	/^app.MapRefresh();$/;"	m
+app.MapRegister	src/SecureAuthMinimalApi/Program.cs	/^app.MapRegister(minPasswordLength, requireUpper, requireLower, requireDigit, requireSymbol, forc/;"	m
 app.UseCookieJwtAuth	src/SecureAuthMinimalApi/Program.cs	/^app.UseCookieJwtAuth();$/;"	m
 app.UseCsrfProtection	src/SecureAuthMinimalApi/Program.cs	/^app.UseCsrfProtection();$/;"	m
 async	src/SecureAuthMinimalApi/Program.cs	/^app.Use(async (ctx, next) =>$/;"	m
