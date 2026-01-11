@@ -1,4 +1,4 @@
-namespace SecureAuthMinimalApi;
+namespace SecureAuthMinimalApi.Models;
 
 /// <summary>
 /// DTO per la conferma email tramite token.

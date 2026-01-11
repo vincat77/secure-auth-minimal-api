@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using SecureAuthMinimalApi;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 

@@ -1,4 +1,4 @@
-namespace SecureAuthMinimalApi;
+namespace SecureAuthMinimalApi.Models;
 
 /// <summary>
 /// DTO per la richiesta di login contenente credenziali, MFA e flag remember-me.

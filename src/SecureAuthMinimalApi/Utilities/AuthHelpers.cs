@@ -1,6 +1,6 @@
 using SecureAuthMinimalApi.Models;
 
-namespace SecureAuthMinimalApi;
+namespace SecureAuthMinimalApi.Utilities;
 
 /// <summary>
 /// Helper condivisi per la gestione di sessioni, token e validazioni di password.

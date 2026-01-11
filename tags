@@ -60,7 +60,7 @@ AttemptCount	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public int At
 Audience	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public string? Audience { get; set; }$/;"	p	class:IdTokenOptions
 Audience	src/SecureAuthMinimalApi/Options/JwtOptions.cs	/^    public string Audience { get; set; } = "";$/;"	p	class:JwtOptions
 AuditAsync	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static Task AuditAsync(LoginAuditRepository repo, string username, string outcome, Ht/;"	m	class:EndpointUtilities
-AuthHelpers	src/SecureAuthMinimalApi/AuthHelpers.cs	/^public static class AuthHelpers$/;"	c
+AuthHelpers	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^public static class AuthHelpers$/;"	c
 Base32Decode	clients/WinFormsClient/MainForm.cs	/^  private static byte[] Base32Decode(string input)$/;"	m	class:MainForm	file:
 Base64Url	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^    public static string Base64Url(byte[] bytes)$/;"	m	class:SecurityUtils
 BaseUri	clients/WinFormsClient/MainForm.cs	/^  private Uri BaseUri => new(_urlControl.ValueText.TrimEnd('\/'));$/;"	f	class:MainForm	file:
@@ -126,14 +126,14 @@ ConfirmEmailAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public a
 ConfirmEmailAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task ConfirmEmailAsync(string token)$/;"	m	class:ApiTests	file:
 ConfirmEmailClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ConfirmEmailClicked;$/;"	E	class:ActionButtonsControl
 ConfirmEmailEndpoints	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^public static class ConfirmEmailEndpoints$/;"	c
-ConfirmEmailRequest	src/SecureAuthMinimalApi/ConfirmEmailRequest.cs	/^public sealed record ConfirmEmailRequest(string? Token);$/;"	m
+ConfirmEmailRequest	src/SecureAuthMinimalApi/Models/ConfirmEmailRequest.cs	/^public sealed record ConfirmEmailRequest(string? Token);$/;"	m
 ConfirmEmailResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record ConfirmEmailResponse(bool Ok, bool? AlreadyConfirmed);$/;"	m	class:ApiTests	file:
 ConfirmMfaAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<LoginResult> ConfirmMfaAsync(string challengeId, string totpCode, bool rem/;"	m	class:SecureAuthApiClient
 ConfirmMfaAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task ConfirmMfaAsync()$/;"	m	class:MainForm	file:
 ConfirmMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ConfirmMfaClicked;$/;"	E	class:ActionButtonsControl
 ConfirmMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ConfirmMfaClicked;$/;"	E	class:MfaPanelControl
 ConfirmMfaEndpoints	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^public static class ConfirmMfaEndpoints$/;"	c
-ConfirmMfaRequest	src/SecureAuthMinimalApi/ConfirmMfaRequest.cs	/^public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, s/;"	m
+ConfirmMfaRequest	src/SecureAuthMinimalApi/Models/ConfirmMfaRequest.cs	/^public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, s/;"	m
 ConfirmPendingMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmPendingMfaAsync()$/;"	m	class:MainForm	file:
 Confirm_email_expired_token_blocks_login_when_required	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_expired_token_blocks_login_when_required()$/;"	m	class:ApiTests
 Confirm_email_expired_token_when_not_required_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_expired_token_when_not_required_returns_gone()$/;"	m	class:ApiTests
@@ -291,7 +291,7 @@ GetField	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private
 GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^await GetHealthAsync(rawHttp);$/;"	m
 GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^static async Task GetHealthAsync(HttpClient http)$/;"	m
 GetPasswordHashAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private async Task<string> GetPasswordHashAsync(string userId)$/;"	m	class:PasswordResetTests	file:
-GetRequiredSession	src/SecureAuthMinimalApi/AuthHelpers.cs	/^    public static UserSession GetRequiredSession(this HttpContext ctx)$/;"	m	class:AuthHelpers
+GetRequiredSession	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static UserSession GetRequiredSession(this HttpContext ctx)$/;"	m	class:AuthHelpers
 GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    public TokenValidationParameters GetValidationParameters() => _validation;$/;"	m	class:IdTokenService
 GetValidationParameters	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public TokenValidationParameters GetValidationParameters()$/;"	m	class:JwtTokenService
 GivenName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? GivenName { get; init; }$/;"	p	class:User
@@ -419,7 +419,7 @@ LoginClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    publi
 LoginEndpoints	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^public static class LoginEndpoints$/;"	c
 LoginForMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginForMfaAsync(string username, string password)$/;"	m	class:MainForm	file:
 LoginPasswordAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginPasswordAsync(string username, string password)$/;"	m	class:MainForm	file:
-LoginRequest	src/SecureAuthMinimalApi/LoginRequest.cs	/^public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool Rem/;"	m
+LoginRequest	src/SecureAuthMinimalApi/Models/LoginRequest.cs	/^public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool Rem/;"	m
 LoginResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record LoginResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool/;"	m	class:MainForm	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string/;"	m	class:ApiTests	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken);$/;"	m	class:ChangePasswordExtendedTests	file:
@@ -642,7 +642,7 @@ RegisterClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    pu
 RegisterEndpoints	src/SecureAuthMinimalApi/Endpoints/RegisterEndpoints.cs	/^public static class RegisterEndpoints$/;"	c
 RegisterFailureAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public async Task RegisterFailureAsync(string username, CancellationToken ct)$/;"	m	class:DbLoginThrottle
 RegisterFailureAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    Task RegisterFailureAsync(string username, CancellationToken ct);$/;"	m	interface:ILoginThrottle
-RegisterRequest	src/SecureAuthMinimalApi/RegisterRequest.cs	/^public sealed record RegisterRequest(string? Username, string? Email, string? Password, string? /;"	m
+RegisterRequest	src/SecureAuthMinimalApi/Models/RegisterRequest.cs	/^public sealed record RegisterRequest(string? Username, string? Email, string? Password, string? /;"	m
 RegisterResp	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private sealed record RegisterResp(string? UserId, string? EmailConfirmToken);$/;"	m	class:MainForm	file:
 RegisterResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, str/;"	m	class:MainForm	file:
 RegisterResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, s/;"	m	class:ApiTests	file:
@@ -811,7 +811,7 @@ Totp_secret_is_encrypted_at_rest	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^
 Totp_setup_and_login_success	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Totp_setup_and_login_success()$/;"	m	class:ApiTests
 Totp_wrong_code_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Totp_wrong_code_returns_unauthorized()$/;"	m	class:ApiTests
 TryDeleteDb	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static void TryDeleteDb(string dbPath)$/;"	m	class:CleanupServiceTests	file:
-TryGetToken	src/SecureAuthMinimalApi/AuthHelpers.cs	/^    public static bool TryGetToken(HttpContext ctx, out string token)$/;"	m	class:AuthHelpers
+TryGetToken	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static bool TryGetToken(HttpContext ctx, out string token)$/;"	m	class:AuthHelpers
 Unprotect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Unprotect(string cipherText)$/;"	m	class:TotpSecretProtector
 UnsafeMethods	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static readonly HashSet<string> UnsafeMethods = new(StringComparer.OrdinalIgnoreCase/;"	f	class:CsrfMiddleware	file:
 UpdateCountdown	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public void UpdateCountdown()$/;"	m	class:RefreshCountdownControl
@@ -850,7 +850,7 @@ Username	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required str
 Username	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string Username { get; init; }$/;"	p	class:User
 Username_lowercase_policy_allows_case_insensitive_login	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Username_lowercase_policy_allows_case_insensitive_login()$/;"	m	class:ApiTests
 ValidateIdToken	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private static JwtSecurityToken ValidateIdToken(string token, TokenValidationParameters tvp)$/;"	m	class:ApiTests	file:
-ValidatePassword	src/SecureAuthMinimalApi/AuthHelpers.cs	/^    public static List<string> ValidatePassword(string password, int minLength, bool requireUppe/;"	m	class:AuthHelpers
+ValidatePassword	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static List<string> ValidatePassword(string password, int minLength, bool requireUppe/;"	m	class:AuthHelpers
 ValueText	clients/WinFormsClient/Controls/LabeledTextBoxControl.cs	/^    public string ValueText$/;"	p	class:LabeledTextBoxControl
 Verify	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^    public static bool Verify(string password, string hash)$/;"	m	class:PasswordHasher
 WaitUntilAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task WaitUntilAsync(Func<Task<bool>> condition, TimeSpan timeout)$/;"	m	class:CleanupServiceTests	file:

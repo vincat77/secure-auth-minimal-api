@@ -1,4 +1,4 @@
-namespace SecureAuthMinimalApi;
+namespace SecureAuthMinimalApi.Models;
 
 /// <summary>
 /// DTO per la conferma MFA contenente challenge, codice TOTP e flag remember-me.
