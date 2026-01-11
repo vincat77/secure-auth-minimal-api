@@ -327,6 +327,69 @@ public partial class MainForm : Form
         }
     }
 
+    private async void btnRegenChallenge_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_password))
+            {
+                Log("[Step] Mancano credenziali per rigenerare la challenge");
+                return;
+            }
+
+            var loginMfa = await LoginForMfaAsync(_username, _password);
+            if (loginMfa.Error != "mfa_required" || string.IsNullOrWhiteSpace(loginMfa.ChallengeId))
+            {
+                Log($"[Step] Login non richiede MFA (error={loginMfa.Error})");
+                return;
+            }
+            _challengeId = loginMfa.ChallengeId;
+            Log($"[Step] Nuova challenge MFA: {_challengeId}");
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnPasswordReset_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (string.IsNullOrWhiteSpace(_email))
+            {
+                Log("[Step] Nessuna email nota: registra prima un utente");
+                return;
+            }
+
+            // Richiesta reset
+            var req = await _api!.PasswordResetRequestAsync(_email);
+            if (string.IsNullOrWhiteSpace(req.ResetToken))
+            {
+                Log("[Step] Reset richiesto, ma nessun token restituito (config potrebbe nasconderlo)");
+                return;
+            }
+
+            var newPassword = "ResetUser123!";
+            var res = await _api.PasswordResetConfirmAsync(req.ResetToken, newPassword, newPassword);
+            if (res.Ok)
+            {
+                _password = newPassword;
+                Log("[Step] Password reset completato, password aggiornata");
+            }
+            else
+            {
+                Log($"[Step] Password reset fallito: {res.Error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// Genera credenziali random per un utente di prova.
     /// </summary>

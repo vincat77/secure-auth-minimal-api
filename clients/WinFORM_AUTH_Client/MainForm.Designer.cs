@@ -23,6 +23,8 @@ partial class MainForm
     private Button btnLoginMfa = null!;
     private Button btnConfirmMfa = null!;
     private Button btnMe = null!;
+    private Button btnRegenChallenge = null!;
+    private Button btnPasswordReset = null!;
     private Label lblBaseUrl = null!;
     private Label lblOtpauth = null!;
     private Label lblTotp = null!;
@@ -61,6 +63,8 @@ partial class MainForm
         btnLoginMfa = new Button();
         btnConfirmMfa = new Button();
         btnMe = new Button();
+        btnRegenChallenge = new Button();
+        btnPasswordReset = new Button();
         lblBaseUrl = new Label();
         lblOtpauth = new Label();
         lblTotp = new Label();
@@ -191,6 +195,26 @@ partial class MainForm
         btnMe.UseVisualStyleBackColor = true;
         btnMe.Click += btnMe_Click;
         // 
+        // btnRegenChallenge
+        // 
+        btnRegenChallenge.Location = new System.Drawing.Point(642, 83);
+        btnRegenChallenge.Name = "btnRegenChallenge";
+        btnRegenChallenge.Size = new System.Drawing.Size(120, 23);
+        btnRegenChallenge.TabIndex = 16;
+        btnRegenChallenge.Text = "9) Nuova challenge";
+        btnRegenChallenge.UseVisualStyleBackColor = true;
+        btnRegenChallenge.Click += btnRegenChallenge_Click;
+        // 
+        // btnPasswordReset
+        // 
+        btnPasswordReset.Location = new System.Drawing.Point(642, 112);
+        btnPasswordReset.Name = "btnPasswordReset";
+        btnPasswordReset.Size = new System.Drawing.Size(120, 23);
+        btnPasswordReset.TabIndex = 17;
+        btnPasswordReset.Text = "Reset password";
+        btnPasswordReset.UseVisualStyleBackColor = true;
+        btnPasswordReset.Click += btnPasswordReset_Click;
+        // 
         // lblBaseUrl
         // 
         lblBaseUrl.AutoSize = true;
@@ -223,6 +247,8 @@ partial class MainForm
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new System.Drawing.Size(774, 411);
+        Controls.Add(btnPasswordReset);
+        Controls.Add(btnRegenChallenge);
         Controls.Add(btnMe);
         Controls.Add(btnConfirmMfa);
         Controls.Add(btnLoginMfa);
