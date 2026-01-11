@@ -1,7 +1,9 @@
 using SecureAuthMinimalApi.Data;
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Models;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
