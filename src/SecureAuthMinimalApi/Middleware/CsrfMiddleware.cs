@@ -1,4 +1,5 @@
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
 
 namespace SecureAuthMinimalApi.Middleware;
 
@@ -50,7 +51,7 @@ public sealed class CsrfMiddleware : IMiddleware
 
                 var headerToken = context.Request.Headers["X-CSRF-Token"].ToString();
                 if (string.IsNullOrWhiteSpace(headerToken) ||
-                    !FixedTimeEquals(headerToken, session.CsrfToken))
+                    !SecurityUtils.FixedTimeEquals(headerToken, session.CsrfToken))
                 {
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     context.Response.ContentType = "application/json";
@@ -65,15 +66,6 @@ public sealed class CsrfMiddleware : IMiddleware
         await next(context);
     }
 
-    private static bool FixedTimeEquals(string a, string b)
-    {
-        // confronto in tempo costante per ridurre il rischio di oracle sui token
-        var aBytes = System.Text.Encoding.UTF8.GetBytes(a);
-        var bBytes = System.Text.Encoding.UTF8.GetBytes(b);
-        if (aBytes.Length != bBytes.Length)
-            return false;
-        return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
-    }
 }
 
 public static class CsrfExtensions

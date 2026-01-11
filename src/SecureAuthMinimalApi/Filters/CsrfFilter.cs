@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Services;
 
 namespace SecureAuthMinimalApi.Filters;
 
@@ -26,20 +27,11 @@ public sealed class CsrfFilter : IEndpointFilter
             return Results.Json(new { ok = false, error = "csrf_missing" }, statusCode: StatusCodes.Status403Forbidden);
         }
 
-        if (!FixedTimeEquals(headerToken!, session.CsrfToken))
+        if (!SecurityUtils.FixedTimeEquals(headerToken!, session.CsrfToken))
         {
             return Results.Json(new { ok = false, error = "csrf_invalid" }, statusCode: StatusCodes.Status403Forbidden);
         }
 
         return await next(context);
-    }
-
-    private static bool FixedTimeEquals(string a, string b)
-    {
-        var aBytes = Encoding.UTF8.GetBytes(a);
-        var bBytes = Encoding.UTF8.GetBytes(b);
-        if (aBytes.Length != bBytes.Length)
-            return false;
-        return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 }
