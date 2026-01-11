@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Options;
+using SecureAuthMinimalApi.Filters;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -59,6 +60,8 @@ public static class LogoutEndpoints
             });
 
             return Results.Ok(new { ok = true });
-        });
+        })
+        .RequireSession()
+        .RequireCsrf();
     }
 }

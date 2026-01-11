@@ -3,6 +3,7 @@ using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Options;
+using SecureAuthMinimalApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -146,7 +147,9 @@ public static class ChangePasswordEndpoints
 
             ctx.Response.Headers.CacheControl = "no-store";
             return Results.Ok(new ChangePasswordResponse(true, null, null, csrfToken));
-        });
+        })
+        .RequireSession()
+        .RequireCsrf();
     }
 
     private static PasswordPolicySettings LoadPasswordPolicy(PasswordPolicyOptions options)
