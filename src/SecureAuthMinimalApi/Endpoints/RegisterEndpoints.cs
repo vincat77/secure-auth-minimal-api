@@ -18,12 +18,12 @@ public static class RegisterEndpoints
     public static void MapRegister(
         this WebApplication app,
         PasswordPolicyOptions passwordPolicy,
-        bool forceLowerUsername)
+        UsernamePolicyOptions usernamePolicy)
     {
         app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger<RegisterLogger> logger, IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
-            var username = NormalizeUsername(req?.Username, forceLowerUsername);
+            var username = NormalizeUsername(req?.Username, usernamePolicy.Lowercase);
             var email = NormalizeEmail(req?.Email);
             var password = req?.Password ?? "";
             var givenNameInput = req?.GivenName?.Trim();

@@ -24,20 +24,14 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());
 var logger = loggerFactory.CreateLogger<Program>();
-var cleanupEnabled = builder.Configuration.GetValue<bool?>("Cleanup:Enabled") ?? true;
-var cleanupInterval = builder.Configuration.GetValue<int?>("Cleanup:IntervalSeconds") ?? 300;
-var cleanupBatch = builder.Configuration.GetValue<int?>("Cleanup:BatchSize") ?? 200;
-var cleanupMaxIterations = builder.Configuration.GetValue<int?>("Cleanup:MaxIterationsPerRun");
-var resetExpirationMinutes = builder.Configuration.GetValue<int?>("PasswordReset:ExpirationMinutes") ?? 30;
-var resetRequireConfirmed = builder.Configuration.GetValue<bool?>("PasswordReset:RequireConfirmed") ?? true;
-var resetIncludeToken = builder.Configuration.GetValue<bool?>("PasswordReset:IncludeTokenInResponseForTesting") ?? false;
-var resetRetentionDays = builder.Configuration.GetValue<int?>("PasswordReset:RetentionDays") ?? 7;
+var cleanupOptions = builder.Configuration.GetSection("Cleanup").Get<CleanupOptions>() ?? new CleanupOptions();
+var resetOptions = builder.Configuration.GetSection("PasswordReset").Get<PasswordResetOptions>() ?? new PasswordResetOptions();
 logger.LogInformation(
     "Cleanup configurazione: enabled={Enabled}, intervalSeconds={Interval}, batchSize={Batch}, maxIterations={MaxIterations}",
-    cleanupEnabled,
-    cleanupInterval,
-    cleanupBatch,
-    cleanupMaxIterations?.ToString() ?? "null");
+    cleanupOptions.Enabled,
+    cleanupOptions.IntervalSeconds,
+    cleanupOptions.BatchSize,
+    cleanupOptions.MaxIterationsPerRun?.ToString() ?? "null");
 
 // L'errore di configurazione per secret mancante o troppo corto viene gestito da JwtTokenService.
 builder.Services.AddSingleton<JwtTokenService>();
@@ -63,6 +57,8 @@ builder.Services.AddSingleton<MfaChallengeRepository>();
 builder.Services.AddSingleton<PasswordResetRepository>();
 builder.Services.AddSingleton<IdTokenService>();
 builder.Services.AddSingleton<IEmailService, NoopEmailService>();
+builder.Services.AddSingleton<PauseController>();
+builder.Services.AddSingleton<ConsoleControlService>();
 builder.Services.Configure<PasswordResetOptions>(builder.Configuration.GetSection("PasswordReset"));
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.Configure<RefreshOptions>(builder.Configuration.GetSection("Refresh"));
@@ -74,6 +70,27 @@ builder.Services.Configure<RememberMeOptions>(builder.Configuration.GetSection("
 builder.Services.Configure<DeviceOptions>(builder.Configuration.GetSection("Device"));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<IdTokenOptions>(builder.Configuration.GetSection("IdToken"));
+builder.Services.Configure<UsernamePolicyOptions>(builder.Configuration.GetSection("UsernamePolicy"));
+builder.Services.Configure<MfaOptions>(builder.Configuration.GetSection("Mfa"));
+builder.Services.Configure<LoginThrottleOptions>(builder.Configuration.GetSection("LoginThrottle"));
+builder.Services.Configure<EmailConfirmationOptions>(options =>
+{
+    var raw = builder.Configuration["EmailConfirmation:Required"];
+    if (string.IsNullOrWhiteSpace(raw))
+    {
+        options.Required = true;
+        return;
+    }
+
+    if (!bool.TryParse(raw, out var parsed))
+    {
+        options.Required = true;
+        logger.LogWarning("EmailConfirmation:Required non valido ({Value}), fallback a true", raw);
+        return;
+    }
+
+    options.Required = parsed;
+});
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();
 
@@ -82,37 +99,33 @@ builder.Services.AddTransient<CsrfMiddleware>();
 
 var app = builder.Build();
 var isDevelopment = app.Environment.IsDevelopment();
-var pauseFlag = 0;
+var pauseController = app.Services.GetRequiredService<PauseController>();
 
 var passwordPolicyOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordPolicyOptions>>().Value;
-var forceLowerUsername = app.Configuration.GetValue<bool?>("UsernamePolicy:Lowercase") ?? false;
-var emailRequiredRaw = app.Configuration["EmailConfirmation:Required"];
-bool emailConfirmationRequired;
-if (string.IsNullOrWhiteSpace(emailRequiredRaw))
-{
-    emailConfirmationRequired = true;
-}
-else if (!bool.TryParse(emailRequiredRaw, out emailConfirmationRequired))
-{
-    emailConfirmationRequired = true;
-    logger.LogWarning("EmailConfirmation:Required non valido ({Value}), fallback a true", emailRequiredRaw);
-}
-var mfaChallengeMinutes = app.Configuration.GetValue<int?>("Mfa:ChallengeMinutes") ?? 10;
-if (mfaChallengeMinutes <= 0)
+var usernamePolicyOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<UsernamePolicyOptions>>().Value;
+var emailConfirmationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailConfirmationOptions>>().Value;
+var mfaOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MfaOptions>>().Value;
+var jwtOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtOptions>>().Value;
+var rememberMeOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
+var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
+var sessionOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<SessionConfigOptions>>().Value;
+var connectionStrings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ConnectionStringsOptions>>().Value;
+var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RefreshOptions>>().Value;
+var idTokenOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<IdTokenOptions>>().Value;
+var loginThrottleOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<LoginThrottleOptions>>().Value;
+if (mfaOptions.ChallengeMinutes <= 0)
 {
     throw new InvalidOperationException("Mfa:ChallengeMinutes deve essere >= 1");
 }
-var mfaRequireUaMatch = app.Configuration.GetValue<bool?>("Mfa:RequireUaMatch") ?? true;
-var mfaRequireIpMatch = app.Configuration.GetValue<bool?>("Mfa:RequireIpMatch") ?? false;
-var mfaMaxAttempts = app.Configuration.GetValue<int?>("Mfa:MaxAttemptsPerChallenge") ?? 5;
+
 var loginOptions = new LoginOptions
 {
-    ForceLowerUsername = forceLowerUsername,
-    EmailConfirmationRequired = emailConfirmationRequired,
-    MfaChallengeMinutes = mfaChallengeMinutes,
-    MfaRequireUaMatch = mfaRequireUaMatch,
-    MfaRequireIpMatch = mfaRequireIpMatch,
-    MfaMaxAttempts = mfaMaxAttempts
+    ForceLowerUsername = usernamePolicyOptions.Lowercase,
+    EmailConfirmationRequired = emailConfirmationOptions.Required,
+    MfaChallengeMinutes = mfaOptions.ChallengeMinutes,
+    MfaRequireUaMatch = mfaOptions.RequireUaMatch,
+    MfaRequireIpMatch = mfaOptions.RequireIpMatch,
+    MfaMaxAttempts = mfaOptions.MaxAttemptsPerChallenge
 };
 
 var skipDbInit = app.Configuration.GetValue<bool?>("Tests:SkipDbInit") ?? false;
@@ -126,63 +139,31 @@ else
 }
 
 // Validazioni config in ambiente non Development.
-if (!isDevelopment)
-{
-    var secret = app.Configuration["Jwt:SecretKey"];
-    if (string.IsNullOrWhiteSpace(secret))
-    {
-        throw new InvalidOperationException("Configurazione mancante: Jwt:SecretKey");
-    }
-    if (secret.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) ||
-        secret.Contains("CHANGEME", StringComparison.OrdinalIgnoreCase) ||
-        secret.Contains("REPLACE_ME", StringComparison.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException("Jwt:SecretKey è un placeholder. Impostare un segreto reale in produzione.");
-    }
-    if (secret.Length < 32)
-    {
-        throw new InvalidOperationException("Jwt:SecretKey troppo corto (min 32 caratteri consigliati).");
-    }
-
-    var iss = app.Configuration["Jwt:Issuer"] ?? "";
-    var aud = app.Configuration["Jwt:Audience"] ?? "";
-    if (!iss.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || !aud.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-    {
-        logger.LogWarning("Jwt Issuer/Audience non HTTPS in ambiente non Development: iss={Issuer}, aud={Audience}", iss, aud);
-    }
-
-    var cookieSecureConfig = app.Configuration.GetValue<bool?>("Cookie:RequireSecure") ?? true;
-    if (!cookieSecureConfig)
-    {
-        logger.LogWarning("Cookie:RequireSecure=false in ambiente non Development: sarà forzato a true");
-    }
-}
+StartupValidation.ValidateJwt(jwtOptions, isDevelopment, logger);
+var cookieOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CookieConfigOptions>>().Value;
+StartupValidation.ValidateCookieSecurity(app, cookieOptions, logger);
 
 var serverUrls = GetConfiguredUrls(app);
-LogStartupInfo(
+StartupValidation.LogStartupInfo(
     app,
     logger,
     serverUrls,
-    cleanupEnabled,
-    cleanupInterval,
-    cleanupBatch,
-    cleanupMaxIterations,
-    passwordPolicyOptions.EffectiveMinLength,
-    passwordPolicyOptions.RequireUpper,
-    passwordPolicyOptions.RequireLower,
-    passwordPolicyOptions.RequireDigit,
-    passwordPolicyOptions.RequireSymbol,
-    forceLowerUsername,
-    emailConfirmationRequired,
-    mfaChallengeMinutes,
-    mfaRequireUaMatch,
-    mfaRequireIpMatch,
-    mfaMaxAttempts,
+    cleanupOptions,
+    passwordPolicyOptions,
+    usernamePolicyOptions,
+    emailConfirmationOptions,
+    mfaOptions,
+    resetOptions,
+    jwtOptions,
+    rememberMeOptions,
+    deviceOptions,
+    sessionOptions,
+    connectionStrings,
+    refreshOptions,
+    idTokenOptions,
+    loginThrottleOptions,
     skipDbInit,
-    resetExpirationMinutes,
-    resetRequireConfirmed,
-    isDevelopment && resetIncludeToken,
-    resetRetentionDays);
+    isDevelopment);
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -202,7 +183,7 @@ if (!isDevelopment)
 }
 
 // Middleware pausa basato su flag condiviso
-app.UsePauseMiddleware(new Func<bool>(() => Volatile.Read(ref pauseFlag) == 1));
+app.UsePauseMiddleware(new Func<bool>(() => pauseController.IsPaused));
 
 // --- ORDINE DEI MIDDLEWARE (OBBLIGATORIO) ---
 // 1) Cookie JWT auth popola HttpContext.Items["session"]
@@ -215,7 +196,7 @@ app.UseCsrfProtection();
 app.MapHealth();
 app.MapLive();
 app.MapReady();
-app.MapRegister(passwordPolicyOptions, forceLowerUsername);
+app.MapRegister(passwordPolicyOptions, usernamePolicyOptions);
 app.MapLogin(loginOptions);
 app.MapConfirmMfa(loginOptions);
 app.MapMe();
@@ -232,54 +213,27 @@ app.MapPasswordReset();
 
 var shutdownCts = new CancellationTokenSource();
 var appTask = app.RunAsync(shutdownCts.Token);
+var consoleService = app.Services.GetRequiredService<ConsoleControlService>();
+var consoleTask = consoleService.RunAsync(shutdownCts, app);
 
-if (Console.IsInputRedirected)
+if (ReferenceEquals(consoleTask, Task.CompletedTask))
 {
-    logger.LogWarning("Input console non disponibile: arresto con Ctrl+C/TERM. Controlli P/S disabilitati.");
+    // In ambienti senza input console (es. test host), lascia girare solo l'app.
     await appTask;
-    return;
 }
-
-var consoleTask = Task.Run(async () =>
+else
 {
-    logger.LogInformation("Controlli console: premi 'P' per pausa/ripresa, 'S' per arresto sicuro.");
-    while (!shutdownCts.IsCancellationRequested)
+    await Task.WhenAny(appTask, consoleTask);
+    shutdownCts.Cancel();
+
+    try
     {
-        if (!Console.KeyAvailable)
-        {
-            await Task.Delay(250, shutdownCts.Token);
-            continue;
-        }
-
-        var key = Console.ReadKey(intercept: true);
-        if (key.Key == ConsoleKey.S)
-        {
-            logger.LogInformation("Arresto richiesto da console (S).");
-            shutdownCts.Cancel();
-            app.Lifetime.StopApplication();
-            break;
-        }
-
-        if (key.Key == ConsoleKey.P)
-        {
-            var newValue = Volatile.Read(ref pauseFlag) == 0 ? 1 : 0;
-            var previous = Interlocked.Exchange(ref pauseFlag, newValue);
-            var isPausedNow = previous == 0;
-            logger.LogWarning(isPausedNow ? "Applicazione messa in pausa: risposte 503 finche non viene ripresa." : "Pausa rimossa: ripresa gestione richieste.");
-        }
+        await Task.WhenAll(appTask, consoleTask);
     }
-}, shutdownCts.Token);
-
-await Task.WhenAny(appTask, consoleTask);
-shutdownCts.Cancel();
-
-try
-{
-    await Task.WhenAll(appTask, consoleTask);
-}
-catch (OperationCanceledException)
-{
-    // Shutdown richiesto dall'utente o dall'host.
+    catch (OperationCanceledException)
+    {
+        // Shutdown richiesto dall'utente o dall'host.
+    }
 }
 
 static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)
@@ -294,106 +248,6 @@ static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)
     }
 
     return new[] { "http://localhost:5000", "https://localhost:5001" };
-}
-
-static void LogStartupInfo(
-    WebApplication app,
-    Microsoft.Extensions.Logging.ILogger logger,
-    IEnumerable<string> serverUrls,
-    bool cleanupEnabled,
-    int cleanupInterval,
-    int cleanupBatch,
-    int? cleanupMaxIterations,
-    int minPasswordLength,
-    bool requireUpper,
-    bool requireLower,
-    bool requireDigit,
-    bool requireSymbol,
-    bool forceLowerUsername,
-    bool emailConfirmationRequired,
-    int mfaChallengeMinutes,
-    bool mfaRequireUaMatch,
-    bool mfaRequireIpMatch,
-    int mfaMaxAttempts,
-    bool skipDbInit,
-    int resetExpirationMinutes,
-    bool resetRequireConfirmed,
-    bool resetIncludeToken,
-    int resetRetentionDays)
-{
-    var startupConfig = new
-    {
-        Environment = app.Environment.EnvironmentName,
-        ContentRoot = app.Environment.ContentRootPath,
-        Urls = serverUrls,
-        Database = app.Configuration.GetConnectionString("Sqlite") ?? "<missing>",
-        Jwt = new
-        {
-            Issuer = app.Configuration["Jwt:Issuer"] ?? "<missing>",
-            Audience = app.Configuration["Jwt:Audience"] ?? "<missing>",
-            SecretLength = app.Configuration["Jwt:SecretKey"]?.Length ?? 0
-        },
-        PasswordPolicy = new
-        {
-            MinLength = minPasswordLength,
-            RequireUpper = requireUpper,
-            RequireLower = requireLower,
-            RequireDigit = requireDigit,
-            RequireSymbol = requireSymbol
-        },
-        UsernamePolicy = new { Lowercase = forceLowerUsername },
-        EmailConfirmation = new { Required = emailConfirmationRequired },
-        Mfa = new
-        {
-            ChallengeMinutes = mfaChallengeMinutes,
-            RequireUaMatch = mfaRequireUaMatch,
-            RequireIpMatch = mfaRequireIpMatch,
-            MaxAttemptsPerChallenge = mfaMaxAttempts
-        },
-        SessionIdleMinutes = app.Configuration.GetValue<int?>("Session:IdleMinutes"),
-        PasswordReset = new
-        {
-            ExpirationMinutes = resetExpirationMinutes,
-            RequireConfirmed = resetRequireConfirmed,
-            IncludeTokenInResponseForTesting = resetIncludeToken,
-            RetentionDays = resetRetentionDays
-        },
-        RememberMe = new
-        {
-            Days = app.Configuration.GetValue<int?>("RememberMe:Days"),
-            CookieName = app.Configuration["RememberMe:CookieName"],
-            Path = app.Configuration["RememberMe:Path"]
-        },
-        Device = new
-        {
-            CookieName = app.Configuration["Device:CookieName"],
-            RequireSecure = app.Configuration.GetValue<bool?>("Device:RequireSecure"),
-            PersistDays = app.Configuration.GetValue<int?>("Device:PersistDays")
-        },
-        Cleanup = new
-        {
-            Enabled = cleanupEnabled,
-            IntervalSeconds = cleanupInterval,
-            BatchSize = cleanupBatch,
-            MaxIterationsPerRun = cleanupMaxIterations
-        },
-        LoginThrottle = new
-        {
-            MaxFailures = app.Configuration.GetValue<int?>("LoginThrottle:MaxFailures"),
-            LockMinutes = app.Configuration.GetValue<int?>("LoginThrottle:LockMinutes")
-        },
-        IdToken = new
-        {
-            Issuer = app.Configuration["IdToken:Issuer"],
-            Audience = app.Configuration["IdToken:Audience"],
-            Minutes = app.Configuration.GetValue<int?>("IdToken:Minutes")
-        },
-        SkipDbInit = skipDbInit
-    };
-
-    var formatted = JsonSerializer.Serialize(startupConfig, new JsonSerializerOptions { WriteIndented = true });
-    logger.LogInformation("Avvio SecureAuthMinimalApi - configurazione attiva:\n{StartupConfig}", formatted);
-    logger.LogInformation("Console pronta: 'P' per pausa/ripresa, 'S' per arresto.");
 }
 
 /// <summary>
