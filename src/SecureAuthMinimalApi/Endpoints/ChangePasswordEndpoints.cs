@@ -5,6 +5,7 @@ using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -24,8 +25,9 @@ public static class ChangePasswordEndpoints
             SessionRepository sessions,
             UserRepository users,
             RefreshTokenRepository refreshRepo,
-            Microsoft.Extensions.Options.IOptions<PasswordPolicyOptions> passwordPolicyOptions,
-            Microsoft.Extensions.Options.IOptions<RememberMeOptions> rememberOptions,
+            IOptions<PasswordPolicyOptions> passwordPolicyOptions,
+            IOptions<RememberMeOptions> rememberOptions,
+            IOptions<CookieConfigOptions> cookieOptions,
             IWebHostEnvironment env,
             ILogger<ChangePasswordLoggerMarker> logger) =>
         {
@@ -113,7 +115,7 @@ public static class ChangePasswordEndpoints
             await sessions.CreateAsync(newSession, ctx.RequestAborted);
             logger.LogInformation("Cambio password OK: sessione ruotata userId={UserId} nuovaSessione={SessionId}", user.Id, sessionId);
 
-            var requireSecureConfig = rememberOptions.Value.RequireSecure;
+            var requireSecureConfig = rememberOptions.Value.RequireSecure || cookieOptions.Value.RequireSecure;
             var requireSecure = env.IsDevelopment() ? requireSecureConfig : true;
             if (!env.IsDevelopment() && !requireSecureConfig)
             {

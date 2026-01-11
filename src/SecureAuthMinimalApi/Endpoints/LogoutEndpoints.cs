@@ -23,8 +23,9 @@ public static class LogoutEndpoints
 
             var rememberOptions = ctx.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
             var deviceOptions = ctx.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
+            var cookieConfig = ctx.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<CookieConfigOptions>>().Value;
 
-            var requireSecure = isDevelopment ? rememberOptions.RequireSecure : true;
+            var requireSecure = isDevelopment ? rememberOptions.RequireSecure : cookieConfig.RequireSecure || rememberOptions.RequireSecure;
             ctx.Response.Cookies.Append("access_token", "", new CookieOptions
             {
                 Expires = DateTimeOffset.UnixEpoch,
