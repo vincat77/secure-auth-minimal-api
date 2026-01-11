@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Logging;
+using SecureAuthMinimalApi.Logging;
+
 namespace SecureAuthMinimalApi.Endpoints;
 
 /// <summary>
@@ -10,6 +13,10 @@ public static class HealthEndpoints
     /// </summary>
     public static void MapHealth(this WebApplication app)
     {
-        app.MapGet("/health", () => Results.Ok(new { ok = true }));
+        app.MapGet("/health", (ILogger<HealthLogger> logger) =>
+        {
+            logger.LogInformation("Health check OK");
+            return Results.Ok(new { ok = true });
+        });
     }
 }

@@ -22,3 +22,13 @@ public sealed class IntrospectLogger;
 public sealed class RegisterLogger;
 /// <summary>Marker logger per refresh token/sessione.</summary>
 public sealed class RefreshLogger;
+/// <summary>Marker logger per endpoint ready.</summary>
+public sealed class ReadyLogger;
+/// <summary>Marker logger per endpoint live.</summary>
+public sealed class LiveLogger;
+/// <summary>Marker logger per endpoint health.</summary>
+public sealed class HealthLogger;
+/// <summary>Marker logger per endpoint /me.</summary>
+public sealed class MeLogger;
+/// <summary>Marker logger per setup MFA.</summary>
+public sealed class MfaSetupLogger;

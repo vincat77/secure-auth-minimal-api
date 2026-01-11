@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class MfaSetupEndpoints
@@ -9,7 +11,7 @@ public static class MfaSetupEndpoints
     /// </summary>
     public static void MapMfaSetup(this WebApplication app)
     {
-        app.MapPost("/mfa/setup", async (HttpContext ctx, UserRepository users) =>
+        app.MapPost("/mfa/setup", async (HttpContext ctx, UserRepository users, ILogger<MfaSetupLogger> logger) =>
         {
             var session = ctx.GetRequiredSession();
             var user = await users.GetByIdAsync(session.UserId, ctx.RequestAborted);
@@ -23,6 +25,7 @@ public static class MfaSetupEndpoints
             var secretBase32 = OtpNet.Base32Encoding.ToString(secretKey);
 
             await users.SetTotpSecretAsync(user.Id, secretBase32, ctx.RequestAborted);
+            logger.LogInformation("MFA setup generato userId={UserId}", user.Id);
 
             var issuer = Uri.EscapeDataString("SecureAuthMinimalApi");
             var label = Uri.EscapeDataString(user.Username);

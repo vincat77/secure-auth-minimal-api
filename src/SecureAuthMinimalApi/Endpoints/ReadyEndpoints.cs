@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SecureAuthMinimalApi.Logging;
 using SecureAuthMinimalApi.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -11,7 +13,7 @@ public static class ReadyEndpoints
     /// </summary>
     public static void MapReady(this WebApplication app)
     {
-        app.MapGet("/ready", async (IOptions<ConnectionStringsOptions> connOpts, IOptions<JwtOptions> jwtOpts) =>
+        app.MapGet("/ready", async (IOptions<ConnectionStringsOptions> connOpts, IOptions<JwtOptions> jwtOpts, ILogger<ReadyLogger> logger) =>
         {
             try
             {
@@ -32,10 +34,12 @@ public static class ReadyEndpoints
                 cmd.CommandTimeout = 3;
                 await cmd.ExecuteScalarAsync();
 
+                logger.LogInformation("Ready check OK");
                 return Results.Ok(new { ok = true });
             }
             catch
             {
+                logger.LogWarning("Ready check fallito");
                 return Results.Json(new { ok = false, error = "db_unreachable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
             }
         });

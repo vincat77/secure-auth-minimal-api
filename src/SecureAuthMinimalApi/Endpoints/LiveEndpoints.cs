@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Logging;
+using SecureAuthMinimalApi.Logging;
+
 namespace SecureAuthMinimalApi.Endpoints;
 
 /// <summary>
@@ -10,6 +13,10 @@ public static class LiveEndpoints
     /// </summary>
     public static void MapLive(this WebApplication app)
     {
-        app.MapGet("/live", () => Results.Ok(new { ok = true }));
+        app.MapGet("/live", (ILogger<LiveLogger> logger) =>
+        {
+            logger.LogInformation("Live check OK");
+            return Results.Ok(new { ok = true });
+        });
     }
 }
