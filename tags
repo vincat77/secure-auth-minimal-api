@@ -859,6 +859,7 @@ _badge	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    priva
 _banner	clients/WinFormsClient/MainForm.Designer.cs	/^    private StatusBanner _banner = null!;$/;"	f	class:MainForm	file:
 _busyLabel	clients/WinFormsClient/MainForm.Designer.cs	/^    private Label _busyLabel = null!;$/;"	f	class:MainForm	file:
 _challengeBox	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^    private TextBox _challengeBox = null!;$/;"	f	class:MfaPanelControl	file:
+_challengeId	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _challengeId;$/;"	f	class:MainForm	file:
 _challengeId	clients/WinFormsClient/MainForm.cs	/^  private string? _challengeId;$/;"	f	class:MainForm	file:
 _challenges	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly MfaChallengeRepository _challenges;$/;"	f	class:ExpiredCleanupService	file:
 _changePasswordButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^  private Button _changePasswordButton = null!;$/;"	f	class:ActionButtonsControl	file:
@@ -871,6 +872,7 @@ _confirmEmailButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designe
 _confirmMfaButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^  private Button _confirmMfaButton = null!;$/;"	f	class:ActionButtonsControl	file:
 _confirmMfaButton	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^    private Button _confirmMfaButton = null!;$/;"	f	class:MfaPanelControl	file:
 _confirmPasswordInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _confirmPasswordInput = null!;$/;"	f	class:MainForm	file:
+_confirmToken	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _confirmToken;$/;"	f	class:MainForm	file:
 _confirmTokenInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _confirmTokenInput = null!;$/;"	f	class:MainForm	file:
 _connectionString	src/SecureAuthMinimalApi/Data/LoginAuditRepository.cs	/^    private readonly string _connectionString;$/;"	f	class:LoginAuditRepository	file:
 _connectionString	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    private readonly string _connectionString;$/;"	f	class:LoginThrottleRepository	file:
@@ -887,8 +889,10 @@ _countdownTimer	clients/WinFormsClient/MainForm.Designer.cs	/^    private System
 _createdUtc	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    private DateTime? _createdUtc;$/;"	f	class:SessionCountdownControl	file:
 _creds	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly SigningCredentials _creds;$/;"	f	class:IdTokenService	file:
 _csrfToken	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private string? _csrfToken;$/;"	f	class:SecureAuthApiClient	file:
+_csrfToken	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _csrfToken;$/;"	f	class:MainForm	file:
 _csrfToken	clients/WinFormsClient/MainForm.cs	/^  private string? _csrfToken;$/;"	f	class:MainForm	file:
 _currentAvatar	clients/WinFormsClient/Controls/SessionCard.cs	/^    private Image? _currentAvatar;$/;"	f	class:SessionCard	file:
+_currentBaseUrl	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _currentBaseUrl;$/;"	f	class:MainForm	file:
 _currentPasswordInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _currentPasswordInput = null!;$/;"	f	class:MainForm	file:
 _dbPath	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"secure-auth-tests-{Guid/;"	f	class:ApiTests	file:
 _dbPath	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    private string _dbPath = null!;$/;"	f	class:EmailChangeTests	file:
@@ -900,6 +904,7 @@ _deviceInfo	clients/WinFormsClient/MainForm.Designer.cs	/^    private DeviceInfo
 _disableMfaButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^  private Button _disableMfaButton = null!;$/;"	f	class:ActionButtonsControl	file:
 _disableMfaButton	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^    private Button _disableMfaButton = null!;$/;"	f	class:MfaPanelControl	file:
 _disposed	clients/WinFormsClient/MainForm.cs	/^    private bool _disposed;$/;"	f	class:MainForm.BusyScope	file:
+_email	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _email;$/;"	f	class:MainForm	file:
 _emailInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _emailInput = null!;$/;"	f	class:MainForm	file:
 _exp	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^    private Label _exp = null!;$/;"	f	class:SessionCard	file:
 _exp	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    private Label _exp = null!;$/;"	f	class:StatusInfoControl	file:
@@ -963,6 +968,7 @@ _output	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private readonly ITes
 _panel	clients/WinFormsClient/Controls/DeviceAlertControl.Designer.cs	/^    private Panel _panel = null!;$/;"	f	class:DeviceAlertControl	file:
 _panel	clients/WinFormsClient/Controls/DeviceInfoControl.Designer.cs	/^    private Panel _panel = null!;$/;"	f	class:DeviceInfoControl	file:
 _panel	clients/WinFormsClient/Controls/StatusBanner.Designer.cs	/^    private Panel _panel = null!;$/;"	f	class:StatusBanner	file:
+_password	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _password;$/;"	f	class:MainForm	file:
 _passwordControl	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _passwordControl = null!;$/;"	f	class:MainForm	file:
 _passwordResets	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly PasswordResetRepository _passwordResets;$/;"	f	class:ExpiredCleanupService	file:
 _payloadBox	clients/WinFormsClient/Controls/IdTokenViewerControl.Designer.cs	/^  private TextBox _payloadBox = null!;$/;"	f	class:IdTokenViewerControl	file:
@@ -1017,9 +1023,26 @@ _urlControl	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTex
 _user	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^    private Label _user = null!;$/;"	f	class:SessionCard	file:
 _user	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    private Label _user = null!;$/;"	f	class:StatusInfoControl	file:
 _userInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _userInput = null!;$/;"	f	class:MainForm	file:
+_username	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _username;$/;"	f	class:MainForm	file:
 _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly TokenValidationParameters _validation;$/;"	f	class:IdTokenService	file:
+btnConfirmEmail	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnConfirmEmail = null!;$/;"	f	class:MainForm	file:
+btnConfirmEmail_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnConfirmEmail_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnConfirmMfa	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnConfirmMfa = null!;$/;"	f	class:MainForm	file:
+btnConfirmMfa_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnConfirmMfa_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnLoginMfa	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnLoginMfa = null!;$/;"	f	class:MainForm	file:
+btnLoginMfa_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnLoginMfa_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnLoginPwd	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnLoginPwd = null!;$/;"	f	class:MainForm	file:
+btnLoginPwd_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnLoginPwd_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnLogout	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnLogout = null!;$/;"	f	class:MainForm	file:
+btnLogout_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnLogout_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnMe	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnMe = null!;$/;"	f	class:MainForm	file:
+btnMe_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnMe_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnRegister	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnRegister = null!;$/;"	f	class:MainForm	file:
+btnRegister_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnRegister_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
 btnRunFlow	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnRunFlow = null!;$/;"	f	class:MainForm	file:
 btnRunFlow_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnRunFlow_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
+btnSetupMfa	clients/WinFORM_AUTH_Client/MainForm.Designer.cs	/^    private Button btnSetupMfa = null!;$/;"	f	class:MainForm	file:
+btnSetupMfa_Click	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async void btnSetupMfa_Click(object sender, EventArgs e)$/;"	m	class:MainForm	file:
 builder.Host.UseSerilog	src/SecureAuthMinimalApi/Program.cs	/^builder.Host.UseSerilog();$/;"	m
 builder.Services.AddDataProtection	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddDataProtection();$/;"	m
 builder.Services.AddHostedService	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddHostedService<ExpiredCleanupService>();$/;"	m

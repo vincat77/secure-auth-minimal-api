@@ -10,6 +10,15 @@ public partial class MainForm : Form
     private SecureAuthApiClient? _api;
     private HttpClient? _rawHttp;
     private HttpClientHandler? _handler;
+    private string? _currentBaseUrl;
+
+    // Stato per il flow completo o step-by-step
+    private string? _username;
+    private string? _password;
+    private string? _email;
+    private string? _confirmToken;
+    private string? _csrfToken;
+    private string? _challengeId;
     private string? _pendingUsername;
     private string? _pendingPassword;
     private string? _pendingChallengeId;
@@ -41,7 +50,15 @@ public partial class MainForm : Form
 
     private void EnsureClient()
     {
-        if (_api != null) return;
+        var baseUrl = txtBaseUrl.Text.Trim();
+        if (_api != null && string.Equals(_currentBaseUrl, baseUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _currentBaseUrl = baseUrl;
+        _api?.Dispose();
+        _rawHttp?.Dispose();
 
         _handler = new HttpClientHandler
         {
@@ -53,13 +70,13 @@ public partial class MainForm : Form
 
         _api = new SecureAuthApiClient(new SecureAuthClientOptions
         {
-            BaseUrl = txtBaseUrl.Text.Trim(),
+            BaseUrl = baseUrl,
             UserAgent = "WinFORM_AUTH_Client/1.0"
         }, _handler);
 
-        _rawHttp = new HttpClient(_handler)
+        _rawHttp = new HttpClient(_handler, disposeHandler: false)
         {
-            BaseAddress = new Uri(txtBaseUrl.Text.Trim())
+            BaseAddress = new Uri(baseUrl)
         };
         _rawHttp.DefaultRequestHeaders.UserAgent.ParseAdd("WinFORM_AUTH_Client/1.0");
         _rawHttp.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -132,6 +149,182 @@ public partial class MainForm : Form
         Log("[Flow] Conferma MFA");
         await ConfirmAndFetchMeAsync(loginMfa.ChallengeId, txtTotp.Text.Trim());
         ClearPending();
+    }
+
+    private async void btnRegister_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            (_username, _password, _email) = GenerateCredentials();
+            _confirmToken = await RegisterUserAsync(_username, _password, _email);
+            if (string.IsNullOrWhiteSpace(_confirmToken))
+            {
+                Log("[Step] Registrazione ok ma token conferma mancante");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnConfirmEmail_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (string.IsNullOrWhiteSpace(_confirmToken))
+            {
+                Log("[Step] Nessun token di conferma disponibile");
+                return;
+            }
+            await ConfirmEmailAsync(_confirmToken);
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnLoginPwd_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_password))
+            {
+                Log("[Step] Mancano credenziali, registra prima l'utente");
+                return;
+            }
+            var login = await LoginPasswordAsync(_username, _password);
+            _csrfToken = login.CsrfToken;
+            Log(login.Ok || login.Error == "mfa_required"
+                ? "[Step] Login password eseguito"
+                : $"[Step] Login fallito: {login.Error}");
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnSetupMfa_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            var setup = await SetupMfaAsync(_csrfToken);
+            if (setup is null || string.IsNullOrWhiteSpace(setup.Secret))
+            {
+                Log("[Step] Setup MFA senza secret, fermo");
+                return;
+            }
+            txtOtpauth.Text = setup.OtpauthUri ?? "";
+            Log($"[Step] otpauth: {setup.OtpauthUri}");
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnLogout_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (_api == null) return;
+            var res = await _api.LogoutAsync();
+            Log(res.Ok ? "[Step] Logout OK" : $"[Step] Logout errore: {res.Error}");
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnLoginMfa_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_password))
+            {
+                Log("[Step] Mancano credenziali, registra prima l'utente");
+                return;
+            }
+            var loginMfa = await LoginForMfaAsync(_username, _password);
+            if (loginMfa.Error != "mfa_required" || string.IsNullOrWhiteSpace(loginMfa.ChallengeId))
+            {
+                Log($"[Step] Login non richiede MFA (error={loginMfa.Error})");
+                return;
+            }
+            _challengeId = loginMfa.ChallengeId;
+            Log($"[Step] Challenge MFA: {_challengeId}. Inserisci TOTP e premi Conferma MFA.");
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnConfirmMfa_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            if (string.IsNullOrWhiteSpace(txtTotp.Text))
+            {
+                Log("[Step] Inserisci il codice TOTP");
+                return;
+            }
+
+            var challenge = _challengeId;
+            if (string.IsNullOrWhiteSpace(challenge) && !string.IsNullOrWhiteSpace(_username) && !string.IsNullOrWhiteSpace(_password))
+            {
+                var relog = await LoginForMfaAsync(_username, _password);
+                if (relog.Error == "mfa_required" && !string.IsNullOrWhiteSpace(relog.ChallengeId))
+                {
+                    challenge = relog.ChallengeId;
+                    _challengeId = challenge;
+                    Log("[Step] Nuova challenge MFA generata");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(challenge))
+            {
+                Log("[Step] Nessuna challenge MFA disponibile");
+                return;
+            }
+
+            await ConfirmAndFetchMeAsync(challenge, txtTotp.Text.Trim());
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
+    }
+
+    private async void btnMe_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            EnsureClient();
+            var me = await _api?.MeAsync()!;
+            if (me is not null && me.Ok)
+            {
+                Log($"[Step] /me OK user={me.UserId}");
+            }
+            else
+            {
+                Log("[Step] /me fallito o non autenticato");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Errore: {ex.Message}");
+        }
     }
 
     /// <summary>
