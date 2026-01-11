@@ -105,6 +105,11 @@ builder.Services.AddOptions<LoginOptions>().Configure(options =>
   options.RateLimitRequests = OptionParsers.ParseIntNoMin(builder.Configuration["Login:RateLimitRequests"], 0, "Login:RateLimitRequests", logger);
   options.RateLimitWindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["Login:RateLimitWindowMinutes"], 1, "Login:RateLimitWindowMinutes", logger);
 });
+builder.Services.AddOptions<RegisterRateLimitOptions>().Configure(options =>
+{
+  options.Requests = OptionParsers.ParseIntNoMin(builder.Configuration["Register:RateLimitRequests"], 0, "Register:RateLimitRequests", logger);
+  options.WindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["Register:RateLimitWindowMinutes"], 1, "Register:RateLimitWindowMinutes", logger);
+});
 
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();

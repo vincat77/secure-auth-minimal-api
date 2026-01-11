@@ -17,12 +17,21 @@ public static class RegisterEndpoints
     public static void MapRegister(
         this WebApplication app)
   {
+        var registerRateLimit = app.Services.GetRequiredService<IOptions<RegisterRateLimitOptions>>().Value;
+
         app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger<RegisterLogger> logger,
           IOptions< PasswordPolicyOptions> passwordPolicy,
           IOptions<UsernamePolicyOptions> usernamePolicy,
           IOptions<TokenHashingOptions> tokenHashing,
           IEmailService emailService) =>
         {
+            // Rate limit per IP: protegge dall'abuso di registrazioni automatiche
+            if (IsRegisterRateLimited(ctx, registerRateLimit))
+            {
+                logger.LogWarning("Registrazione rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
+
             var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
             var username = NormalizeUsername(req?.Username, usernamePolicy.Value.Lowercase);
             var email = NormalizeEmail(req?.Email);
@@ -141,5 +150,34 @@ public static class RegisterEndpoints
             return Results.Created($"/users/{user.Id}", new { ok = true, userId = user.Id, email = user.Email, emailConfirmExpiresUtc = emailConfirmExpires.ToString("O") });
 #endif
         });
+    }
+
+    private static bool IsRegisterRateLimited(HttpContext ctx, RegisterRateLimitOptions options)
+    {
+        if (options.Requests <= 0)
+            return false;
+
+        var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
+        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        return RegisterRateLimiter.ShouldThrottle(ip, options.Requests, window);
+    }
+
+    private static class RegisterRateLimiter
+    {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentQueue<DateTime>> Store = new();
+
+        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)
+        {
+            var now = DateTime.UtcNow;
+            var queue = Store.GetOrAdd(key, _ => new System.Collections.Concurrent.ConcurrentQueue<DateTime>());
+            queue.Enqueue(now);
+
+            while (queue.TryPeek(out var ts) && ts < now - window)
+            {
+                queue.TryDequeue(out _);
+            }
+
+            return queue.Count > maxRequests;
+        }
     }
 }

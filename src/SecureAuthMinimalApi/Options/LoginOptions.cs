@@ -45,3 +45,15 @@ public sealed class LoginOptions
     /// </summary>
     public int RateLimitWindowMinutes { get; set; } = 1;
 }
+
+/// <summary>
+/// Opzioni di rate limit per la registrazione.
+/// </summary>
+public sealed class RegisterRateLimitOptions
+{
+    /// <summary>Numero massimo di richieste di registrazione nella finestra.</summary>
+    public int Requests { get; set; } = 0;
+
+    /// <summary>Finestra di rate limit (minuti).</summary>
+    public int WindowMinutes { get; set; } = 1;
+}
