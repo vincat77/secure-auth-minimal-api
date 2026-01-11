@@ -47,6 +47,13 @@ ApiTests	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^public class ApiTests : 
 Append	clients/WinFormsClient/MainForm.cs	/^  private void Append(string message)$/;"	m	class:MainForm	file:
 AppendOutput	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public void AppendOutput(string message)$/;"	m	class:LogPanelControl
 ApplyChangePasswordEnabled	clients/WinFormsClient/MainForm.cs	/^  private void ApplyChangePasswordEnabled(bool enabled)$/;"	m	class:MainForm	file:
+Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(changeEmail.Ok, "Change email unconfirmed");$/;"	m
+Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(loginDemo.Ok, "Login demo");$/;"	m
+Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(loginUnconf.Ok, "Login unconfirmed");$/;"	m
+Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(logout.Ok, "Logout demo");$/;"	m
+Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(logoutUnconf.Ok, "Logout unconfirmed");$/;"	m
+Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(refreshDemo.Ok, "Refresh demo");$/;"	m
+Assert	clients/SecureAuthClient.Console/Program.cs	/^static void Assert(bool condition, string name)$/;"	m
 AttemptCount	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public int AttemptCount { get; init; }$/;"	p	class:MfaChallenge
 Audience	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public string? Audience { get; set; }$/;"	p	class:IdTokenOptions
 Audience	src/SecureAuthMinimalApi/Options/JwtOptions.cs	/^    public string Audience { get; set; } = "";$/;"	p	class:JwtOptions
@@ -178,6 +185,7 @@ DbInitializer_is_idempotent_and_seeds_demo_once	tests/SecureAuthMinimalApi.Tests
 DbInitializer_requires_connection_string	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public void DbInitializer_requires_connection_string()$/;"	m	class:ApiTests
 DbLoginThrottle	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public DbLoginThrottle(LoginThrottleRepository repo, IConfiguration config)$/;"	m	class:DbLoginThrottle
 DbLoginThrottle	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^public sealed class DbLoginThrottle : ILoginThrottle$/;"	c
+DefaultUserAgent	clients/WinFormsClient/MainForm.cs	/^  private const string DefaultUserAgent = "WinFormsClient\/1.0";$/;"	f	class:MainForm	file:
 DeleteDb	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private static void DeleteDb(string dbPath)$/;"	m	class:ChangePasswordExtendedTests	file:
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string nowIso, int batchSize, CancellationToken ct/;"	m	class:MfaChallengeRepository
 DeleteExpiredAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<int> DeleteExpiredAsync(string cutoffIso, int batchSize, CancellationToken/;"	m	class:PasswordResetRepository
@@ -221,6 +229,7 @@ DisposeAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public Task Disp
 DisposeAsync	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    public Task DisposeAsync()$/;"	m	class:EmailChangeTests
 DisposeAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    public Task DisposeAsync()$/;"	m	class:PasswordResetTests
 DisposeAsync	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^    public Task DisposeAsync()$/;"	m	class:RefreshTokenRepositoryTests
+Dump	clients/SecureAuthClient.Console/Program.cs	/^static void Dump(object obj)$/;"	m
 DumpCookies	clients/WinFormsClient/MainForm.cs	/^  private void DumpCookies()$/;"	m	class:MainForm	file:
 Email	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? Email { get; init; }$/;"	p	class:User
 EmailChangeTests	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^public class EmailChangeTests : IAsyncLifetime$/;"	c
@@ -264,6 +273,8 @@ GetByTokenAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    pu
 GetByTokenHashAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<PasswordReset?> GetByTokenHashAsync(string tokenHash, CancellationToken ct/;"	m	class:PasswordResetRepository
 GetByUsernameAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)$/;"	m	class:UserRepository
 GetField	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static T GetField<T>(object target, string name)$/;"	m	class:MainFormChangePasswordTests	file:
+GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^await GetHealthAsync(rawHttp);$/;"	m
+GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^static async Task GetHealthAsync(HttpClient http)$/;"	m
 GetPasswordHashAsync	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private async Task<string> GetPasswordHashAsync(string userId)$/;"	m	class:PasswordResetTests	file:
 GetRequiredSession	src/SecureAuthMinimalApi/AuthHelpers.cs	/^    public static UserSession GetRequiredSession(this HttpContext ctx)$/;"	m	class:AuthHelpers
 GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    public TokenValidationParameters GetValidationParameters() => _validation;$/;"	m	class:IdTokenService
@@ -392,7 +403,7 @@ LoginAuditRepository	src/SecureAuthMinimalApi/Data/LoginAuditRepository.cs	/^pub
 LoginClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? LoginClicked;$/;"	E	class:ActionButtonsControl
 LoginEndpoints	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^public static class LoginEndpoints$/;"	c
 LoginRequest	src/SecureAuthMinimalApi/LoginRequest.cs	/^public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool Rem/;"	m
-LoginResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? /;"	m	class:MainForm	file:
+LoginResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record LoginResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool/;"	m	class:MainForm	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string/;"	m	class:ApiTests	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken);$/;"	m	class:ChangePasswordExtendedTests	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken);$/;"	m	class:EmailChangeTests	file:
@@ -485,7 +496,7 @@ Me_without_cookie_returns_401	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^   
 MfaChallenge	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^public sealed class MfaChallenge$/;"	c
 MfaChallengeRepository	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public MfaChallengeRepository(IConfiguration config)$/;"	m	class:MfaChallengeRepository
 MfaChallengeRepository	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^public sealed class MfaChallengeRepository$/;"	c
-MfaConfirmResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, str/;"	m	class:MainForm	file:
+MfaConfirmResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken,/;"	m	class:MainForm	file:
 MfaConfirmResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, s/;"	m	class:ApiTests	file:
 MfaDisableEndpoints	src/SecureAuthMinimalApi/Endpoints/MfaDisableEndpoints.cs	/^public static class MfaDisableEndpoints$/;"	c
 MfaFilter	src/SecureAuthMinimalApi/Filters/MfaFilter.cs	/^public sealed class MfaFilter : IEndpointFilter$/;"	c
@@ -577,6 +588,9 @@ RefreshCountdownControl	clients/WinFormsClient/Controls/RefreshCountdownControl.
 RefreshCsrfHash	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? RefreshCsrfHash { get; init; }$/;"	p	class:RefreshToken
 RefreshCsrfToken	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public string? RefreshCsrfToken => _refreshCsrfToken;$/;"	f	class:SecureAuthApiClient
 RefreshEndpoints	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^public static class RefreshEndpoints$/;"	c
+RefreshManual	clients/SecureAuthClient.Console/Program.cs	/^await RefreshManual(rawHttp, handler.CookieContainer, includeHeader: false);$/;"	m
+RefreshManual	clients/SecureAuthClient.Console/Program.cs	/^await RefreshManual(rawHttp, handler.CookieContainer, includeHeader: true, headerValue: "wrong")/;"	m
+RefreshManual	clients/SecureAuthClient.Console/Program.cs	/^static async Task RefreshManual(HttpClient http, CookieContainer cookies, bool includeHeader, st/;"	m
 RefreshOptions	src/SecureAuthMinimalApi/Services/RefreshOptions.cs	/^public sealed class RefreshOptions$/;"	c
 RefreshResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record RefreshResponse(bool Ok, string? CsrfToken, bool? RememberIssued, bool/;"	m	class:ApiTests	file:
 RefreshResult	clients/SecureAuthClient/SecureAuthApiClient.cs	/^public sealed record RefreshResult($/;"	m
@@ -931,6 +945,7 @@ _qrBox	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^    private
 _refreshButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private Button _refreshButton = null!;$/;"	f	class:ActionButtonsControl	file:
 _refreshCountdown	clients/WinFormsClient/Controls/SessionCard.Designer.cs	/^    private RefreshCountdownControl _refreshCountdown = null!;$/;"	f	class:SessionCard	file:
 _refreshCsrfToken	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private string? _refreshCsrfToken;$/;"	f	class:SecureAuthApiClient	file:
+_refreshCsrfToken	clients/WinFormsClient/MainForm.cs	/^  private string? _refreshCsrfToken;$/;"	f	class:MainForm	file:
 _refreshExpiresUtc	clients/WinFormsClient/MainForm.cs	/^  private DateTime? _refreshExpiresUtc;$/;"	f	class:MainForm	file:
 _refreshTokens	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly RefreshTokenRepository _refreshTokens;$/;"	f	class:ExpiredCleanupService	file:
 _registerButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.cs	/^    private Button _registerButton = null!;$/;"	f	class:ActionButtonsControl	file:
@@ -1004,3 +1019,4 @@ enabled	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public voi
 enabled	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public void SetMfaEnabled(bool enabled) => _confirmMfaButton.Enabled = enabled;$/;"	f	class:MfaPanelControl
 enabled	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public void SetQrEnabled(bool enabled) => _showQrButton.Enabled = enabled;$/;"	f	class:MfaPanelControl
 loggerFactory	src/SecureAuthMinimalApi/Program.cs	/^using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());$/;"	t	file:
+rawHttp.DefaultRequestHeaders.Accept.Add	clients/SecureAuthClient.Console/Program.cs	/^rawHttp.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application\/json"/;"	m

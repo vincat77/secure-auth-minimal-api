@@ -25,8 +25,10 @@ public sealed partial class MainForm : Form
   private HttpClientHandler _handler = null!;
   private CookieContainer _cookies = null!;
   private string? _csrfToken;
+  private string? _refreshCsrfToken;
   private string _rememberText = "-";
   private bool _isAuthenticated;
+  private const string DefaultUserAgent = "WinFormsClient/1.0";
 
   public MainForm()
   {
@@ -139,6 +141,7 @@ public sealed partial class MainForm : Form
 
       var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
       _csrfToken = login?.CsrfToken;
+      _refreshCsrfToken = login?.RefreshCsrfToken ?? _refreshCsrfToken;
       _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
       _idTokenViewer.SetToken(login?.IdToken);
 #if DEBUG
@@ -211,6 +214,7 @@ public sealed partial class MainForm : Form
 
       var confirm = JsonSerializer.Deserialize<MfaConfirmResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
       _csrfToken = confirm?.CsrfToken ?? _csrfToken;
+      _refreshCsrfToken = confirm?.RefreshCsrfToken ?? _refreshCsrfToken;
       _rememberText = confirm?.RememberIssued == true ? "Emesso" : "Non emesso";
       _deviceInfo.UpdateDevice(confirm?.DeviceId, confirm?.DeviceIssued);
       _deviceAlert.SetStatus(true, "MFA confermata");
@@ -247,7 +251,11 @@ public sealed partial class MainForm : Form
     using var busy = BeginBusy("Refresh in corso...");
     try
     {
-      var response = await _http.PostAsync(new Uri(BaseUri, "/refresh"), content: null);
+      var req = new HttpRequestMessage(HttpMethod.Post, new Uri(BaseUri, "/refresh"));
+      if (!string.IsNullOrWhiteSpace(_refreshCsrfToken))
+        req.Headers.Add("X-Refresh-Csrf", _refreshCsrfToken);
+
+      var response = await _http.SendAsync(req);
       var body = await response.Content.ReadAsStringAsync();
       Append($"POST /refresh -> {(int)response.StatusCode}\n{body}");
       if (!response.IsSuccessStatusCode)
@@ -262,6 +270,7 @@ public sealed partial class MainForm : Form
       }
       var login = JsonSerializer.Deserialize<LoginResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
       _csrfToken = login?.CsrfToken ?? _csrfToken;
+      _refreshCsrfToken = login?.RefreshCsrfToken ?? _refreshCsrfToken;
       _rememberText = login?.RememberIssued == true ? "Emesso" : "Non emesso";
       // /refresh non restituisce id_token; manteniamo l'ultimo ricevuto
       _deviceInfo.UpdateDevice(login?.DeviceId, login?.DeviceIssued);
@@ -591,12 +600,12 @@ public sealed partial class MainForm : Form
     }
   }
 
-  private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
+  private sealed record LoginResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
   private sealed record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? EmailConfirmExpiresUtc);
   private sealed record MeResponse(bool Ok, string SessionId, string UserId, string CreatedAtUtc, string ExpiresAtUtc);
   private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);
   private sealed record MfaRequiredResponse(bool? Ok, string? Error, string? ChallengeId);
-  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
+  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool? RememberIssued, string? RefreshExpiresAtUtc, bool? DeviceIssued, string? DeviceId, string? IdToken);
   private sealed record ChangePasswordResponse(bool Ok, string? Error, IEnumerable<string>? Errors, string? CsrfToken);
 
   private void ResetHttpClient()
@@ -632,6 +641,8 @@ public sealed partial class MainForm : Form
       ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
     };
     _http = new HttpClient(_handler);
+    _http.DefaultRequestHeaders.UserAgent.ParseAdd(DefaultUserAgent);
+    _http.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
   }
 
   private async Task RefreshSessionInfoAsync()
