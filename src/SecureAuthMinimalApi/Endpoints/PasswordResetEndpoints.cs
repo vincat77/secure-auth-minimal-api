@@ -8,6 +8,7 @@ using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using SecureAuthMinimalApi.Utilities;
 using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -29,7 +30,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             var sqliteConnString = connStrings.Sqlite
                 ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite for password reset");
 
-            app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService, ILogger logger) =>
+            app.MapPost("/password-reset/request", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, IEmailService emailService, ILogger<PasswordResetLogger> logger) =>
             {
                 // Input essenziale: email normalizzata; risposta sempre 200 per non leakare esistenza account/stato conferma.
                 var req = await ctx.Request.ReadFromJsonAsync<PasswordResetRequest>();
@@ -144,7 +145,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             return Results.Ok(new { ok = true });
         });
 
-        app.MapPost("/password-reset/confirm", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, SessionRepository sessions, RefreshTokenRepository refreshRepo, ILogger logger) =>
+        app.MapPost("/password-reset/confirm", async (HttpContext ctx, UserRepository users, PasswordResetRepository resets, SessionRepository sessions, RefreshTokenRepository refreshRepo, ILogger<PasswordResetLogger> logger) =>
         {
             // Valida payload; rifiuta token vuoti e mismatch password con 400 uniforme.
             var req = await ctx.Request.ReadFromJsonAsync<PasswordResetConfirmRequest>();

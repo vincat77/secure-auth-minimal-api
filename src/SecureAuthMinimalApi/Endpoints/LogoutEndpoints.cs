@@ -1,7 +1,9 @@
+using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LogoutEndpoints
@@ -13,7 +15,7 @@ public static class LogoutEndpoints
     {
         var isDevelopment = app.Environment.IsDevelopment();
 
-        app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions, ILogger logger) =>
+        app.MapPost("/logout", async (HttpContext ctx, SessionRepository sessions, ILogger<LogoutLogger> logger) =>
         {
             var session = ctx.GetRequiredSession();
 

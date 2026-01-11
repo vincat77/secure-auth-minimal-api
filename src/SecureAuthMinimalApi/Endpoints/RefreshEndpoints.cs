@@ -5,6 +5,7 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using Microsoft.Extensions.Options;
+using SecureAuthMinimalApi.Logging;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using static SecureAuthMinimalApi.Utilities.CookieUtils;
 
@@ -23,7 +24,7 @@ public static class RefreshEndpoints
         var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 
-        app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users, ILogger logger) =>
+        app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users, ILogger<RefreshLogger> logger) =>
         {
             var cookieName = refreshOptions.CookieName ?? rememberOptions.CookieName ?? "refresh_token";
             var deviceCookieName = deviceOptions.CookieName ?? "device_id";

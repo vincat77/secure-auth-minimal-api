@@ -3,6 +3,7 @@ using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LogoutAllEndpoints
@@ -14,7 +15,7 @@ public static class LogoutAllEndpoints
     {
         var isDevelopment = app.Environment.IsDevelopment();
 
-        app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo, ILogger logger) =>
+        app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo, ILogger<LogoutAllLogger> logger) =>
         {
             var session = ctx.GetRequiredSession();  
 

@@ -5,6 +5,7 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -19,7 +20,7 @@ public static class RegisterEndpoints
         PasswordPolicyOptions passwordPolicy,
         bool forceLowerUsername)
     {
-        app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger logger, IEmailService emailService) =>
+        app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger<RegisterLogger> logger, IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
             var username = NormalizeUsername(req?.Username, forceLowerUsername);

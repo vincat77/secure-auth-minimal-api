@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -14,7 +15,7 @@ public static class IntrospectEndpoints
     /// </summary>
     public static void MapIntrospect(this WebApplication app)
     {
-        app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions, ILogger logger) =>
+        app.MapGet("/introspect", async (HttpContext ctx, JwtTokenService jwt, SessionRepository sessions, ILogger<IntrospectLogger> logger) =>
         {
             if (!AuthHelpers.TryGetToken(ctx, out var token))
                 return Results.Unauthorized();

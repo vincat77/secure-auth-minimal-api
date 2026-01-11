@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
+using SecureAuthMinimalApi.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -11,7 +12,7 @@ public static class ConfirmEmailEndpoints
     /// </summary>
     public static void MapConfirmEmail(this WebApplication app)
     {
-        app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users, ILogger logger) =>
+        app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users, ILogger<ConfirmEmailLogger> logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
             if (string.IsNullOrWhiteSpace(req?.Token))

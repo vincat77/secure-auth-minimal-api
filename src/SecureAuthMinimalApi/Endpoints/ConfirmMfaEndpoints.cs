@@ -8,6 +8,7 @@ using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using static SecureAuthMinimalApi.Utilities.CookieUtils;
 using Microsoft.Extensions.Options;
+using SecureAuthMinimalApi.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -26,7 +27,7 @@ public static class ConfirmMfaEndpoints
         var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 
-        app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo, ILogger logger) =>
+        app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo, ILogger<ConfirmMfaLogger> logger) =>
         {
             var body = await ctx.Request.ReadFromJsonAsync<ConfirmMfaRequest>();
             if (string.IsNullOrWhiteSpace(body?.ChallengeId) || string.IsNullOrWhiteSpace(body.TotpCode))

@@ -4,6 +4,7 @@ using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -17,7 +18,7 @@ public static class ChangeEmailEndpoints
     {
         var env = app.Environment;
 
-        app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService, ILogger logger) =>
+        app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService, ILogger<ChangeEmailLogger> logger) =>
         {
             // 1) Input parsing/normalizzazione email
             var emailInput = await ctx.ReadAndValidateEmailAsync(logger);

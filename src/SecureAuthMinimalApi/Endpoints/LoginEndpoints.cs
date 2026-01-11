@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using SecureAuthMinimalApi.Utilities;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using static SecureAuthMinimalApi.Utilities.CookieUtils;
+using SecureAuthMinimalApi.Logging;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -28,7 +29,7 @@ public static class LoginEndpoints
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
         var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
 
-        app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo, ILogger logger) =>
+        app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo, ILogger<LoginLogger> logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
             var username = NormalizeUsername(req?.Username, loginOptions.ForceLowerUsername);

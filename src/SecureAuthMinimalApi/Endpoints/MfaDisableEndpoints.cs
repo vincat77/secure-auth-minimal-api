@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Logging;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class MfaDisableEndpoints
@@ -10,7 +11,7 @@ public static class MfaDisableEndpoints
     /// </summary>
     public static void MapMfaDisable(this WebApplication app)
     {
-        app.MapPost("/mfa/disable", async (HttpContext ctx, UserRepository users, ILogger logger) =>
+        app.MapPost("/mfa/disable", async (HttpContext ctx, UserRepository users, ILogger<MfaDisableLogger> logger) =>
         {
             var session = ctx.GetRequiredSession();
             var user = await users.GetByIdAsync(session.UserId, ctx.RequestAborted);
