@@ -7,6 +7,7 @@ using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -26,9 +27,11 @@ public static class LoginEndpoints
         int mfaMaxAttempts)
     {
         var isDevelopment = app.Environment.IsDevelopment();
-        var rememberOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
-        var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
-        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RefreshOptions>>().Value;
+        var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
+        var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
+        var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
+        var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
+        var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
 
         app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo) =>
         {
@@ -157,9 +160,9 @@ public static class LoginEndpoints
             };
 
             await sessions.CreateAsync(session, ctx.RequestAborted);
-            logger.LogInformation("Login OK sessionId={SessionId} userId={UserId} created={Created} exp={Exp} iss={Issuer} aud={Audience}", sessionId, user.Id, nowIso, expIso, app.Configuration["Jwt:Issuer"], app.Configuration["Jwt:Audience"]);
+            logger.LogInformation("Login OK sessionId={SessionId} userId={UserId} created={Created} exp={Exp} iss={Issuer} aud={Audience}", sessionId, user.Id, nowIso, expIso, jwtOptions.Issuer, jwtOptions.Audience);
 
-            var requireSecureConfig = app.Configuration.GetValue<bool>("Cookie:RequireSecure");
+            var requireSecureConfig = cookieConfig.RequireSecure;
             var requireSecure = isDevelopment ? requireSecureConfig : true;
             if (!isDevelopment && !requireSecureConfig)
             {
