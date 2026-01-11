@@ -2,7 +2,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
 
 namespace SecureAuthMinimalApi.Data;
 
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
       var exists = conn.ExecuteScalar<long>(seedCheck);
       if (exists == 0)
       {
-        var demoHash = Services.PasswordHasher.Hash("123456789012");
+        var demoHash = PasswordHasher.Hash("123456789012");
         const string seedInsert = @"
 INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, picture_url, is_locked, deleted_at_utc)
 VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, 1, @PictureUrl, 0, NULL);";

@@ -5,7 +5,7 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using Microsoft.Extensions.Options;
-using static SecureAuthMinimalApi.Services.SecurityUtils;
+using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 
 namespace SecureAuthMinimalApi.Endpoints;
 

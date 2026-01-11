@@ -1,5 +1,5 @@
 using SecureAuthMinimalApi.Models;
-using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
 
 namespace SecureAuthMinimalApi.Middleware;
 

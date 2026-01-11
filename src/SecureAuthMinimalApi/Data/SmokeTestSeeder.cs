@@ -1,6 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
-using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
 using System.Security.Cryptography;
 
 namespace SecureAuthMinimalApi.Data;

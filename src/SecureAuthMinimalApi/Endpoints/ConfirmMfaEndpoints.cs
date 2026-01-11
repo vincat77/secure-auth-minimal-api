@@ -5,7 +5,7 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
-using static SecureAuthMinimalApi.Services.SecurityUtils;
+using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -165,7 +165,7 @@ public static class ConfirmMfaEndpoints
                 var rememberPath = refreshOptions.Path ?? rememberOptions.Path ?? "/refresh";
                 var refreshToken = Base64Url(RandomBytes(32));
                 refreshCsrfToken = Base64Url(RandomBytes(32));
-                var refreshCsrfHash = SecurityUtils.HashToken(refreshCsrfToken);
+                var refreshCsrfHash = HashToken(refreshCsrfToken);
                 var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
                 var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
 

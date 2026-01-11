@@ -5,7 +5,8 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
-using static SecureAuthMinimalApi.Services.SecurityUtils;
+using static SecureAuthMinimalApi.Utilities.SecurityUtils;
+using SecureAuthMinimalApi.Utilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -182,12 +183,12 @@ namespace SecureAuthMinimalApi.Endpoints;
                 return Results.BadRequest(new { ok = false, error = "password_policy_failed", errors = policyErrors });
             }
 
-            if (Services.PasswordHasher.Verify(req.NewPassword!, user.PasswordHash))
+            if (PasswordHasher.Verify(req.NewPassword!, user.PasswordHash))
             {
                 return Results.BadRequest(new { ok = false, error = "password_must_be_different" });
             }
 
-            var newHash = Services.PasswordHasher.Hash(req.NewPassword!);
+            var newHash = PasswordHasher.Hash(req.NewPassword!);
             var nowIso = DateTime.UtcNow.ToString("O");
 
             // Transazione best-effort: MarkUsed + Update password + revoke session/refresh.

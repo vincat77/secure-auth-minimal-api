@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace SecureAuthMinimalApi.Services;
+namespace SecureAuthMinimalApi.Utilities;
 
 /// <summary>
 /// Utility di sicurezza comuni (confronti constant-time, hashing, ecc.).

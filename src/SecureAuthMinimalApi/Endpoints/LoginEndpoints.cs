@@ -6,7 +6,8 @@ using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using Microsoft.Extensions.Options;
-using static SecureAuthMinimalApi.Services.SecurityUtils;
+using SecureAuthMinimalApi.Utilities;
+using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -227,7 +228,7 @@ public static class LoginEndpoints
 
                 var refreshToken = Base64Url(RandomBytes(32));
                 refreshCsrfToken = Base64Url(RandomBytes(32));
-                var refreshCsrfHash = SecurityUtils.HashToken(refreshCsrfToken);
+                var refreshCsrfHash = HashToken(refreshCsrfToken);
                 var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
                 var rt = new RefreshToken
                 {

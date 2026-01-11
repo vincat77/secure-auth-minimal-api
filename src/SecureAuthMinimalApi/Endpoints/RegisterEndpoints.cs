@@ -3,6 +3,7 @@ using SecureAuthMinimalApi;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Utilities;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
