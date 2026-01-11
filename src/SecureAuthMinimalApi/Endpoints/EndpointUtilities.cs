@@ -7,27 +7,6 @@ namespace SecureAuthMinimalApi.Endpoints;
 internal static class EndpointUtilities
 {
     /// <summary>
-    /// Genera un array di byte casuali usando un RNG crittografico.
-    /// </summary>
-    public static byte[] RandomBytes(int len)
-    {
-        var buffer = new byte[len];
-        System.Security.Cryptography.RandomNumberGenerator.Fill(buffer);
-        return buffer;
-    }
-
-    /// <summary>
-    /// Converte byte in Base64 url-safe senza padding.
-    /// </summary>
-    public static string Base64Url(byte[] bytes)
-    {
-        return Convert.ToBase64String(bytes)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-    }
-
-    /// <summary>
     /// Registra un evento di audit login con i metadati della richiesta.
     /// </summary>
     public static Task AuditAsync(LoginAuditRepository repo, string username, string outcome, HttpContext ctx, string? detail)

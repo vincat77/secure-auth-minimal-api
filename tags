@@ -62,8 +62,6 @@ Audience	src/SecureAuthMinimalApi/Options/JwtOptions.cs	/^    public string Audi
 AuditAsync	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static Task AuditAsync(LoginAuditRepository repo, string username, string outcome, Ht/;"	m	class:EndpointUtilities
 AuthHelpers	src/SecureAuthMinimalApi/AuthHelpers.cs	/^public static class AuthHelpers$/;"	c
 Base32Decode	clients/WinFormsClient/MainForm.cs	/^  private static byte[] Base32Decode(string input)$/;"	m	class:MainForm	file:
-Base64Url	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static string Base64Url(byte[] bytes)$/;"	m	class:ChangePasswordEndpoints	file:
-Base64Url	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static string Base64Url(byte[] bytes)$/;"	m	class:EndpointUtilities
 Base64Url	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    public static string Base64Url(byte[] bytes)$/;"	m	class:SecurityUtils
 BaseUri	clients/WinFormsClient/MainForm.cs	/^  private Uri BaseUri => new(_urlControl.ValueText.TrimEnd('\/'));$/;"	f	class:MainForm	file:
 BaseUrl	clients/SecureAuthClient/SecureAuthClientOptions.cs	/^    public required string BaseUrl { get; init; }$/;"	p	class:SecureAuthClientOptions
@@ -598,9 +596,7 @@ Program	clients/WinFORM_AUTH_Client/Program.cs	/^internal static class Program$/
 Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Program	src/SecureAuthMinimalApi/Program.cs	/^public partial class Program { }$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
-RandomBytes	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static byte[] RandomBytes(int len)$/;"	m	class:ChangePasswordEndpoints	file:
-RandomBytes	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static byte[] RandomBytes(int len)$/;"	m	class:EndpointUtilities
-RandomBytes	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    private static byte[] RandomBytes(int length)$/;"	m	class:SecurityUtils	file:
+RandomBytes	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    public static byte[] RandomBytes(int length)$/;"	m	class:SecurityUtils
 RateLimitRequests	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetConfig
 RateLimitWindowMinutes	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetConfig
 RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints

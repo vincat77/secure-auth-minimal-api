@@ -45,7 +45,7 @@ public static class SecurityUtils
     /// <summary>
     /// Genera una sequenza di byte crittograficamente sicura della lunghezza richiesta.
     /// </summary>
-    private static byte[] RandomBytes(int length)
+    public static byte[] RandomBytes(int length)
     {
         if (length <= 0)
             throw new ArgumentOutOfRangeException(nameof(length));

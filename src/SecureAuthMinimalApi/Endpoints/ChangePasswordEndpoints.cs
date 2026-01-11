@@ -6,6 +6,7 @@ using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using static SecureAuthMinimalApi.Services.SecurityUtils;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -155,26 +156,6 @@ public static class ChangePasswordEndpoints
     }
 
     /// <summary>
-    /// Genera array di byte casuali per token e CSRF.
-    /// </summary>
-    private static byte[] RandomBytes(int len)
-    {
-        var b = new byte[len];
-        System.Security.Cryptography.RandomNumberGenerator.Fill(b);
-        return b;
-    }
-
-    /// <summary>
-    /// Converte una sequenza di byte in Base64 url-safe senza padding.
-    /// </summary>
-    private static string Base64Url(byte[] bytes)
-    {
-        return Convert.ToBase64String(bytes)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-    }
-
     private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, ILogger logger, string context)
     {
         var sameSiteString = string.IsNullOrWhiteSpace(value) ? "Strict" : value;

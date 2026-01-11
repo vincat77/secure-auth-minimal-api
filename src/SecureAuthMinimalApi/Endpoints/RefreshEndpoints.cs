@@ -4,10 +4,8 @@ using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
-using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Options;
+using static SecureAuthMinimalApi.Services.SecurityUtils;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
