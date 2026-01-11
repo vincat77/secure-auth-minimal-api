@@ -396,6 +396,7 @@ InvokePrivate	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    pr
 IsLocked	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool IsLocked { get; init; }$/;"	p	class:User
 IsLockedAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public async Task<bool> IsLockedAsync(string username, CancellationToken ct)$/;"	m	class:DbLoginThrottle
 IsLockedAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    Task<bool> IsLockedAsync(string username, CancellationToken ct);$/;"	m	interface:ILoginThrottle
+IsLoginRateLimited	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    private static bool IsLoginRateLimited(HttpContext ctx, LoginOptions options, LoginRateLimit/;"	m	class:LoginEndpoints	file:
 IsPaused	src/SecureAuthMinimalApi/Services/PauseController.cs	/^    public bool IsPaused => Volatile.Read(ref _flag) == 1;$/;"	f	class:PauseController
 IsSvg	clients/WinFormsClient/ImageLoader.cs	/^    private static bool IsSvg(string url)$/;"	m	class:ImageLoader	file:
 Issuer	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public string? Issuer { get; set; }$/;"	p	class:IdTokenOptions
@@ -445,6 +446,9 @@ LoginEndpoints	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^public sta
 LoginForMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginForMfaAsync(string username, string password)$/;"	m	class:MainForm	file:
 LoginOptions	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^public sealed class LoginOptions$/;"	c
 LoginPasswordAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginPasswordAsync(string username, string password)$/;"	m	class:MainForm	file:
+LoginRateLimitTests	tests/SecureAuthMinimalApi.Tests/LoginRateLimitTests.cs	/^    public LoginRateLimitTests(WebApplicationFactory<Program> factory)$/;"	m	class:LoginRateLimitTests
+LoginRateLimitTests	tests/SecureAuthMinimalApi.Tests/LoginRateLimitTests.cs	/^public class LoginRateLimitTests : IClassFixture<WebApplicationFactory<Program>>$/;"	c
+LoginRateLimiter	src/SecureAuthMinimalApi/Services/LoginRateLimiter.cs	/^public sealed class LoginRateLimiter$/;"	c
 LoginRequest	src/SecureAuthMinimalApi/Models/LoginRequest.cs	/^public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool Rem/;"	m
 LoginResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record LoginResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool/;"	m	class:MainForm	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string/;"	m	class:ApiTests	file:
@@ -469,6 +473,7 @@ Login_lockout_respects_custom_threshold	tests/SecureAuthMinimalApi.Tests/ApiTest
 Login_me_logout_flow	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_me_logout_flow()$/;"	m	class:ApiTests
 Login_mfa_challenge_expired_returns_unauthorized	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_mfa_challenge_expired_returns_unauthorized(bool emailRequired)$/;"	m	class:ApiTests
 Login_missing_fields_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_missing_fields_returns_bad_request()$/;"	m	class:ApiTests
+Login_rate_limit_returns_429_after_threshold	tests/SecureAuthMinimalApi.Tests/LoginRateLimitTests.cs	/^    public async Task Login_rate_limit_returns_429_after_threshold()$/;"	m	class:LoginRateLimitTests
 Login_remember_false_with_email_not_required_emits_no_refresh	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_false_with_email_not_required_emits_no_refresh()$/;"	m	class:ApiTests
 Login_remember_in_production_allows_samesite_none_when_explicit_flag	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_in_production_allows_samesite_none_when_explicit_flag()$/;"	m	class:ApiTests
 Login_remember_in_production_blocks_samesite_none_by_default	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Login_remember_in_production_blocks_samesite_none_by_default()$/;"	m	class:ApiTests
@@ -590,6 +595,7 @@ Outcome	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required stri
 OutputBox	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public TextBox OutputBox => _output;$/;"	f	class:LogPanelControl
 ParseBool	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static bool ParseBool(string? raw, bool defaultValue, string key, ILogger logger)$/;"	m	class:OptionParsers
 ParseInt	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static int ParseInt(string? raw, int defaultValue, int minValue, string key, ILogger /;"	m	class:OptionParsers
+ParseIntNoMin	src/SecureAuthMinimalApi/Services/OptionParsers.cs	/^    public static int ParseIntNoMin(string? raw, int defaultValue, string key, ILogger logger)$/;"	m	class:OptionParsers
 ParseSameSite	src/SecureAuthMinimalApi/Utilities/CookieUtils.cs	/^    public static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, /;"	m	class:CookieUtils
 PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string PasswordHash { get; init; }$/;"	p	class:User
 PasswordHasher	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
@@ -635,7 +641,9 @@ Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Program	src/SecureAuthMinimalApi/Program.cs	/^public partial class Program { }$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
 RandomBytes	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^    public static byte[] RandomBytes(int length)$/;"	m	class:SecurityUtils
+RateLimitRequests	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int RateLimitRequests { get; set; } = 0;$/;"	p	class:LoginOptions
 RateLimitRequests	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetOptions
+RateLimitWindowMinutes	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int RateLimitWindowMinutes { get; set; } = 1;$/;"	p	class:LoginOptions
 RateLimitWindowMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetOptions
 RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints
 ReadAndValidateEmailAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<(EmailChangeInput? Email, IResult? ErrorResult)> ReadAndValidateEm/;"	m	class:ChangeEmailEndpoints	file:
@@ -815,6 +823,7 @@ SetupMfaAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task SetupMfa
 SetupMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:ActionButtonsControl
 SetupMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:MfaPanelControl
 ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        public static bool ShouldThrottle(string key, int limit, TimeSpan window)$/;"	m	class:PasswordResetEndpoints.RateLimiter
+ShouldThrottle	src/SecureAuthMinimalApi/Services/LoginRateLimiter.cs	/^    public bool ShouldThrottle(string key, int maxRequests, TimeSpan window)$/;"	m	class:LoginRateLimiter
 ShowCookiesClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ShowCookiesClicked;$/;"	E	class:ActionButtonsControl
 ShowQrClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ShowQrClicked;$/;"	E	class:ActionButtonsControl
 ShowQrClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ShowQrClicked;$/;"	E	class:MfaPanelControl
@@ -994,6 +1003,7 @@ _factory	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private WebApplicati
 _factory	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:ChangePasswordExtendedTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    private WebApplicationFactory<Program> _factory = null!;$/;"	f	class:EmailChangeTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:IdleTimeoutTests	file:
+_factory	tests/SecureAuthMinimalApi.Tests/LoginRateLimitTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:LoginRateLimitTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/LogoutAllTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:LogoutAllTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/LogoutRefreshTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:LogoutRefreshTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private WebApplicationFactory<Program> _factory = null!;$/;"	f	class:PasswordResetTests	file:
@@ -1101,6 +1111,7 @@ _smokeFlowButton	clients/WinFormsClient/Controls/ActionButtonsControl.Designer.c
 _state	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    private Label _state = null!;$/;"	f	class:StatusInfoControl	file:
 _status	clients/WinFormsClient/Controls/DeviceAlertControl.Designer.cs	/^    private Label _status = null!;$/;"	f	class:DeviceAlertControl	file:
 _statusInfo	clients/WinFormsClient/MainForm.Designer.cs	/^    private StatusInfoControl _statusInfo = null!;$/;"	f	class:MainForm	file:
+_store	src/SecureAuthMinimalApi/Services/LoginRateLimiter.cs	/^    private readonly ConcurrentDictionary<string, ConcurrentQueue<DateTime>> _store = new();$/;"	f	class:LoginRateLimiter	file:
 _textBox	clients/WinFormsClient/Controls/LabeledTextBoxControl.Designer.cs	/^    private TextBox _textBox = null!;$/;"	f	class:LabeledTextBoxControl	file:
 _title	clients/WinFormsClient/Controls/DeviceAlertControl.Designer.cs	/^    private Label _title = null!;$/;"	f	class:DeviceAlertControl	file:
 _title	clients/WinFormsClient/Controls/DeviceInfoControl.Designer.cs	/^    private Label _title = null!;$/;"	f	class:DeviceInfoControl	file:
@@ -1166,6 +1177,7 @@ builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Serv
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<IdTokenService>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<JwtTokenService>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<LoginAuditRepository>();$/;"	m
+builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<LoginRateLimiter>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<LoginThrottleRepository>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<MfaChallengeRepository>();$/;"	m
 builder.Services.AddSingleton	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddSingleton<PasswordResetRepository>();$/;"	m

@@ -33,6 +33,7 @@ builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<LoginThrottleRepository>();
 builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();
 builder.Services.AddSingleton<LoginAuditRepository>();
+builder.Services.AddSingleton<LoginRateLimiter>();
 
 // DataProtection con chiavi persistenti (evita invalidazioni dopo restart/deploy)
 var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
@@ -101,6 +102,8 @@ builder.Services.AddOptions<LoginOptions>().Configure(options =>
   options.MfaRequireUaMatch = OptionParsers.ParseBool(builder.Configuration["Mfa:RequireUaMatch"], true, "Mfa:RequireUaMatch", logger);
   options.MfaRequireIpMatch = OptionParsers.ParseBool(builder.Configuration["Mfa:RequireIpMatch"], false, "Mfa:RequireIpMatch", logger);
   options.MfaMaxAttempts = OptionParsers.ParseInt(builder.Configuration["Mfa:MaxAttemptsPerChallenge"], 5, 1, "Mfa:MaxAttemptsPerChallenge", logger);
+  options.RateLimitRequests = OptionParsers.ParseIntNoMin(builder.Configuration["Login:RateLimitRequests"], 0, "Login:RateLimitRequests", logger);
+  options.RateLimitWindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["Login:RateLimitWindowMinutes"], 1, "Login:RateLimitWindowMinutes", logger);
 });
 
 builder.Services.AddHostedService<ExpiredCleanupService>();

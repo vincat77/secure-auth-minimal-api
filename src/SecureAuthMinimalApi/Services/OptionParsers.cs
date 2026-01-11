@@ -30,4 +30,16 @@ public static class OptionParsers
         logger.LogWarning("{Key} non valido ({Value}), fallback a {Default}", key, raw, defaultValue);
         return defaultValue;
     }
+
+    public static int ParseIntNoMin(string? raw, int defaultValue, string key, ILogger logger)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return defaultValue;
+
+        if (int.TryParse(raw, out var parsed))
+            return parsed;
+
+        logger.LogWarning("{Key} non valido ({Value}), fallback a {Default}", key, raw, defaultValue);
+        return defaultValue;
+    }
 }

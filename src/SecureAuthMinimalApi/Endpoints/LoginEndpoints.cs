@@ -25,6 +25,7 @@ public static class LoginEndpoints
         var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
         var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
+        var loginRateLimiter = app.Services.GetRequiredService<LoginRateLimiter>();
 
         app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService,
           IOptions<LoginOptions> loginOptions,
@@ -35,6 +36,13 @@ public static class LoginEndpoints
             var password = req?.Password ?? "";
             var nonce = req?.Nonce;
             logger.LogInformation("Login avviato username={Username}", username);
+
+            // Rate limit per IP/endpoint (anti brute-force base)
+            if (IsLoginRateLimited(ctx, loginOptions.Value, loginRateLimiter))
+            {
+                logger.LogWarning("Login rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
             var inputErrors = new List<string>();
             if (string.IsNullOrWhiteSpace(username))
                 inputErrors.Add("username_required");
@@ -277,4 +285,14 @@ public static class LoginEndpoints
         });
     }
 
+    private static bool IsLoginRateLimited(HttpContext ctx, LoginOptions options, LoginRateLimiter limiter)
+    {
+        if (options.RateLimitRequests <= 0)
+            return false;
+
+        var limit = options.RateLimitRequests;
+        var window = options.RateLimitWindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.RateLimitWindowMinutes);
+        var key = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        return limiter.ShouldThrottle(key, limit, window);
+    }
 }

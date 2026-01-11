@@ -34,4 +34,14 @@ public sealed class LoginOptions
     /// Numero massimo di tentativi per challenge MFA.
     /// </summary>
     public int MfaMaxAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Numero massimo di richieste di login consentite nella finestra di rate limit.
+    /// </summary>
+    public int RateLimitRequests { get; set; } = 0;
+
+    /// <summary>
+    /// Durata della finestra di rate limit (in minuti) per il login.
+    /// </summary>
+    public int RateLimitWindowMinutes { get; set; } = 1;
 }
