@@ -73,7 +73,7 @@ BusyScope	clients/WinFormsClient/MainForm.cs	/^    public BusyScope(Action onDis
 BusyScope	clients/WinFormsClient/MainForm.cs	/^  private sealed class BusyScope : IDisposable$/;"	c	class:MainForm
 ChallengeId	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public string? ChallengeId$/;"	p	class:MfaPanelControl
 ChangeEmailAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<ApiResult> ChangeEmailAsync(string newEmail)$/;"	m	class:SecureAuthApiClient
-ChangeEmailEndpoints	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^public static class ChangeEmailEndpoints$/;"	c
+ChangeEmailEndpoints	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static class ChangeEmailEndpoints$/;"	c
 ChangeEmailRequest	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^internal sealed record ChangeEmailRequest(string? NewEmail);$/;"	m
 ChangeEmailResponse	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    private sealed record ChangeEmailResponse(bool Ok, string? ConfirmToken, string? ConfirmExpi/;"	m	class:EmailChangeTests	file:
 ChangeEmail_UnconfirmedUser_SucceedsAndGeneratesNewToken	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    public async Task ChangeEmail_UnconfirmedUser_SucceedsAndGeneratesNewToken()$/;"	m	class:EmailChangeTests
@@ -259,6 +259,7 @@ EnsureCreated	src/SecureAuthMinimalApi/Data/DbInitializer.cs	/^  public static v
 EnsureCsrf	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void EnsureCsrf()$/;"	m	class:SecureAuthApiClient	file:
 EnsureHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void EnsureHttpClient()$/;"	m	class:MainForm	file:
 EnsureRefreshCsrf	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void EnsureRefreshCsrf()$/;"	m	class:SecureAuthApiClient	file:
+EnsureUserEligibleAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult?> EnsureUserEligibleAsync(UserRepository users, User user,/;"	m	class:ChangeEmailEndpoints	file:
 EnvironmentName	tests/SecureAuthMinimalApi.Tests/TestHostEnvironment.cs	/^    public string EnvironmentName { get; set; } = Environments.Development;$/;"	p	class:TestEnv
 ExecuteAsync	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    protected override async Task ExecuteAsync(CancellationToken stoppingToken)$/;"	m	class:ExpiredCleanupService
 ExpirationMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int ExpirationMinutes { get; set; } = 30;$/;"	p	class:PasswordResetOptions
@@ -487,7 +488,7 @@ MainForm	clients/WinFormsClient/MainForm.Designer.cs	/^public partial class Main
 MainForm	clients/WinFormsClient/MainForm.cs	/^  public MainForm()$/;"	m	class:MainForm
 MainForm	clients/WinFormsClient/MainForm.cs	/^public sealed partial class MainForm : Form$/;"	c
 MainFormChangePasswordTests	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^public class MainFormChangePasswordTests$/;"	c
-MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    public static void MapChangeEmail(this WebApplication app, ILogger logger)$/;"	m	class:ChangeEmailEndpoints
+MapChangeEmail	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^        public static void MapChangeEmail(this WebApplication app, ILogger logger)$/;"	m	class:ChangeEmailEndpoints
 MapChangePassword	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    public static void MapChangePassword(this WebApplication app)$/;"	m	class:ChangePasswordEndpoints
 MapConfirmEmail	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    public static void MapConfirmEmail(this WebApplication app, ILogger logger)$/;"	m	class:ConfirmEmailEndpoints
 MapConfirmMfa	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    public static void MapConfirmMfa($/;"	m	class:ConfirmMfaEndpoints
@@ -598,6 +599,7 @@ RandomBytes	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^    public sta
 RateLimitRequests	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetOptions
 RateLimitWindowMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetOptions
 RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints
+ReadAndValidateEmailAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<(string? Raw, string? Normalized, IResult? ErrorResult)> ReadAndVa/;"	m	class:ChangeEmailEndpoints	file:
 ReadyEndpoints	src/SecureAuthMinimalApi/Endpoints/ReadyEndpoints.cs	/^public static class ReadyEndpoints$/;"	c
 Ready_endpoint_returns_200_when_db_and_jwt_are_valid	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_200_when_db_and_jwt_are_valid()$/;"	m	class:ApiTests
 Ready_endpoint_returns_503_when_db_unreachable	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_503_when_db_unreachable()$/;"	m	class:ApiTests
@@ -813,6 +815,7 @@ TryDeleteDb	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    privat
 TryGetToken	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static bool TryGetToken(HttpContext ctx, out string token)$/;"	m	class:AuthHelpers
 Unprotect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Unprotect(string cipherText)$/;"	m	class:TotpSecretProtector
 UnsafeMethods	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static readonly HashSet<string> UnsafeMethods = new(StringComparer.OrdinalIgnoreCase/;"	f	class:CsrfMiddleware	file:
+UpdateAndSendConfirmationAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult> UpdateAndSendConfirmationAsync($/;"	m	class:ChangeEmailEndpoints	file:
 UpdateCountdown	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public void UpdateCountdown()$/;"	m	class:RefreshCountdownControl
 UpdateCountdown	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    public void UpdateCountdown(TimeSpan elapsedSinceUpdate)$/;"	m	class:SessionCountdownControl
 UpdateDevice	clients/WinFormsClient/Controls/DeviceInfoControl.cs	/^    public void UpdateDevice(string? deviceId, bool? issuedNow = null)$/;"	m	class:DeviceInfoControl
