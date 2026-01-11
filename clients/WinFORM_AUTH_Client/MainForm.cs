@@ -10,6 +10,10 @@ public partial class MainForm : Form
     private SecureAuthApiClient? _api;
     private HttpClient? _rawHttp;
     private HttpClientHandler? _handler;
+    private string? _pendingUsername;
+    private string? _pendingPassword;
+    private string? _pendingChallengeId;
+    private string? _pendingOtpauth;
 
     public MainForm()
     {
@@ -64,6 +68,13 @@ public partial class MainForm : Form
     private async Task RunFlowAsync()
     {
         if (_api == null) throw new InvalidOperationException("Api client non inizializzato");
+
+        // Se esiste già una challenge pendente, prova solo a confermare MFA
+        if (!string.IsNullOrWhiteSpace(_pendingChallengeId))
+        {
+            await ConfirmPendingMfaAsync();
+            return;
+        }
 
         var username = $"flow-{Guid.NewGuid():N}".Substring(0, 16);
         var password = "FlowUser123!";
@@ -125,15 +136,61 @@ public partial class MainForm : Form
         // Attendere inserimento TOTP
         if (string.IsNullOrWhiteSpace(txtTotp.Text))
         {
-            Log("[Flow] Inserisci il codice TOTP nella textbox e ripremi il bottone");
+            _pendingUsername = username;
+            _pendingPassword = password;
+            _pendingChallengeId = loginMfa.ChallengeId;
+            _pendingOtpauth = setup.OtpauthUri;
+            Log("[Flow] Inserisci il codice TOTP nella textbox e ripremi il bottone per confermare la MFA");
             return;
         }
 
         Log("[Flow] Conferma MFA");
-        var confirm = await _api.ConfirmMfaAsync(loginMfa.ChallengeId, txtTotp.Text.Trim(), rememberMe: true);
+        await ConfirmAndFetchMeAsync(loginMfa.ChallengeId, txtTotp.Text.Trim());
+        ClearPending();
+    }
+
+    private async Task ConfirmPendingMfaAsync()
+    {
+        if (_api == null || string.IsNullOrWhiteSpace(_pendingUsername) || string.IsNullOrWhiteSpace(_pendingPassword))
+        {
+            Log("[Flow] Stato pendente mancante, riavviare il flow.");
+            ClearPending();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(txtTotp.Text))
+        {
+            Log("[Flow] Inserisci il codice TOTP e ripremi il bottone");
+            return;
+        }
+
+        // se la challenge è scaduta, genera una nuova challenge rifacendo login
+        var challengeId = _pendingChallengeId;
+        if (string.IsNullOrWhiteSpace(challengeId))
+        {
+            var relog = await _api.LoginAsync(_pendingUsername, _pendingPassword, rememberMe: true);
+            if (relog.Error != "mfa_required" || string.IsNullOrWhiteSpace(relog.ChallengeId))
+            {
+                Log($"[Flow] Re-login non ha prodotto challenge (error={relog.Error})");
+                return;
+            }
+            challengeId = relog.ChallengeId;
+            _pendingChallengeId = challengeId;
+            Log("[Flow] Nuova challenge MFA generata dopo re-login");
+        }
+
+        await ConfirmAndFetchMeAsync(challengeId, txtTotp.Text.Trim());
+        ClearPending();
+    }
+
+    private async Task ConfirmAndFetchMeAsync(string challengeId, string totp)
+    {
+        if (_api == null) return;
+
+        var confirm = await _api.ConfirmMfaAsync(challengeId, totp, rememberMe: true);
         if (!confirm.Ok)
         {
-            Log($"[Flow] Confirm MFA fallita: {confirm.Error}");
+            Log($"[Flow] Confirm MFA fallita: {confirm.Error ?? "unknown"}");
             return;
         }
 
@@ -147,6 +204,14 @@ public partial class MainForm : Form
         {
             Log("[Flow] /me fallito dopo MFA");
         }
+    }
+
+    private void ClearPending()
+    {
+        _pendingUsername = null;
+        _pendingPassword = null;
+        _pendingChallengeId = null;
+        _pendingOtpauth = null;
     }
 
     private async Task<T?> PostJson<T>(string path, object payload, string? csrfHeader = null)

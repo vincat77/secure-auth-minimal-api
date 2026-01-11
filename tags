@@ -111,12 +111,14 @@ Cleanup_keeps_valid_records	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests
 Cleanup_removes_expired_records	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    public async Task Cleanup_removes_expired_records()$/;"	m	class:CleanupServiceTests
 ClearMfa	clients/WinFormsClient/MainForm.cs	/^  private void ClearMfa()$/;"	m	class:MainForm	file:
 ClearOnLogoutAll	src/SecureAuthMinimalApi/Options/DeviceOptions.cs	/^    public bool ClearOnLogoutAll { get; set; }$/;"	p	class:DeviceOptions
+ClearPending	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private void ClearPending()$/;"	m	class:MainForm	file:
 ClearTotpSecretAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task ClearTotpSecretAsync(string userId, CancellationToken ct)$/;"	m	class:UserRepository
 ClientIp	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:LoginAudit
 ClientIp	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:MfaChallenge
 ClientIp	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:PasswordReset
 ClientIp	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:RefreshToken
 ComputeHash	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^    public string ComputeHash(string token)$/;"	m	class:RefreshTokenHasher
+ConfirmAndFetchMeAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmAndFetchMeAsync(string challengeId, string totp)$/;"	m	class:MainForm	file:
 ConfirmEmailAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task ConfirmEmailAsync()$/;"	m	class:MainForm	file:
 ConfirmEmailAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task ConfirmEmailAsync(string userId, CancellationToken ct)$/;"	m	class:UserRepository
 ConfirmEmailAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task ConfirmEmailAsync(string token)$/;"	m	class:ApiTests	file:
@@ -130,6 +132,7 @@ ConfirmMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    
 ConfirmMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ConfirmMfaClicked;$/;"	E	class:MfaPanelControl
 ConfirmMfaEndpoints	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^public static class ConfirmMfaEndpoints$/;"	c
 ConfirmMfaRequest	src/SecureAuthMinimalApi/ConfirmMfaRequest.cs	/^public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, s/;"	m
+ConfirmPendingMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmPendingMfaAsync()$/;"	m	class:MainForm	file:
 Confirm_email_expired_token_blocks_login_when_required	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_expired_token_blocks_login_when_required()$/;"	m	class:ApiTests
 Confirm_email_expired_token_when_not_required_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_expired_token_when_not_required_returns_gone()$/;"	m	class:ApiTests
 Confirm_email_with_expired_token_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_expired_token_returns_gone()$/;"	m	class:ApiTests
@@ -957,6 +960,10 @@ _panel	clients/WinFormsClient/Controls/StatusBanner.Designer.cs	/^    private Pa
 _passwordControl	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _passwordControl = null!;$/;"	f	class:MainForm	file:
 _passwordResets	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    private readonly PasswordResetRepository _passwordResets;$/;"	f	class:ExpiredCleanupService	file:
 _payloadBox	clients/WinFormsClient/Controls/IdTokenViewerControl.Designer.cs	/^  private TextBox _payloadBox = null!;$/;"	f	class:IdTokenViewerControl	file:
+_pendingChallengeId	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _pendingChallengeId;$/;"	f	class:MainForm	file:
+_pendingOtpauth	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _pendingOtpauth;$/;"	f	class:MainForm	file:
+_pendingPassword	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _pendingPassword;$/;"	f	class:MainForm	file:
+_pendingUsername	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _pendingUsername;$/;"	f	class:MainForm	file:
 _pictureInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _pictureInput = null!;$/;"	f	class:MainForm	file:
 _progress	clients/WinFormsClient/Controls/RefreshCountdownControl.Designer.cs	/^    private ProgressBar _progress = null!;$/;"	f	class:RefreshCountdownControl	file:
 _progress	clients/WinFormsClient/Controls/SessionCountdownControl.Designer.cs	/^    private ProgressBar _progress = null!;$/;"	f	class:SessionCountdownControl	file:
