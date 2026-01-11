@@ -18,6 +18,9 @@ public sealed class RefreshOptions
     public string Path { get; set; } = "/refresh";
     public string? SameSite { get; set; }
     public bool AllowSameSiteNone { get; set; }
+    /// <summary>
+    /// Richiede flag Secure per il cookie refresh (default true).
+    /// </summary>
     public bool RequireSecure { get; set; } = true;
 
     /// <summary>

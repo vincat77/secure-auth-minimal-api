@@ -141,6 +141,7 @@ Confirm_email_expired_token_when_not_required_returns_gone	tests/SecureAuthMinim
 Confirm_email_with_expired_token_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_expired_token_returns_gone()$/;"	m	class:ApiTests
 Confirm_email_with_invalid_token_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_invalid_token_returns_bad_request()$/;"	m	class:ApiTests
 Confirm_email_with_valid_token_marks_confirmed	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_valid_token_marks_confirmed()$/;"	m	class:ApiTests
+ConnectionStringsOptions	src/SecureAuthMinimalApi/Options/ConnectionStringsOptions.cs	/^public sealed class ConnectionStringsOptions$/;"	c
 ContentRootFileProvider	tests/SecureAuthMinimalApi.Tests/TestHostEnvironment.cs	/^    public IFileProvider ContentRootFileProvider { get; set; }$/;"	p	class:TestEnv
 ContentRootPath	tests/SecureAuthMinimalApi.Tests/TestHostEnvironment.cs	/^    public string ContentRootPath { get; set; } = Path.GetTempPath();$/;"	p	class:TestEnv
 CookieConfigOptions	src/SecureAuthMinimalApi/Options/CookieConfigOptions.cs	/^public sealed class CookieConfigOptions$/;"	c
@@ -784,6 +785,7 @@ ShowQrClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public ev
 SigningKeyPath	src/SecureAuthMinimalApi/Options/IdTokenOptions.cs	/^    public string? SigningKeyPath { get; set; }$/;"	p	class:IdTokenOptions
 SmokeFlowClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? SmokeFlowClicked;$/;"	E	class:ActionButtonsControl
 SmokeTestSeeder	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^public static class SmokeTestSeeder$/;"	c
+Sqlite	src/SecureAuthMinimalApi/Options/ConnectionStringsOptions.cs	/^    public string? Sqlite { get; set; }$/;"	p	class:ConnectionStringsOptions
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.Designer.cs	/^partial class StatusBanner$/;"	c
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.cs	/^    public StatusBanner()$/;"	m	class:StatusBanner
 StatusBanner	clients/WinFormsClient/Controls/StatusBanner.cs	/^public partial class StatusBanner : UserControl$/;"	c

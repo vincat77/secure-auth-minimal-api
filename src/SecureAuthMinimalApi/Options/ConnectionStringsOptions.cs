@@ -5,5 +5,8 @@ namespace SecureAuthMinimalApi.Options;
 /// </summary>
 public sealed class ConnectionStringsOptions
 {
+    /// <summary>
+    /// Stringa di connessione SQLite (ConnectionStrings:Sqlite).
+    /// </summary>
     public string? Sqlite { get; set; }
 }

@@ -5,9 +5,24 @@ namespace SecureAuthMinimalApi.Options;
 /// </summary>
 public sealed class PasswordPolicyOptions
 {
+    /// <summary>
+    /// Lunghezza minima password (consigliato >=12).
+    /// </summary>
     public int MinLength { get; set; } = 12;
+    /// <summary>
+    /// Richiede almeno una maiuscola.
+    /// </summary>
     public bool RequireUpper { get; set; }
+    /// <summary>
+    /// Richiede almeno una minuscola.
+    /// </summary>
     public bool RequireLower { get; set; }
+    /// <summary>
+    /// Richiede almeno una cifra.
+    /// </summary>
     public bool RequireDigit { get; set; }
+    /// <summary>
+    /// Richiede almeno un simbolo.
+    /// </summary>
     public bool RequireSymbol { get; set; }
 }
