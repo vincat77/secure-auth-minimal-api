@@ -260,7 +260,7 @@ EnsureHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void EnsureHttpC
 EnsureRefreshCsrf	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void EnsureRefreshCsrf()$/;"	m	class:SecureAuthApiClient	file:
 EnvironmentName	tests/SecureAuthMinimalApi.Tests/TestHostEnvironment.cs	/^    public string EnvironmentName { get; set; } = Environments.Development;$/;"	p	class:TestEnv
 ExecuteAsync	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    protected override async Task ExecuteAsync(CancellationToken stoppingToken)$/;"	m	class:ExpiredCleanupService
-ExpirationMinutes	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int ExpirationMinutes { get; set; } = 30;$/;"	p	class:PasswordResetConfig
+ExpirationMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int ExpirationMinutes { get; set; } = 30;$/;"	p	class:PasswordResetOptions
 ExpiredCleanupService	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^    public ExpiredCleanupService($/;"	m	class:ExpiredCleanupService
 ExpiredCleanupService	src/SecureAuthMinimalApi/Services/ExpiredCleanupService.cs	/^public sealed class ExpiredCleanupService : BackgroundService$/;"	c
 Expired_jwt_returns_401_on_me	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Expired_jwt_returns_401_on_me()$/;"	m	class:ApiTests
@@ -337,7 +337,7 @@ Idle_expired_session_returns_401_and_revokes	tests/SecureAuthMinimalApi.Tests/Id
 Idle_within_timeout_updates_last_seen_and_returns_ok	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    public async Task Idle_within_timeout_updates_last_seen_and_returns_ok()$/;"	m	class:IdleTimeoutTests
 ImageLoader	clients/WinFormsClient/ImageLoader.cs	/^public static class ImageLoader$/;"	c
 ImageLoaderTests	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^public class ImageLoaderTests$/;"	c
-IncludeTokenInResponseForTesting	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool IncludeTokenInResponseForTesting { get; set; } = false;$/;"	p	class:PasswordResetConfig
+IncludeTokenInResponseForTesting	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public bool IncludeTokenInResponseForTesting { get; set; } = false;$/;"	p	class:PasswordResetOptions
 IncrementAttemptAsync	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public async Task IncrementAttemptAsync(string id, CancellationToken ct)$/;"	m	class:MfaChallengeRepository
 InitializeAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public Task InitializeAsync()$/;"	m	class:ApiTests
 InitializeAsync	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    public Task InitializeAsync()$/;"	m	class:EmailChangeTests
@@ -560,10 +560,10 @@ PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required strin
 PasswordHasher	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
 PasswordPolicyOptions	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^public sealed class PasswordPolicyOptions$/;"	c
 PasswordReset	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^public sealed class PasswordReset$/;"	c
-PasswordResetConfig	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^public sealed class PasswordResetConfig$/;"	c
 PasswordResetConfirmAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<ApiResult> PasswordResetConfirmAsync(string token, string newPassword, str/;"	m	class:SecureAuthApiClient
 PasswordResetConfirmRequest	src/SecureAuthMinimalApi/Models/PasswordResetConfirmRequest.cs	/^public sealed record PasswordResetConfirmRequest(string? Token, string? NewPassword, string? Con/;"	m
 PasswordResetEndpoints	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    public static class PasswordResetEndpoints$/;"	c
+PasswordResetOptions	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^public sealed class PasswordResetOptions$/;"	c
 PasswordResetRepository	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public PasswordResetRepository(IConfiguration config)$/;"	m	class:PasswordResetRepository
 PasswordResetRepository	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^public sealed class PasswordResetRepository$/;"	c
 PasswordResetRequest	src/SecureAuthMinimalApi/Models/PasswordResetRequest.cs	/^public sealed record PasswordResetRequest(string? Email);$/;"	m
@@ -597,8 +597,8 @@ Program	clients/WinFormsClient/Program.cs	/^internal static class Program$/;"	c
 Program	src/SecureAuthMinimalApi/Program.cs	/^public partial class Program { }$/;"	c
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
 RandomBytes	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    public static byte[] RandomBytes(int length)$/;"	m	class:SecurityUtils
-RateLimitRequests	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetConfig
-RateLimitWindowMinutes	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetConfig
+RateLimitRequests	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetOptions
+RateLimitWindowMinutes	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetOptions
 RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints
 ReadyEndpoints	src/SecureAuthMinimalApi/Endpoints/ReadyEndpoints.cs	/^public static class ReadyEndpoints$/;"	c
 Ready_endpoint_returns_200_when_db_and_jwt_are_valid	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Ready_endpoint_returns_200_when_db_and_jwt_are_valid()$/;"	m	class:ApiTests
@@ -668,7 +668,7 @@ Register_with_short_password_returns_bad_request	tests/SecureAuthMinimalApi.Test
 RememberChecked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public bool RememberChecked$/;"	p	class:ActionButtonsControl
 RememberMeOptions	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^public sealed class RememberMeOptions$/;"	c
 RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	class:MainForm	file:
-RequireConfirmed	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetConfig
+RequireConfirmed	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetOptions
 RequireCsrf	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireCsrf(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireMfa	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireMfa(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireSecure	src/SecureAuthMinimalApi/Options/CookieConfigOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:CookieConfigOptions
@@ -683,7 +683,7 @@ ResetHttpClient	clients/WinFormsClient/MainForm.cs	/^  private void ResetHttpCli
 ResetInfo	clients/WinFormsClient/Controls/DeviceInfoControl.cs	/^    public void ResetInfo()$/;"	m	class:DeviceInfoControl
 ResetRequestResponse	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private record ResetRequestResponse(bool Ok, string? ResetToken);$/;"	m	class:PasswordResetTests	file:
 ResetStatus	clients/WinFormsClient/Controls/DeviceAlertControl.cs	/^    public void ResetStatus()$/;"	m	class:DeviceAlertControl
-RetentionDays	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RetentionDays { get; set; } = 7;$/;"	p	class:PasswordResetConfig
+RetentionDays	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public int RetentionDays { get; set; } = 7;$/;"	p	class:PasswordResetOptions
 RetokenizeWithOverrides	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private string RetokenizeWithOverrides(string token, string? audience = null, string? issuer/;"	m	class:ApiTests	file:
 RevokeAllForUserAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken ct, /;"	m	class:RefreshTokenRepository
 RevokeAllForUserAsync	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    public async Task RevokeAllForUserAsync(string userId, string revokedAtUtcIso, CancellationT/;"	m	class:SessionRepository

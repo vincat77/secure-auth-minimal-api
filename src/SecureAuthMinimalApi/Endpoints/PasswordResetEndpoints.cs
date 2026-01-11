@@ -1,13 +1,11 @@
 using System.Collections.Concurrent;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
-using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Options;
 using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
+using static SecureAuthMinimalApi.Services.SecurityUtils;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -20,11 +18,11 @@ namespace SecureAuthMinimalApi.Endpoints;
     {
         public static void MapPasswordReset(this WebApplication app, ILogger logger)
         {
-            var resetConfig = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordResetConfig>>().Value;
+            var resetOptions = app.Services.GetRequiredService<IOptions<PasswordResetOptions>>().Value;
             var env = app.Services.GetRequiredService<IHostEnvironment>();
-            var includeTokenInResponse = resetConfig.IncludeTokenInResponseForTesting && env.IsDevelopment();
-            var rateLimitEnabled = resetConfig.RateLimitRequests > 0 && resetConfig.RateLimitWindowMinutes > 0;
-            var rateLimitWindow = TimeSpan.FromMinutes(resetConfig.RateLimitWindowMinutes <= 0 ? 15 : resetConfig.RateLimitWindowMinutes);
+            var includeTokenInResponse = resetOptions.IncludeTokenInResponseForTesting && env.IsDevelopment();
+            var rateLimitEnabled = resetOptions.RateLimitRequests > 0 && resetOptions.RateLimitWindowMinutes > 0;
+            var rateLimitWindow = TimeSpan.FromMinutes(resetOptions.RateLimitWindowMinutes <= 0 ? 15 : resetOptions.RateLimitWindowMinutes);
             var connStrings = app.Services.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
             var sqliteConnString = connStrings.Sqlite
                 ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite for password reset");
@@ -73,7 +71,7 @@ namespace SecureAuthMinimalApi.Endpoints;
                 return Results.Ok(new { ok = true });
             }
 
-            if (resetConfig.RequireConfirmed && !user.EmailConfirmed)
+            if (resetOptions.RequireConfirmed && !user.EmailConfirmed)
             {
                 var confirmToken = string.IsNullOrWhiteSpace(user.EmailConfirmToken)
                     ? Guid.NewGuid().ToString("N")
@@ -104,10 +102,10 @@ namespace SecureAuthMinimalApi.Endpoints;
             }
 
             var now = DateTime.UtcNow;
-            var expMinutes = resetConfig.ExpirationMinutes <= 0 ? 30 : resetConfig.ExpirationMinutes;
+            var expMinutes = resetOptions.ExpirationMinutes <= 0 ? 30 : resetOptions.ExpirationMinutes;
             var expires = now.AddMinutes(expMinutes);
             var token = GenerateToken();
-            var tokenHash = SecurityUtils.HashToken(token);
+            var tokenHash = HashToken(token);
             var reset = new PasswordReset
             {
                 Id = Guid.NewGuid().ToString("N"),
@@ -153,7 +151,7 @@ namespace SecureAuthMinimalApi.Endpoints;
                 return Results.BadRequest(new { ok = false, error = "invalid_input" });
             }
 
-            var tokenHash = SecurityUtils.HashToken(req.Token!);
+            var tokenHash = HashToken(req.Token!);
             var reset = await resets.GetByTokenHashAsync(tokenHash, ctx.RequestAborted);
             if (reset is null || !DateTime.TryParse(reset.ExpiresAtUtc, out var exp) || exp.ToUniversalTime() <= DateTime.UtcNow || !string.IsNullOrWhiteSpace(reset.UsedAtUtc))
             {
@@ -224,11 +222,7 @@ namespace SecureAuthMinimalApi.Endpoints;
 
     private static string GenerateToken()
     {
-        var bytes = RandomNumberGenerator.GetBytes(32);
-        return Convert.ToBase64String(bytes)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
+        return Base64Url(RandomBytes(32));
     }
 
     private static class RateLimiter

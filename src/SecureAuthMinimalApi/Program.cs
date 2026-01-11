@@ -66,7 +66,7 @@ builder.Services.AddSingleton<MfaChallengeRepository>();
 builder.Services.AddSingleton<PasswordResetRepository>();
 builder.Services.AddSingleton<IdTokenService>();
 builder.Services.AddSingleton<IEmailService, NoopEmailService>();
-builder.Services.Configure<PasswordResetConfig>(builder.Configuration.GetSection("PasswordReset"));
+builder.Services.Configure<PasswordResetOptions>(builder.Configuration.GetSection("PasswordReset"));
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.Configure<RefreshOptions>(builder.Configuration.GetSection("Refresh"));
 builder.Services.Configure<CookieConfigOptions>(builder.Configuration.GetSection("Cookie"));
