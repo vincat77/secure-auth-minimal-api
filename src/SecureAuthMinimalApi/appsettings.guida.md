@@ -4,7 +4,7 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 ## Jwt
 - `Jwt:Issuer` - Issuer dei JWT di accesso. In prod usare un URL/URN stabile.
 - `Jwt:Audience` - Audience prevista per i client che validano il token.
-- `Jwt:SecretKey` - Chiave simmetrica (>=32 caratteri). In prod tenere in variabile ambiente o KeyVault.
+- `Jwt:SecretKey` - Chiave simmetrica (>=32 caratteri). In prod tenere in variabile ambiente o KeyVault. In non-Development l'app fallisce se la chiave è un placeholder o troppo corta.
 - `Jwt:AccessTokenMinutes` - Durata in minuti del token di accesso. Intero >0.
 
 ## IdToken
@@ -93,8 +93,14 @@ Spiegazione sintetica di ogni sezione/chiave e valori attesi.
 ## PasswordReset
 - PasswordReset:ExpirationMinutes - Durata validita' token di reset (minuti, default 30).
 - PasswordReset:RequireConfirmed - Se true solo utenti con email confermata possono ricevere token reset (default true).
-- PasswordReset:IncludeTokenInResponseForTesting - Solo per test/dev: include il token in response su /password-reset/request (non usare in prod).
+- PasswordReset:IncludeTokenInResponseForTesting - **Solo per Dev/Test**: include il token in response su /password-reset/request (non usare in prod; logga warning se attivo fuori Dev).
 - PasswordReset:RetentionDays - Giorni di retention per token scaduti/usati prima del cleanup (default 7).
 - PasswordReset:RateLimitRequests - Numero massimo di richieste reset per (email+IP) nella finestra (default 5). <=0 per disabilitare.
 - PasswordReset:RateLimitWindowMinutes - Finestra in minuti per il rate limit (default 15).
+
+## Seed
+- Seed:Enabled - Abilita la creazione dell'utente demo. In prod lasciare false; consentito solo per ambienti di sviluppo/test.
+
+## DataProtection
+- DataProtection:KeysPath - Percorso persistente per il key ring. In prod usare storage persistente/condiviso; fallback locale `.dpkeys/` è solo per Dev/Test.
 
