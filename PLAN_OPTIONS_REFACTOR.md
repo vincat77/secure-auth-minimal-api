@@ -11,8 +11,16 @@ Uniformare la lettura della configurazione passando da `IConfiguration` disperso
 ## Step proposti
 
 1) Mappatura e inventario (breve)
-   - Trovare dove `IConfiguration[...]` viene letto direttamente negli endpoint/middleware.
-   - Verificare le options già esistenti (`PasswordPolicyOptions`, `RememberMeOptions`, `DeviceOptions`, `RefreshOptions`, `JwtOptions`, `IdTokenOptions`, `PasswordResetConfig`, `CleanupOptions`).
+   - Letture dirette `IConfiguration[...]`:
+     * `Endpoints/LoginEndpoints.cs`: legge RememberMe, Device, Refresh cookie (name/path/samesite), password policy, flag cookie.
+     * `Endpoints/RefreshEndpoints.cs`: legge Refresh cookie (name/path/samesite/secure/AllowSameSiteNone), RequireUserAgentMatch.
+     * `Endpoints/LogoutEndpoints.cs` / `LogoutAllEndpoints.cs`: legge nomi/path cookie refresh/device.
+     * `Endpoints/ChangePasswordEndpoints.cs`: `LoadPasswordPolicy` via `IConfiguration.GetValue`.
+     * `Endpoints/PasswordResetEndpoints.cs`: mix `PasswordResetConfig` + letture raw di `PasswordPolicy:*`.
+     * `Endpoints/MfaSetup/ConfirmMfa`: riuso config cookie/device/refresh post-MFA.
+     * `Program.cs`: log/validazione (ok), ma alcuni valori propagati agli endpoint senza options dedicate.
+   - Options già esistenti: `PasswordPolicyOptions`, `RememberMeOptions`, `DeviceOptions`, `RefreshOptions`, `PasswordResetConfig`, `CleanupOptions`, `JwtOptions`, `IdTokenOptions`.
+   - Gap: `RefreshOptions` non include cookie name/path/samesite/secure; manca una `CookieOptions`/`SessionOptions`; password policy letta raw in alcuni endpoint; reset password mescola config e letture raw.
 
 2) Definizione/estensione options
    - Completare le classi options mancanti o incomplete:
