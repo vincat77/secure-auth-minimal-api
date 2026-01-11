@@ -1,5 +1,6 @@
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Services;
+using SecureAuthMinimalApi.Filters;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -70,7 +71,9 @@ public static class ChangeEmailEndpoints
             }
 
             return Results.Ok(new { ok = true });
-        });
+        })
+        .RequireSession()
+        .RequireCsrf();
     }
 }
 
