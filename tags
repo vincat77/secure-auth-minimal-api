@@ -119,6 +119,7 @@ ClientIp	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^    public string? C
 ClientIp	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? ClientIp { get; init; }$/;"	p	class:RefreshToken
 ComputeHash	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^    public string ComputeHash(string token)$/;"	m	class:RefreshTokenHasher
 ConfirmAndFetchMeAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmAndFetchMeAsync(string challengeId, string totp)$/;"	m	class:MainForm	file:
+ConfirmEmailAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmEmailAsync(string confirmToken)$/;"	m	class:MainForm	file:
 ConfirmEmailAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task ConfirmEmailAsync()$/;"	m	class:MainForm	file:
 ConfirmEmailAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task ConfirmEmailAsync(string userId, CancellationToken ct)$/;"	m	class:UserRepository
 ConfirmEmailAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task ConfirmEmailAsync(string token)$/;"	m	class:ApiTests	file:
@@ -269,6 +270,7 @@ FixedTimeEquals	src/SecureAuthMinimalApi/Filters/CsrfFilter.cs	/^    private sta
 FixedTimeEquals	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfMiddleware	file:
 FullFlowAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task FullFlowAsync()$/;"	m	class:MainForm	file:
 Full_auth_flow_with_remember_and_mfa	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Full_auth_flow_with_remember_and_mfa()$/;"	m	class:ApiTests
+GenerateCredentials	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private static (string username, string password, string email) GenerateCredentials()$/;"	m	class:MainForm	file:
 GenerateToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string GenerateToken()$/;"	m	class:PasswordResetEndpoints	file:
 GenerateTotp	clients/WinFormsClient/MainForm.cs	/^  private static string GenerateTotp(string base32Secret)$/;"	m	class:MainForm	file:
 GetAsync	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public async Task<ThrottleState> GetAsync(string username, CancellationToken ct)$/;"	m	class:LoginThrottleRepository
@@ -412,6 +414,8 @@ LoginAuditRepository	src/SecureAuthMinimalApi/Data/LoginAuditRepository.cs	/^   
 LoginAuditRepository	src/SecureAuthMinimalApi/Data/LoginAuditRepository.cs	/^public sealed class LoginAuditRepository$/;"	c
 LoginClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? LoginClicked;$/;"	E	class:ActionButtonsControl
 LoginEndpoints	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^public static class LoginEndpoints$/;"	c
+LoginForMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginForMfaAsync(string username, string password)$/;"	m	class:MainForm	file:
+LoginPasswordAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginPasswordAsync(string username, string password)$/;"	m	class:MainForm	file:
 LoginRequest	src/SecureAuthMinimalApi/LoginRequest.cs	/^public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool Rem/;"	m
 LoginResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record LoginResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool/;"	m	class:MainForm	file:
 LoginResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed record LoginResponse(bool Ok, string? CsrfToken, bool? RememberIssued, string/;"	m	class:ApiTests	file:
@@ -642,6 +646,7 @@ RegisterResponse	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    priv
 RegisterResponse	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private record RegisterResponse(bool Ok, string? UserId, string? EmailConfirmToken, string? /;"	m	class:PasswordResetTests	file:
 RegisterSuccessAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public async Task RegisterSuccessAsync(string username, CancellationToken ct)$/;"	m	class:DbLoginThrottle
 RegisterSuccessAsync	src/SecureAuthMinimalApi/Services/ILoginThrottle.cs	/^    Task RegisterSuccessAsync(string username, CancellationToken ct);$/;"	m	interface:ILoginThrottle
+RegisterUserAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<string?> RegisterUserAsync(string username, string password, string email/;"	m	class:MainForm	file:
 Register_duplicate_email_case_insensitive_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_email_case_insensitive_returns_conflict()$/;"	m	class:ApiTests
 Register_duplicate_returns_conflict	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_returns_conflict()$/;"	m	class:ApiTests
 Register_duplicate_returns_conflict_when_email_confirmation_not_required	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Register_duplicate_returns_conflict_when_email_confirmation_not_required()$/;"	m	class:ApiTests
@@ -753,6 +758,7 @@ SetStatus	clients/WinFormsClient/Controls/DeviceAlertControl.cs	/^    public voi
 SetStatus	clients/WinFormsClient/Controls/StatusInfoControl.cs	/^    public void SetStatus(string stateText, string? userId, string? sessionId, string? expiresAt/;"	m	class:StatusInfoControl
 SetToken	clients/WinFormsClient/Controls/IdTokenViewerControl.cs	/^  public void SetToken(string? idToken)$/;"	m	class:IdTokenViewerControl
 SetTotpSecretAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task SetTotpSecretAsync(string userId, string secret, CancellationToken ct)$/;"	m	class:UserRepository
+SetupMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<MfaSetupResponse?> SetupMfaAsync(string? csrf)$/;"	m	class:MainForm	file:
 SetupMfaAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task SetupMfaAsync()$/;"	m	class:MainForm	file:
 SetupMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:ActionButtonsControl
 SetupMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:MfaPanelControl

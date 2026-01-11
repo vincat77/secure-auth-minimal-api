@@ -76,48 +76,29 @@ public partial class MainForm : Form
             return;
         }
 
-        // 1) Genera credenziali casuali per un nuovo utente di prova
-        var username = $"flow-{Guid.NewGuid():N}".Substring(0, 16);
-        var password = "FlowUser123!";
-        var email = $"{username}@example.com";
+        var (username, password, email) = GenerateCredentials();
 
-        // 2) Registrazione utente
-        Log($"[Flow] Register {username}");
-        var reg = await PostJson<RegisterResp>("/register", new { username, password, email });
-        var confirmToken = reg?.EmailConfirmToken;
-        Log($"[Flow] Confirm token: {confirmToken}");
-
+        // 1) Registrazione + token conferma
+        var confirmToken = await RegisterUserAsync(username, password, email);
         if (string.IsNullOrWhiteSpace(confirmToken))
         {
             Log("[Flow] Token conferma mancante, stop");
             return;
         }
 
-        // 3) Conferma email con il token ricevuto
-        Log("[Flow] Confirm email");
-        await PostJson<object>("/confirm-email", new { token = confirmToken.ToString() });
+        // 2) Conferma email
+        await ConfirmEmailAsync(confirmToken);
 
-        // 4) Login password per ottenere CSRF e refresh-CSRF
-        Log("[Flow] Login password");
-        var login = await _api.LoginAsync(username, password, rememberMe: true);
+        // 3) Login password per ottenere CSRF e refresh-CSRF
+        var login = await LoginPasswordAsync(username, password);
         if (!login.Ok && login.Error != "mfa_required")
         {
             Log($"[Flow] Login fallito: {login.Error}");
             return;
         }
 
-        string? csrf = login.CsrfToken;
-        string? refreshCsrf = login.RefreshCsrfToken;
-
-        // 5) Setup MFA (richiede CSRF) e mostra l’otpauth da scansionare
-        Log("[Flow] Setup MFA");
-        if (string.IsNullOrWhiteSpace(csrf))
-        {
-            Log("[Flow] CSRF mancante dopo login, stop");
-            return;
-        }
-
-        var setup = await PostJson<MfaSetupResponse>("/mfa/setup", new { }, csrfHeader: csrf);
+        // 4) Setup MFA con CSRF
+        var setup = await SetupMfaAsync(login.CsrfToken);
         if (setup is null || string.IsNullOrWhiteSpace(setup.Secret))
         {
             Log("[Flow] Setup MFA senza secret, stop");
@@ -127,19 +108,16 @@ public partial class MainForm : Form
         txtOtpauth.Text = setup.OtpauthUri ?? "";
         Log($"[Flow] otpauth: {setup.OtpauthUri}");
 
-        // 6) Logout per forzare un nuovo login che richieda MFA
+        // 5) Logout e nuovo login per ottenere challenge MFA
         await _api.LogoutAsync();
-
-        // 7) Login che genera la challenge MFA
-        Log("[Flow] Login per MFA");
-        var loginMfa = await _api.LoginAsync(username, password, rememberMe: true);
+        var loginMfa = await LoginForMfaAsync(username, password);
         if (loginMfa.Error != "mfa_required" || string.IsNullOrWhiteSpace(loginMfa.ChallengeId))
         {
             Log($"[Flow] Login non richiede MFA (error={loginMfa.Error})");
             return;
         }
 
-        // 8) Attende che l’utente inserisca il TOTP; memorizza lo stato se manca
+        // 6) Attesa codice TOTP, salva stato per click successivo
         if (string.IsNullOrWhiteSpace(txtTotp.Text))
         {
             _pendingUsername = username;
@@ -150,10 +128,77 @@ public partial class MainForm : Form
             return;
         }
 
-        // 9) Conferma MFA e verifica accesso con /me
+        // 7) Conferma MFA e verifica /me
         Log("[Flow] Conferma MFA");
         await ConfirmAndFetchMeAsync(loginMfa.ChallengeId, txtTotp.Text.Trim());
         ClearPending();
+    }
+
+    /// <summary>
+    /// Genera credenziali random per un utente di prova.
+    /// </summary>
+    private static (string username, string password, string email) GenerateCredentials()
+    {
+        // 1) Genera credenziali casuali per un nuovo utente di prova
+        var username = $"flow-{Guid.NewGuid():N}".Substring(0, 16);
+        var password = "FlowUser123!";
+        var email = $"{username}@example.com";
+
+        return (username, password, email);
+    }
+
+    /// <summary>
+    /// Registra un nuovo utente e restituisce il token di conferma email.
+    /// </summary>
+    private async Task<string?> RegisterUserAsync(string username, string password, string email)
+    {
+        Log($"[Flow] Register {username}");
+        var reg = await PostJson<RegisterResp>("/register", new { username, password, email });
+        var confirmToken = reg?.EmailConfirmToken;
+        Log($"[Flow] Confirm token: {confirmToken}");
+        return confirmToken;
+    }
+
+    /// <summary>
+    /// Chiama /confirm-email con il token fornito.
+    /// </summary>
+    private async Task ConfirmEmailAsync(string confirmToken)
+    {
+        Log("[Flow] Confirm email");
+        await PostJson<object>("/confirm-email", new { token = confirmToken });
+    }
+
+    /// <summary>
+    /// Login password per ottenere CSRF/refresh-CSRF.
+    /// </summary>
+    private async Task<LoginResult> LoginPasswordAsync(string username, string password)
+    {
+        Log("[Flow] Login password");
+        return await _api!.LoginAsync(username, password, rememberMe: true);
+    }
+
+    /// <summary>
+    /// Setup MFA usando il CSRF ottenuto dal login.
+    /// </summary>
+    private async Task<MfaSetupResponse?> SetupMfaAsync(string? csrf)
+    {
+        Log("[Flow] Setup MFA");
+        if (string.IsNullOrWhiteSpace(csrf))
+        {
+            Log("[Flow] CSRF mancante dopo login, stop");
+            return null;
+        }
+
+        return await PostJson<MfaSetupResponse>("/mfa/setup", new { }, csrfHeader: csrf);
+    }
+
+    /// <summary>
+    /// Login che deve produrre una challenge MFA.
+    /// </summary>
+    private async Task<LoginResult> LoginForMfaAsync(string username, string password)
+    {
+        Log("[Flow] Login per MFA");
+        return await _api!.LoginAsync(username, password, rememberMe: true);
     }
 
     private async Task ConfirmPendingMfaAsync()
