@@ -28,10 +28,10 @@ curl -i -X POST http://localhost:5000/logout ^
   -b cookies.txt
 ```
 
-Refresh sessione (ruota refresh token e rinnova access/CSRF):
+Refresh sessione (ruota refresh token e rinnova access/CSRF + richiede header X-Refresh-Csrf):
 ```bash
 curl -i -X POST http://localhost:5000/refresh ^
-  -H "X-CSRF-Token: <csrfToken>" ^
+  -H "X-Refresh-Csrf: <refreshCsrfToken>" ^
   -b cookies.txt
 ```
 
@@ -79,7 +79,7 @@ curl -i http://localhost:5000/introspect -b cookies.txt
 - `POST /login/confirm-mfa`: completa login con TOTP.
 - `GET /me`: profilo sessione attiva.
 - `POST /logout` e `POST /logout-all`: revoca sessione/i.
-- `POST /refresh`: ruota refresh token e rinnova access/CSRF.
+- `POST /refresh`: ruota refresh token e rinnova access/CSRF (richiede header `X-Refresh-Csrf` restituito alla precedente emissione).
 - `GET /health` / `GET /live` / `GET /ready`: health checks.
 - `GET /introspect`: stato sessione da token.
 - `GET /confirm-email`: conferma email.
@@ -89,7 +89,7 @@ File di riferimento: `src/SecureAuthMinimalApi/appsettings.guida.md`.
 Impostazioni chiave:
 - `Jwt:*` per issuer/audience/secret.
 - `Cookie:RequireSecure` per sviluppo locale.
-- `Session:*`, `LoginThrottle:*`, `PasswordPolicy:*`, `Mfa:*`, `Cleanup:*`.
+- `Session:*`, `LoginThrottle:*`, `PasswordPolicy:*`, `Mfa:*`, `Cleanup:*`, `Refresh:*` (opzioni cookie + `RequireUserAgentMatch`; header `X-Refresh-Csrf` richiesto per refresh token).
 - `ConnectionStrings:Sqlite` per il DB.
 
 ## Test
