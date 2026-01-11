@@ -8,19 +8,20 @@ partial class ActionButtonsControl
     /// <summary>Required designer variable.</summary>
     private IContainer components = null!;
 
-    private Button _registerButton = null!;
-    private Button _confirmEmailButton = null!;
-    private Button _loginButton = null!;
-    private Button _confirmMfaButton = null!;
-    private Button _refreshButton = null!;
-    private Button _setupMfaButton = null!;
-    private Button _disableMfaButton = null!;
-    private Button _meButton = null!;
-    private Button _changePasswordButton = null!;
-    private Button _logoutButton = null!;
-    private Button _showQrButton = null!;
-    private Button _showCookiesButton = null!;
-    private CheckBox _rememberCheck = null!;
+  private Button _registerButton = null!;
+  private Button _smokeFlowButton = null!;
+  private Button _confirmEmailButton = null!;
+  private Button _loginButton = null!;
+  private Button _confirmMfaButton = null!;
+  private Button _refreshButton = null!;
+  private Button _setupMfaButton = null!;
+  private Button _disableMfaButton = null!;
+  private Button _meButton = null!;
+  private Button _changePasswordButton = null!;
+  private Button _logoutButton = null!;
+  private Button _showQrButton = null!;
+  private Button _showCookiesButton = null!;
+  private CheckBox _rememberCheck = null!;
 
     /// <summary>Clean up any resources being used.</summary>
     protected override void Dispose(bool disposing)
@@ -46,6 +47,7 @@ partial class ActionButtonsControl
     _logoutButton = new Button();
     _showQrButton = new Button();
     _showCookiesButton = new Button();
+    _smokeFlowButton = new Button();
     _rememberCheck = new CheckBox();
     SuspendLayout();
     // 
@@ -145,13 +147,21 @@ partial class ActionButtonsControl
     _showCookiesButton.TabIndex = 11;
     _showCookiesButton.Text = "Mostra cookie";
     // 
+    // _smokeFlowButton
+    // 
+    _smokeFlowButton.Location = new Point(0, 420);
+    _smokeFlowButton.Name = "_smokeFlowButton";
+    _smokeFlowButton.Size = new Size(155, 30);
+    _smokeFlowButton.TabIndex = 12;
+    _smokeFlowButton.Text = "Flow completo MFA";
+    // 
     // _rememberCheck
     // 
     _rememberCheck.AutoSize = true;
-    _rememberCheck.Location = new Point(36, 421);
+    _rememberCheck.Location = new Point(36, 455);
     _rememberCheck.Name = "_rememberCheck";
     _rememberCheck.Size = new Size(80, 19);
-    _rememberCheck.TabIndex = 12;
+    _rememberCheck.TabIndex = 13;
     _rememberCheck.Text = "Ricordami";
     // 
     // ActionButtonsControl
@@ -161,6 +171,7 @@ partial class ActionButtonsControl
     BorderStyle = BorderStyle.FixedSingle;
     Controls.Add(_changePasswordButton);
     Controls.Add(_rememberCheck);
+    Controls.Add(_smokeFlowButton);
     Controls.Add(_showCookiesButton);
     Controls.Add(_showQrButton);
     Controls.Add(_logoutButton);
@@ -173,7 +184,7 @@ partial class ActionButtonsControl
     Controls.Add(_confirmEmailButton);
     Controls.Add(_registerButton);
     Name = "ActionButtonsControl";
-    Size = new Size(158, 492);
+    Size = new Size(158, 520);
     ResumeLayout(false);
     PerformLayout();
   }

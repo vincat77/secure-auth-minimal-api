@@ -22,6 +22,7 @@ public sealed partial class ActionButtonsControl : UserControl
     public event EventHandler? LogoutClicked;
     public event EventHandler? ShowQrClicked;
     public event EventHandler? ShowCookiesClicked;
+    public event EventHandler? SmokeFlowClicked;
 
     protected override void OnLoad(EventArgs e)
     {
@@ -38,6 +39,7 @@ public sealed partial class ActionButtonsControl : UserControl
         _logoutButton.Click += (s, _) => LogoutClicked?.Invoke(this, EventArgs.Empty);
         _showQrButton.Click += (s, _) => ShowQrClicked?.Invoke(this, EventArgs.Empty);
         _showCookiesButton.Click += (s, _) => ShowCookiesClicked?.Invoke(this, EventArgs.Empty);
+        _smokeFlowButton.Click += (s, _) => SmokeFlowClicked?.Invoke(this, EventArgs.Empty);
     }
 
     public bool RememberChecked

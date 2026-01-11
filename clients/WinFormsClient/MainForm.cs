@@ -8,6 +8,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Security.Cryptography;
+using System.Buffers.Binary;
 using SecureAuthClient;
 using WinFormsClient.Controls;
 
@@ -44,11 +46,13 @@ public sealed partial class MainForm : Form
     _actions.RefreshClicked += async (_, _) => await RefreshAsync();
     _actions.SetupMfaClicked += async (_, _) => await SetupMfaAsync();
     _actions.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
+    _actions.SmokeFlowClicked += async (_, _) => await FullFlowAsync();
     _actions.MeClicked += async (_, _) => await MeAsync();
     _actions.ChangePasswordClicked += async (_, _) => await ChangePasswordAsync();
     _actions.LogoutClicked += async (_, _) => await LogoutAsync();
     _actions.ShowQrClicked += (_, _) => RenderQr();
     _actions.ShowCookiesClicked += (_, _) => DumpCookies();
+    _actions.SmokeFlowClicked += async (_, _) => await FullFlowAsync();
     _mfaPanel.ConfirmMfaClicked += async (_, _) => await ConfirmMfaAsync();
     _mfaPanel.SetupMfaClicked += async (_, _) => await SetupMfaAsync();
     _mfaPanel.DisableMfaClicked += async (_, _) => await DisableMfaAsync();
@@ -404,6 +408,168 @@ public sealed partial class MainForm : Form
       Append($"Errore cambio password: {ex.Message}");
       LogEvent("Errore", $"Cambio password eccezione: {ex.Message}");
     }
+  }
+
+  /// <summary>
+  /// Esegue un flusso completo: registra utente random, conferma email, login, setup MFA, logout, login con MFA e verifica /me.
+  /// Utile per riprodurre problemi MFA end-to-end.
+  /// </summary>
+  private async Task FullFlowAsync()
+  {
+    EnsureHttpClient();
+    using var busy = BeginBusy("Flow completo in corso...");
+    try
+    {
+      var username = $"flow-{Guid.NewGuid():N}".Substring(0, 18);
+      var password = "FlowUser123!";
+      var email = $"{username}@example.com";
+      Append($"[FLOW] Registrazione utente {username}");
+
+      // 1) Registrazione
+      var regPayload = new
+      {
+        username,
+        password,
+        email
+      };
+      var regResp = await _http.PostAsJsonAsync(new Uri(BaseUri, "/register"), regPayload);
+      var regBody = await regResp.Content.ReadAsStringAsync();
+      if (!regResp.IsSuccessStatusCode)
+      {
+        Append($"[FLOW] Registrazione fallita: {(int)regResp.StatusCode} {regBody}");
+        return;
+      }
+      var reg = JsonSerializer.Deserialize<RegisterResponse>(regBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      Append($"[FLOW] Registrato userId={reg?.UserId} token={reg?.EmailConfirmToken}");
+
+      // 2) Conferma email
+      if (!string.IsNullOrWhiteSpace(reg?.EmailConfirmToken))
+      {
+        var confirmResp = await _http.PostAsJsonAsync(new Uri(BaseUri, "/confirm-email"), new { token = reg.EmailConfirmToken });
+        Append($"[FLOW] Conferma email status {(int)confirmResp.StatusCode}");
+        if (!confirmResp.IsSuccessStatusCode) return;
+      }
+
+      // 3) Login (password)
+      var login = await _api!.LoginAsync(username, password, rememberMe: true);
+      if (login.Error == "mfa_required")
+      {
+        Append("[FLOW] MFA già richiesto al primo login (atteso dopo setup).");
+        _challengeId = login.ChallengeId;
+      }
+      else if (!login.Ok)
+      {
+        Append($"[FLOW] Login fallito: {login.Error}");
+        return;
+      }
+      else
+      {
+        _csrfToken = login.CsrfToken;
+        _refreshCsrfToken = login.RefreshCsrfToken;
+      }
+
+      // 4) Setup MFA (richiede CSRF)
+      Append("[FLOW] Setup MFA");
+      if (string.IsNullOrWhiteSpace(_csrfToken))
+      {
+        Append("[FLOW] CSRF mancante dopo login, stop");
+        return;
+      }
+      var setupReq = new HttpRequestMessage(HttpMethod.Post, new Uri(BaseUri, "/mfa/setup"));
+      setupReq.Headers.Add("X-CSRF-Token", _csrfToken);
+      var setupResp = await _http.SendAsync(setupReq);
+      var setupBody = await setupResp.Content.ReadAsStringAsync();
+      if (!setupResp.IsSuccessStatusCode)
+      {
+        Append($"[FLOW] Setup MFA fallito: {(int)setupResp.StatusCode} {setupBody}");
+        return;
+      }
+      var setup = JsonSerializer.Deserialize<MfaSetupResponse>(setupBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      if (string.IsNullOrWhiteSpace(setup?.Secret))
+      {
+        Append("[FLOW] Setup MFA senza secret, stop");
+        return;
+      }
+      var totpCode = GenerateTotp(setup.Secret);
+      Append($"[FLOW] TOTP generato (una tantum): {totpCode}");
+
+      // 5) Logout sessione corrente
+      await _api.LogoutAsync();
+
+      // 6) Login -> atteso mfa_required
+      var loginMfa = await _api.LoginAsync(username, password, rememberMe: true);
+      if (loginMfa.Error != "mfa_required" || string.IsNullOrWhiteSpace(loginMfa.ChallengeId))
+      {
+        Append($"[FLOW] Login non ha restituito mfa_required (error={loginMfa.Error})");
+        return;
+      }
+      _challengeId = loginMfa.ChallengeId;
+
+      // 7) Conferma MFA con TOTP appena generato
+      var confirm = await _api.ConfirmMfaAsync(_challengeId, totpCode, rememberMe: true);
+      if (!confirm.Ok)
+      {
+        Append($"[FLOW] Confirm MFA fallito: {confirm.Error}");
+        return;
+      }
+      _csrfToken = confirm.CsrfToken ?? _csrfToken;
+      _refreshCsrfToken = confirm.RefreshCsrfToken ?? _refreshCsrfToken;
+      Append("[FLOW] MFA confermato, sessione attiva");
+
+      // 8) /me
+      var me = await _api.MeAsync();
+      if (me is not null && me.Ok)
+      {
+        Append($"[FLOW] /me OK user={me.UserId}");
+      }
+      else
+      {
+        Append("[FLOW] /me fallito dopo MFA");
+      }
+    }
+    catch (Exception ex)
+    {
+      Append($"[FLOW] Errore: {ex.Message}");
+    }
+  }
+
+  private static string GenerateTotp(string base32Secret)
+  {
+    var key = Base32Decode(base32Secret);
+    var timestep = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 30;
+    Span<byte> timeBytes = stackalloc byte[8];
+    BinaryPrimitives.WriteUInt64BigEndian(timeBytes, (ulong)timestep);
+    using var hmac = new HMACSHA1(key);
+    var hash = hmac.ComputeHash(timeBytes.ToArray());
+    var offset = hash[^1] & 0x0F;
+    var binary =
+      ((hash[offset] & 0x7f) << 24) |
+      ((hash[offset + 1] & 0xff) << 16) |
+      ((hash[offset + 2] & 0xff) << 8) |
+      (hash[offset + 3] & 0xff);
+    var code = binary % 1_000_000;
+    return code.ToString("D6");
+  }
+
+  private static byte[] Base32Decode(string input)
+  {
+    const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    var clean = input.Trim().Replace(" ", "").TrimEnd('=').ToUpperInvariant();
+    var output = new List<byte>();
+    int bits = 0, value = 0;
+    foreach (var c in clean)
+    {
+      var index = alphabet.IndexOf(c);
+      if (index < 0) continue;
+      value = (value << 5) | index;
+      bits += 5;
+      if (bits >= 8)
+      {
+        output.Add((byte)((value >> (bits - 8)) & 0xFF));
+        bits -= 8;
+      }
+    }
+    return output.ToArray();
   }
 
   /// <summary>
