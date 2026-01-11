@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
-
+using SecureAuthMinimalApi.Utilities;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LogoutEndpoints

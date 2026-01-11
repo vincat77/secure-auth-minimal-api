@@ -1,5 +1,5 @@
 using System.Text.Json;
-
+using SecureAuthMinimalApi.Utilities;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class MeEndpoints

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
-
+using SecureAuthMinimalApi.Utilities;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class MfaDisableEndpoints

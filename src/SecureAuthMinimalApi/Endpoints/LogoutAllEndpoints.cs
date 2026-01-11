@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
-
+using SecureAuthMinimalApi.Utilities;
 namespace SecureAuthMinimalApi.Endpoints;
 
 public static class LogoutAllEndpoints
@@ -16,7 +16,7 @@ public static class LogoutAllEndpoints
 
         app.MapPost("/logout-all", async (HttpContext ctx, SessionRepository sessions, RefreshTokenRepository refreshRepo) =>
         {
-            var session = ctx.GetRequiredSession();
+            var session = ctx.GetRequiredSession();  
 
             await refreshRepo.RevokeAllForUserAsync(session.UserId, "logout-all", ctx.RequestAborted);
             await sessions.RevokeAsync(session.SessionId, DateTime.UtcNow.ToString("O"), ctx.RequestAborted);

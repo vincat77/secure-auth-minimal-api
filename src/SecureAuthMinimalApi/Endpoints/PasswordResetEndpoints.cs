@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using SecureAuthMinimalApi.Utilities;
+using SecureAuthMinimalApi.Services;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -47,7 +48,7 @@ namespace SecureAuthMinimalApi.Endpoints;
             {
                 var clientIp = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
                 var key = $"{email}|{clientIp}";
-                if (RateLimiter.ShouldThrottle(key, resetConfig.RateLimitRequests, rateLimitWindow))
+                if (RateLimiter.ShouldThrottle(key, resetOptions.RateLimitRequests, rateLimitWindow))  
                 {
                     return Results.StatusCode(StatusCodes.Status429TooManyRequests);
                 }

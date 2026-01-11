@@ -1,6 +1,7 @@
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Filters;
+using SecureAuthMinimalApi.Utilities;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
