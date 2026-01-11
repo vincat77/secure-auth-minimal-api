@@ -64,6 +64,7 @@ AuthHelpers	src/SecureAuthMinimalApi/AuthHelpers.cs	/^public static class AuthHe
 Base32Decode	clients/WinFormsClient/MainForm.cs	/^  private static byte[] Base32Decode(string input)$/;"	m	class:MainForm	file:
 Base64Url	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static string Base64Url(byte[] bytes)$/;"	m	class:ChangePasswordEndpoints	file:
 Base64Url	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static string Base64Url(byte[] bytes)$/;"	m	class:EndpointUtilities
+Base64Url	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    public static string Base64Url(byte[] bytes)$/;"	m	class:SecurityUtils
 BaseUri	clients/WinFormsClient/MainForm.cs	/^  private Uri BaseUri => new(_urlControl.ValueText.TrimEnd('\/'));$/;"	f	class:MainForm	file:
 BaseUrl	clients/SecureAuthClient/SecureAuthClientOptions.cs	/^    public required string BaseUrl { get; init; }$/;"	p	class:SecureAuthClientOptions
 BaseUrl	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^    private const string BaseUrl = "https:\/\/api.dicebear.com\/9.x\/adventurer\/";$/;"	f	class:ImageLoaderTests	file:
@@ -272,9 +273,7 @@ ExpiresAtUtc	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public requir
 ExpiresAtUtc	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public required string ExpiresAtUtc { get; init; }$/;"	p	class:UserSession
 FamilyName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? FamilyName { get; init; }$/;"	p	class:User
 FilterTestHelpers	tests/SecureAuthMinimalApi.Tests/Filters/FilterTestHelpers.cs	/^internal static class FilterTestHelpers$/;"	c
-FixedTimeEquals	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:RefreshEndpoints	file:
-FixedTimeEquals	src/SecureAuthMinimalApi/Filters/CsrfFilter.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfFilter	file:
-FixedTimeEquals	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static bool FixedTimeEquals(string a, string b)$/;"	m	class:CsrfMiddleware	file:
+FixedTimeEquals	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    public static bool FixedTimeEquals(string a, string b)$/;"	m	class:SecurityUtils
 FullFlowAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task FullFlowAsync()$/;"	m	class:MainForm	file:
 Full_auth_flow_with_remember_and_mfa	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Full_auth_flow_with_remember_and_mfa()$/;"	m	class:ApiTests
 GenerateCredentials	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private static (string username, string password, string email) GenerateCredentials()$/;"	m	class:MainForm	file:
@@ -300,10 +299,7 @@ GetValidationParameters	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^ 
 GivenName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? GivenName { get; init; }$/;"	p	class:User
 Hash	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^    public static string Hash(string password)$/;"	m	class:PasswordHasher
 HashToken	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static string HashToken(string token)$/;"	m	class:SmokeTestSeeder	file:
-HashToken	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:ConfirmMfaEndpoints	file:
-HashToken	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:LoginEndpoints	file:
-HashToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetEndpoints	file:
-HashToken	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:RefreshEndpoints	file:
+HashToken	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    public static string HashToken(string token)$/;"	m	class:SecurityUtils
 HashToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetTests	file:
 HeadersDump	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        public string? HeadersDump { get; private set; }$/;"	p	class:MainFormChangePasswordTests.StubHandler
 Headers_expose_expiry_and_idle_remaining	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    public async Task Headers_expose_expiry_and_idle_remaining()$/;"	m	class:IdleTimeoutTests
@@ -403,7 +399,6 @@ LoadFromUrlAsync	clients/WinFormsClient/ImageLoader.cs	/^    public static async
 LoadFromUrlAsync_Jpeg_Works	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^    public async Task LoadFromUrlAsync_Jpeg_Works()$/;"	m	class:ImageLoaderTests
 LoadFromUrlAsync_Png_Works	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^    public async Task LoadFromUrlAsync_Png_Works()$/;"	m	class:ImageLoaderTests
 LoadFromUrlAsync_Svg_WorksOrIsSkippedForSkiaBug	tests/WinFormsClient.Tests/ImageLoaderTests.cs	/^    public async Task LoadFromUrlAsync_Svg_WorksOrIsSkippedForSkiaBug()$/;"	m	class:ImageLoaderTests
-LoadPasswordPolicy	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static PasswordPolicySettings LoadPasswordPolicy(PasswordPolicyOptions options)$/;"	m	class:ChangePasswordEndpoints	file:
 LoadProfileImageAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task LoadProfileImageAsync(string? idToken)$/;"	m	class:MainForm	file:
 LoadRaster	clients/WinFormsClient/ImageLoader.cs	/^    private static Image LoadRaster(Stream stream)$/;"	m	class:ImageLoader	file:
 LoadSvg	clients/WinFormsClient/ImageLoader.cs	/^    private static Image LoadSvg(Stream stream, int width, int height)$/;"	m	class:ImageLoader	file:
@@ -566,7 +561,6 @@ ParseSameSite	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    priva
 PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string PasswordHash { get; init; }$/;"	p	class:User
 PasswordHasher	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
 PasswordPolicyOptions	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^public sealed class PasswordPolicyOptions$/;"	c
-PasswordPolicySettings	src/SecureAuthMinimalApi/Models/PasswordPolicySettings.cs	/^public sealed record PasswordPolicySettings(int MinLength, bool RequireUpper, bool RequireLower,/;"	m
 PasswordReset	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^public sealed class PasswordReset$/;"	c
 PasswordResetConfig	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^public sealed class PasswordResetConfig$/;"	c
 PasswordResetConfirmAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<ApiResult> PasswordResetConfirmAsync(string token, string newPassword, str/;"	m	class:SecureAuthApiClient
@@ -679,16 +673,12 @@ RememberMeOptions	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^public
 RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	class:MainForm	file:
 RequireConfirmed	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetConfig
 RequireCsrf	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireCsrf(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
-RequireDigit	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireDigit { get; set; }$/;"	p	class:PasswordPolicyOptions
-RequireLower	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireLower { get; set; }$/;"	p	class:PasswordPolicyOptions
 RequireMfa	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireMfa(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
 RequireSecure	src/SecureAuthMinimalApi/Options/CookieConfigOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:CookieConfigOptions
 RequireSecure	src/SecureAuthMinimalApi/Options/DeviceOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:DeviceOptions
 RequireSecure	src/SecureAuthMinimalApi/Options/RefreshOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:RefreshOptions
 RequireSecure	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^    public bool RequireSecure { get; set; } = true;$/;"	p	class:RememberMeOptions
 RequireSession	src/SecureAuthMinimalApi/Filters/EndpointFilterExtensions.cs	/^    public static RouteHandlerBuilder RequireSession(this RouteHandlerBuilder builder)$/;"	m	class:EndpointFilterExtensions
-RequireSymbol	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireSymbol { get; set; }$/;"	p	class:PasswordPolicyOptions
-RequireUpper	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^    public bool RequireUpper { get; set; }$/;"	p	class:PasswordPolicyOptions
 RequireUserAgentMatch	src/SecureAuthMinimalApi/Options/RefreshOptions.cs	/^    public bool RequireUserAgentMatch { get; set; } = false;$/;"	p	class:RefreshOptions
 ResetAsync	src/SecureAuthMinimalApi/Data/LoginThrottleRepository.cs	/^    public async Task ResetAsync(string username, CancellationToken ct)$/;"	m	class:LoginThrottleRepository
 ResetChangePasswordForm	clients/WinFormsClient/MainForm.cs	/^  private void ResetChangePasswordForm()$/;"	m	class:MainForm	file:
@@ -729,6 +719,7 @@ SecretKey	src/SecureAuthMinimalApi/Options/JwtOptions.cs	/^    public string Sec
 SecureAuthApiClient	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public SecureAuthApiClient(SecureAuthClientOptions options, HttpMessageHandler? handler = nu/;"	m	class:SecureAuthApiClient
 SecureAuthApiClient	clients/SecureAuthClient/SecureAuthApiClient.cs	/^public sealed class SecureAuthApiClient : IDisposable$/;"	c
 SecureAuthClientOptions	clients/SecureAuthClient/SecureAuthClientOptions.cs	/^public sealed class SecureAuthClientOptions$/;"	c
+SecurityUtils	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^public static class SecurityUtils$/;"	c
 Seed	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    public static void Seed(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder
 SeedExpiredRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRecordsAsync(string dbPath)$/;"	m	class:CleanupServiceTests	file:
 SeedExpiredRefreshTokensAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRefreshTokensAsync(string dbPath, int count)$/;"	m	class:CleanupServiceTests	file:

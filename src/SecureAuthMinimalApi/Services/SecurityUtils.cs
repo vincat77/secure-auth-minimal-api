@@ -30,4 +30,15 @@ public static class SecurityUtils
         var hash = sha.ComputeHash(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
+
+    /// <summary>
+    /// Converte una sequenza di byte in Base64 URL-safe senza padding.
+    /// </summary>
+    public static string Base64Url(byte[] bytes)
+    {
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
 }
