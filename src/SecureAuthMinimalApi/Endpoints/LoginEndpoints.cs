@@ -40,7 +40,7 @@ public static class LoginEndpoints
             // Rate limit per IP/endpoint (anti brute-force base)
             if (IsLoginRateLimited(ctx, loginOptions.Value, loginRateLimiter))
             {
-                logger.LogWarning("Login rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                logger.LogWarning("Login rate-limit superato per IP {Ip}", GetClientIp(ctx));
                 return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             }
             var inputErrors = new List<string>();
@@ -292,7 +292,7 @@ public static class LoginEndpoints
 
         var limit = options.RateLimitRequests;
         var window = options.RateLimitWindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.RateLimitWindowMinutes);
-        var key = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        var key = GetClientIp(ctx);
         return limiter.ShouldThrottle(key, limit, window);
     }
 }

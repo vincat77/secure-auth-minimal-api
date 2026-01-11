@@ -28,7 +28,7 @@ public static class RegisterEndpoints
             // Rate limit per IP: protegge dall'abuso di registrazioni automatiche
             if (IsRegisterRateLimited(ctx, registerRateLimit))
             {
-                logger.LogWarning("Registrazione rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                logger.LogWarning("Registrazione rate-limit superato per IP {Ip}", GetClientIp(ctx));
                 return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             }
 
@@ -158,7 +158,7 @@ public static class RegisterEndpoints
             return false;
 
         var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
-        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        var ip = GetClientIp(ctx);
         return RegisterRateLimiter.ShouldThrottle(ip, options.Requests, window);
     }
 

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using SecureAuthMinimalApi.Logging;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using static SecureAuthMinimalApi.Utilities.CookieUtils;
+using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -28,7 +29,7 @@ public static class RefreshEndpoints
         {
             if (IsRefreshRateLimited(ctx, rateLimitOptions))
             {
-                logger.LogWarning("Refresh rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                logger.LogWarning("Refresh rate-limit superato per IP {Ip}", GetClientIp(ctx));
                 return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             }
 
@@ -183,7 +184,7 @@ public static class RefreshEndpoints
             return false;
 
         var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
-        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        var ip = GetClientIp(ctx);
         return RefreshRateLimiter.ShouldThrottle(ip, options.Requests, window);
     }
 

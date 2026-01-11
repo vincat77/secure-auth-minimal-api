@@ -4,6 +4,7 @@ using SecureAuthMinimalApi.Logging;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Utilities;
 using Microsoft.Extensions.Options;
+using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -20,7 +21,7 @@ public static class ConfirmEmailEndpoints
         {
             if (IsConfirmRateLimited(ctx, rateLimitOptions))
             {
-                logger.LogWarning("Conferma email rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                logger.LogWarning("Conferma email rate-limit superato per IP {Ip}", GetClientIp(ctx));
                 return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             }
 
@@ -79,7 +80,7 @@ public static class ConfirmEmailEndpoints
             return false;
 
         var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
-        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        var ip = GetClientIp(ctx);
         return ConfirmRateLimiter.ShouldThrottle(ip, options.Requests, window);
     }
 

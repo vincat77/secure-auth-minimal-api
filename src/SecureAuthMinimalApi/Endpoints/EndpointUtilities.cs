@@ -10,13 +10,14 @@ internal static class EndpointUtilities
     /// </summary>
     public static Task AuditAsync(LoginAuditRepository repo, string username, string outcome, HttpContext ctx, string? detail)
     {
+        var clientIp = GetClientIp(ctx);
         var audit = new LoginAudit
         {
             Id = Guid.NewGuid().ToString("N"),
             Username = username,
             Outcome = outcome,
             TimestampUtc = DateTime.UtcNow.ToString("O"),
-            ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),
+            ClientIp = clientIp,
             UserAgent = ctx.Request.Headers["User-Agent"].ToString(),
             Detail = detail
         };
@@ -42,5 +43,26 @@ internal static class EndpointUtilities
         if (string.IsNullOrWhiteSpace(email))
             return null;
         return email.Trim().ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Restituisce l'IP client tenendo conto di X-Forwarded-For/X-Real-IP, con fallback a RemoteIpAddress.
+    /// </summary>
+    public static string GetClientIp(HttpContext ctx)
+    {
+        var fwd = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(fwd))
+        {
+            // usa il primo IP nella lista (client originario)
+            var first = fwd.Split(',').Select(x => x.Trim()).FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(first))
+                return first;
+        }
+
+        var real = ctx.Request.Headers["X-Real-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(real))
+            return real;
+
+        return ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
     }
 }

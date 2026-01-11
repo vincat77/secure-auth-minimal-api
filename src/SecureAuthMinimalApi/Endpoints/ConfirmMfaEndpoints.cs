@@ -31,7 +31,7 @@ public static class ConfirmMfaEndpoints
         {
             if (IsConfirmMfaRateLimited(ctx, rateLimitOptions))
             {
-                logger.LogWarning("Confirm-MFA rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                logger.LogWarning("Confirm-MFA rate-limit superato per IP {Ip}", GetClientIp(ctx));
                 return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             }
 
@@ -253,7 +253,7 @@ public static class ConfirmMfaEndpoints
             return false;
 
         var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
-        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        var ip = GetClientIp(ctx);
         return ConfirmMfaRateLimiter.ShouldThrottle(ip, options.Requests, window);
     }
 

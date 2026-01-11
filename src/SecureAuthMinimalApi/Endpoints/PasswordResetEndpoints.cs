@@ -8,6 +8,7 @@ using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Logging;
 using SecureAuthMinimalApi.Options;
 using Microsoft.Extensions.Options;
+using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -47,7 +48,7 @@ namespace SecureAuthMinimalApi.Endpoints;
 
             if (rateLimitEnabled)
             {
-                var clientIp = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+                var clientIp = GetClientIp(ctx);
                 var key = $"{email}|{clientIp}";
                 if (RateLimiter.ShouldThrottle(key, resetOptions.RateLimitRequests, rateLimitWindow))  
                 {
