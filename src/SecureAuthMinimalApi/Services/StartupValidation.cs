@@ -1,0 +1,162 @@
+using System.Text.Json;
+using SecureAuthMinimalApi.Options;
+using SecureAuthMinimalApi.Models;
+
+namespace SecureAuthMinimalApi.Services;
+
+/// <summary>
+/// Controlli di sicurezza eseguiti all'avvio in ambienti non Development.
+/// </summary>
+public static class StartupValidation
+{
+    /// <summary>
+    /// Valida le impostazioni JWT (secret, issuer, audience).
+    /// </summary>
+    public static void ValidateJwt(JwtOptions jwtOptions, bool isDevelopment, ILogger logger)
+    {
+        if (isDevelopment)
+            return;
+
+        if (string.IsNullOrWhiteSpace(jwtOptions.SecretKey))
+        {
+            throw new InvalidOperationException("Configurazione mancante: Jwt:SecretKey");
+        }
+
+        if (jwtOptions.SecretKey.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) ||
+            jwtOptions.SecretKey.Contains("CHANGEME", StringComparison.OrdinalIgnoreCase) ||
+            jwtOptions.SecretKey.Contains("REPLACE_ME", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Jwt:SecretKey è un placeholder. Impostare un segreto reale in produzione.");
+        }
+
+        if (jwtOptions.SecretKey.Length < 32)
+        {
+            throw new InvalidOperationException("Jwt:SecretKey troppo corto (min 32 caratteri consigliati).");
+        }
+
+        var iss = jwtOptions.Issuer ?? "";
+        var aud = jwtOptions.Audience ?? "";
+        if (!iss.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            !aud.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogWarning("Jwt Issuer/Audience non HTTPS in ambiente non Development: iss={Issuer}, aud={Audience}", iss, aud);
+        }
+    }
+
+    /// <summary>
+    /// Valida le impostazioni cookie di sicurezza.
+    /// </summary>
+    public static void ValidateCookieSecurity(WebApplication app, CookieConfigOptions cookieOptions, ILogger logger)
+    {
+        if (app.Environment.IsDevelopment())
+            return;
+
+        if (!cookieOptions.RequireSecure)
+        {
+            logger.LogWarning("Cookie:RequireSecure=false in ambiente non Development: sarà forzato a true");
+        }
+    }
+
+    /// <summary>
+    /// Logga la configurazione effettiva all'avvio (per diagnostica).
+    /// </summary>
+    public static void LogStartupInfo(
+        WebApplication app,
+        ILogger logger,
+        IEnumerable<string> serverUrls,
+        CleanupOptions cleanup,
+        PasswordPolicyOptions passwordPolicy,
+        UsernamePolicyOptions usernamePolicy,
+        EmailConfirmationOptions emailConfirmation,
+        MfaOptions mfa,
+        PasswordResetOptions reset,
+        JwtOptions jwt,
+        RememberMeOptions rememberMe,
+        DeviceOptions device,
+        SessionConfigOptions session,
+        ConnectionStringsOptions connectionStrings,
+        RefreshOptions refreshOptions,
+        IdTokenOptions idTokenOptions,
+        LoginThrottleOptions loginThrottle,
+        bool skipDbInit,
+        bool isDevelopment)
+    {
+        var startupConfig = new
+        {
+            Environment = app.Environment.EnvironmentName,
+            ContentRoot = app.Environment.ContentRootPath,
+            Urls = serverUrls,
+            Database = connectionStrings.Sqlite ?? "<missing>",
+            Jwt = new
+            {
+                Issuer = jwt.Issuer ?? "<missing>",
+                Audience = jwt.Audience ?? "<missing>",
+                SecretLength = jwt.SecretKey?.Length ?? 0
+            },
+            PasswordPolicy = new
+            {
+                MinLength = passwordPolicy.EffectiveMinLength,
+                RequireUpper = passwordPolicy.RequireUpper,
+                RequireLower = passwordPolicy.RequireLower,
+                RequireDigit = passwordPolicy.RequireDigit,
+                RequireSymbol = passwordPolicy.RequireSymbol
+            },
+            UsernamePolicy = new { Lowercase = usernamePolicy.Lowercase },
+            EmailConfirmation = new { Required = emailConfirmation.Required },
+            Mfa = new
+            {
+                ChallengeMinutes = mfa.ChallengeMinutes,
+                RequireUaMatch = mfa.RequireUaMatch,
+                RequireIpMatch = mfa.RequireIpMatch,
+                MaxAttemptsPerChallenge = mfa.MaxAttemptsPerChallenge
+            },
+            SessionIdleMinutes = session.IdleMinutes,
+            PasswordReset = new
+            {
+                ExpirationMinutes = reset.ExpirationMinutes,
+                RequireConfirmed = reset.RequireConfirmed,
+                IncludeTokenInResponseForTesting = isDevelopment && reset.IncludeTokenInResponseForTesting,
+                RetentionDays = reset.RetentionDays
+            },
+            RememberMe = new
+            {
+                CookieName = rememberMe.CookieName,
+                Path = rememberMe.Path,
+                RequireSecure = rememberMe.RequireSecure,
+                SameSite = rememberMe.SameSite,
+                AllowSameSiteNone = rememberMe.AllowSameSiteNone
+            },
+            Device = new
+            {
+                CookieName = device.CookieName,
+                RequireSecure = device.RequireSecure,
+                PersistDays = device.PersistDays,
+                SameSite = device.SameSite,
+                AllowSameSiteNone = device.AllowSameSiteNone
+            },
+            Cleanup = new
+            {
+                Enabled = cleanup.Enabled,
+                IntervalSeconds = cleanup.IntervalSeconds,
+                BatchSize = cleanup.BatchSize,
+                MaxIterationsPerRun = cleanup.MaxIterationsPerRun
+            },
+            LoginThrottle = new
+            {
+                MaxFailures = loginThrottle.MaxFailures,
+                LockMinutes = loginThrottle.LockMinutes
+            },
+            IdToken = new
+            {
+                Issuer = idTokenOptions.Issuer,
+                Audience = idTokenOptions.Audience,
+                Minutes = idTokenOptions.Minutes
+            },
+            SkipDbInit = skipDbInit
+        };
+
+        var formatted = JsonSerializer.Serialize(startupConfig, new JsonSerializerOptions { WriteIndented = true });
+        logger.LogInformation("Avvio SecureAuthMinimalApi - configurazione attiva:\n{StartupConfig}", formatted);
+        logger.LogInformation("Console pronta: 'P' per pausa/ripresa, 'S' per arresto.");
+    }
+}
