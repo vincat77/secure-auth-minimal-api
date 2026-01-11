@@ -7,6 +7,7 @@ using SecureAuthMinimalApi.Services;
 using System.Security.Cryptography;
 using System.Text;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
+using Microsoft.Extensions.Options;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -23,9 +24,10 @@ public static class ConfirmMfaEndpoints
         int mfaMaxAttempts)
     {
         var isDevelopment = app.Environment.IsDevelopment();
-        var rememberOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
-        var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
-        var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RefreshOptions>>().Value;
+        var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
+        var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
+        var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
+        var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 
         app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo) =>
         {
@@ -132,7 +134,7 @@ public static class ConfirmMfaEndpoints
             };
             await sessions.CreateAsync(session, ctx.RequestAborted);
 
-            var requireSecureConfig = app.Configuration.GetValue<bool>("Cookie:RequireSecure");
+            var requireSecureConfig = cookieConfig.RequireSecure || refreshOptions.RequireSecure;
             var requireSecure = isDevelopment ? requireSecureConfig : true;
             if (!isDevelopment && !requireSecureConfig)
             {
@@ -201,8 +203,9 @@ public static class ConfirmMfaEndpoints
                 refreshExpiresUtc = refreshExpires.ToString("O");
 
                 var rememberCookieName = refreshOptions.CookieName ?? rememberOptions.CookieName ?? "refresh_token";
-                var rememberSecure = isDevelopment ? refreshOptions.RequireSecure : true;
-                if (!isDevelopment && !refreshOptions.RequireSecure)
+                var rememberSecureConfig = refreshOptions.RequireSecure || cookieConfig.RequireSecure;
+                var rememberSecure = isDevelopment ? rememberSecureConfig : true;
+                if (!isDevelopment && !rememberSecureConfig)
                 {
                     logger.LogWarning("Refresh:RequireSecure=false in ambiente non Development: forzato a true");
                     rememberSecure = true;
@@ -220,13 +223,14 @@ public static class ConfirmMfaEndpoints
                     });
 
                 var deviceSameSite = ParseSameSite(deviceOptions.SameSite, deviceOptions.AllowSameSiteNone, isDevelopment, logger, "Device");
+                var deviceRequireSecureConfig = deviceOptions.RequireSecure || cookieConfig.RequireSecure;
                 ctx.Response.Cookies.Append(
                     deviceCookieName,
                     deviceId!,
                     new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = isDevelopment ? deviceOptions.RequireSecure : true,
+                        Secure = isDevelopment ? deviceRequireSecureConfig : true,
                         SameSite = deviceSameSite,
                         Path = "/",
                         MaxAge = refreshExpires - DateTime.UtcNow
