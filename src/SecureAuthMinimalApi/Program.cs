@@ -27,6 +27,7 @@ using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog());
 var logger = loggerFactory.CreateLogger<Program>();
 var cleanupOptions = builder.Configuration.GetSection("Cleanup").Get<CleanupOptions>() ?? new CleanupOptions();
 var resetOptions = builder.Configuration.GetSection("PasswordReset").Get<PasswordResetOptions>() ?? new PasswordResetOptions();
+
 logger.LogInformation(
     "Cleanup configurazione: enabled={Enabled}, intervalSeconds={Interval}, batchSize={Batch}, maxIterations={MaxIterations}",
     cleanupOptions.Enabled,
@@ -41,6 +42,7 @@ builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<LoginThrottleRepository>();
 builder.Services.AddSingleton<ILoginThrottle, DbLoginThrottle>();
 builder.Services.AddSingleton<LoginAuditRepository>();
+
 // DataProtection con chiavi persistenti (evita invalidazioni dopo restart/deploy)
 var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
 if (string.IsNullOrWhiteSpace(dpKeysPath))
@@ -60,6 +62,7 @@ builder.Services.AddSingleton<IdTokenService>();
 builder.Services.AddSingleton<IEmailService, NoopEmailService>();
 builder.Services.AddSingleton<PauseController>();
 builder.Services.AddSingleton<ConsoleControlService>();
+
 builder.Services.Configure<PasswordResetOptions>(builder.Configuration.GetSection("PasswordReset"));
 builder.Services.Configure<CleanupOptions>(builder.Configuration.GetSection("Cleanup"));
 builder.Services.Configure<RefreshOptions>(builder.Configuration.GetSection("Refresh"));
@@ -92,6 +95,7 @@ builder.Services.Configure<EmailConfirmationOptions>(options =>
 
   options.Required = parsed;
 });
+
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();
 
@@ -130,24 +134,12 @@ var loginOptions = new LoginOptions
   MfaMaxAttempts = mfaOptions.MaxAttemptsPerChallenge
 };
 
-var skipDbInit = app.Configuration.GetValue<bool?>("Tests:SkipDbInit") ?? false;
-if (skipDbInit)
-{
-  logger.LogWarning("Avvio con Tests:SkipDbInit=true: saltata inizializzazione DB (solo per test)");
-}
-else
-{
-  DbInitializer.EnsureCreated(app.Configuration, app.Environment.IsDevelopment(), logger);
-}
+app.EnsureDatabaseInitialized(logger);
 
 // Validazioni config in ambiente non Development.
 StartupValidation.ValidateJwt(app, jwtOptions, logger);
-
 StartupValidation.ValidateCookieSecurity(app, cookieOptions, logger);
-
 StartupValidation.LogStartupInfo(app, logger);
-
-
 
 // Middleware ordine personalizzato
 app.UseRequestLoggingWithUnauthorizedHandling();
