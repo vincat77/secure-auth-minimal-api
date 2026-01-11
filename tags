@@ -124,6 +124,7 @@ ClientIp	src/SecureAuthMinimalApi/Models/RefreshToken.cs	/^    public string? Cl
 ComputeHash	src/SecureAuthMinimalApi/Services/RefreshTokenHasher.cs	/^    public string ComputeHash(string token)$/;"	m	class:RefreshTokenHasher
 Configure	src/SecureAuthMinimalApi/Program.cs	/^    .Configure(options =>$/;"	m
 Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<ConfirmEmailRateLimitOptions>().Configure(options =>$/;"	m
+Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<ConfirmMfaRateLimitOptions>().Configure(options =>$/;"	m
 Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<EmailConfirmationOptions>().Configure(options =>$/;"	m
 Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<LoginOptions>().Configure(options =>$/;"	m
 Configure	src/SecureAuthMinimalApi/Program.cs	/^builder.Services.AddOptions<RefreshRateLimitOptions>().Configure(options =>$/;"	m
@@ -145,6 +146,10 @@ ConfirmMfaAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task Confir
 ConfirmMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? ConfirmMfaClicked;$/;"	E	class:ActionButtonsControl
 ConfirmMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? ConfirmMfaClicked;$/;"	E	class:MfaPanelControl
 ConfirmMfaEndpoints	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^public static class ConfirmMfaEndpoints$/;"	c
+ConfirmMfaRateLimitOptions	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^public sealed class ConfirmMfaRateLimitOptions$/;"	c
+ConfirmMfaRateLimitTests	tests/SecureAuthMinimalApi.Tests/ConfirmMfaRateLimitTests.cs	/^    public ConfirmMfaRateLimitTests(WebApplicationFactory<Program> factory)$/;"	m	class:ConfirmMfaRateLimitTests
+ConfirmMfaRateLimitTests	tests/SecureAuthMinimalApi.Tests/ConfirmMfaRateLimitTests.cs	/^public class ConfirmMfaRateLimitTests : IClassFixture<WebApplicationFactory<Program>>$/;"	c
+ConfirmMfaRateLimiter	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static class ConfirmMfaRateLimiter$/;"	c	class:ConfirmMfaEndpoints
 ConfirmMfaRequest	src/SecureAuthMinimalApi/Models/ConfirmMfaRequest.cs	/^public sealed record ConfirmMfaRequest(string? ChallengeId, string? TotpCode, bool RememberMe, s/;"	m
 ConfirmPendingMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task ConfirmPendingMfaAsync()$/;"	m	class:MainForm	file:
 ConfirmRateLimiter	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    private static class ConfirmRateLimiter$/;"	c	class:ConfirmEmailEndpoints
@@ -154,6 +159,7 @@ Confirm_email_rate_limit_returns_429_after_threshold	tests/SecureAuthMinimalApi.
 Confirm_email_with_expired_token_returns_gone	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_expired_token_returns_gone()$/;"	m	class:ApiTests
 Confirm_email_with_invalid_token_returns_bad_request	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_invalid_token_returns_bad_request()$/;"	m	class:ApiTests
 Confirm_email_with_valid_token_marks_confirmed	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Confirm_email_with_valid_token_marks_confirmed()$/;"	m	class:ApiTests
+Confirm_mfa_rate_limit_returns_429_after_threshold	tests/SecureAuthMinimalApi.Tests/ConfirmMfaRateLimitTests.cs	/^    public async Task Confirm_mfa_rate_limit_returns_429_after_threshold()$/;"	m	class:ConfirmMfaRateLimitTests
 ConnectionStringsOptions	src/SecureAuthMinimalApi/Options/ConnectionStringsOptions.cs	/^public sealed class ConnectionStringsOptions$/;"	c
 ConsoleControlService	src/SecureAuthMinimalApi/Services/ConsoleControlService.cs	/^    public ConsoleControlService(PauseController pauseController, ILogger<ConsoleControlService>/;"	m	class:ConsoleControlService
 ConsoleControlService	src/SecureAuthMinimalApi/Services/ConsoleControlService.cs	/^public sealed class ConsoleControlService$/;"	c
@@ -401,6 +407,7 @@ InvokeAsync	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^  
 InvokeAsync	src/SecureAuthMinimalApi/Middleware/SecurityHeadersMiddleware.cs	/^    public async Task InvokeAsync(HttpContext context)$/;"	m	class:SecurityHeadersMiddleware
 InvokeChangePasswordAsync	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static Task InvokeChangePasswordAsync(MainForm form)$/;"	m	class:MainFormChangePasswordTests	file:
 InvokePrivate	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static void InvokePrivate(object target, string name, params object[] args)$/;"	m	class:MainFormChangePasswordTests	file:
+IsConfirmMfaRateLimited	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static bool IsConfirmMfaRateLimited(HttpContext ctx, ConfirmMfaRateLimitOptions opti/;"	m	class:ConfirmMfaEndpoints	file:
 IsConfirmRateLimited	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^    private static bool IsConfirmRateLimited(HttpContext ctx, ConfirmEmailRateLimitOptions optio/;"	m	class:ConfirmEmailEndpoints	file:
 IsLocked	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool IsLocked { get; init; }$/;"	p	class:User
 IsLockedAsync	src/SecureAuthMinimalApi/Services/DbLoginThrottle.cs	/^    public async Task<bool> IsLockedAsync(string username, CancellationToken ct)$/;"	m	class:DbLoginThrottle
@@ -736,6 +743,7 @@ RenderQr	clients/WinFormsClient/MainForm.cs	/^  private void RenderQr()$/;"	m	cl
 RequestLoggingMiddleware	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^    public RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logg/;"	m	class:RequestLoggingMiddleware
 RequestLoggingMiddleware	src/SecureAuthMinimalApi/Middleware/RequestLoggingMiddleware.cs	/^public sealed class RequestLoggingMiddleware$/;"	c
 Requests	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int Requests { get; set; } = 0;$/;"	p	class:ConfirmEmailRateLimitOptions
+Requests	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int Requests { get; set; } = 0;$/;"	p	class:ConfirmMfaRateLimitOptions
 Requests	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int Requests { get; set; } = 0;$/;"	p	class:RefreshRateLimitOptions
 Requests	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int Requests { get; set; } = 0;$/;"	p	class:RegisterRateLimitOptions
 RequireConfirmed	src/SecureAuthMinimalApi/Options/PasswordResetOptions.cs	/^    public bool RequireConfirmed { get; set; } = true;$/;"	p	class:PasswordResetOptions
@@ -844,6 +852,7 @@ SetupMfaAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task SetupMfa
 SetupMfaClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:ActionButtonsControl
 SetupMfaClicked	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public event EventHandler? SetupMfaClicked;$/;"	E	class:MfaPanelControl
 ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)$/;"	m	class:ConfirmEmailEndpoints.ConfirmRateLimiter
+ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)$/;"	m	class:ConfirmMfaEndpoints.ConfirmMfaRateLimiter
 ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^        public static bool ShouldThrottle(string key, int limit, TimeSpan window)$/;"	m	class:PasswordResetEndpoints.RateLimiter
 ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)$/;"	m	class:RefreshEndpoints.RefreshRateLimiter
 ShouldThrottle	src/SecureAuthMinimalApi/Endpoints/RegisterEndpoints.cs	/^        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)$/;"	m	class:RegisterEndpoints.RegisterRateLimiter
@@ -863,6 +872,7 @@ StatusInfoControl	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	
 StatusInfoControl	clients/WinFormsClient/Controls/StatusInfoControl.cs	/^    public StatusInfoControl()$/;"	m	class:StatusInfoControl
 StatusInfoControl	clients/WinFormsClient/Controls/StatusInfoControl.cs	/^public partial class StatusInfoControl : UserControl$/;"	c
 Store	src/SecureAuthMinimalApi/Endpoints/ConfirmEmailEndpoints.cs	/^        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Syste/;"	f	class:ConfirmEmailEndpoints.ConfirmRateLimiter	file:
+Store	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Syste/;"	f	class:ConfirmMfaEndpoints.ConfirmMfaRateLimiter	file:
 Store	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Syste/;"	f	class:RefreshEndpoints.RefreshRateLimiter	file:
 Store	src/SecureAuthMinimalApi/Endpoints/RegisterEndpoints.cs	/^        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Syste/;"	f	class:RegisterEndpoints.RegisterRateLimiter	file:
 StubHandler	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)$/;"	m	class:MainFormChangePasswordTests.StubHandler
@@ -964,6 +974,7 @@ Verify	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^    public static 
 WaitUntilAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task WaitUntilAsync(Func<Task<bool>> condition, TimeSpan timeout)$/;"	m	class:CleanupServiceTests	file:
 WeakPasswords	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    public static IEnumerable<object[]> WeakPasswords()$/;"	m	class:ChangePasswordExtendedTests
 WindowMinutes	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int WindowMinutes { get; set; } = 1;$/;"	p	class:ConfirmEmailRateLimitOptions
+WindowMinutes	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int WindowMinutes { get; set; } = 1;$/;"	p	class:ConfirmMfaRateLimitOptions
 WindowMinutes	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int WindowMinutes { get; set; } = 1;$/;"	p	class:RefreshRateLimitOptions
 WindowMinutes	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int WindowMinutes { get; set; } = 1;$/;"	p	class:RegisterRateLimitOptions
 _accessTokenMinutes	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    private readonly int _accessTokenMinutes;$/;"	f	class:JwtTokenService	file:
@@ -1032,6 +1043,7 @@ _expiresUtc	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    pri
 _factory	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private WebApplicationFactory<Program> _factory = null!;$/;"	f	class:ApiTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/ChangePasswordExtendedTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:ChangePasswordExtendedTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/ConfirmEmailRateLimitTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:ConfirmEmailRateLimitTests	file:
+_factory	tests/SecureAuthMinimalApi.Tests/ConfirmMfaRateLimitTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:ConfirmMfaRateLimitTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^    private WebApplicationFactory<Program> _factory = null!;$/;"	f	class:EmailChangeTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/IdleTimeoutTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:IdleTimeoutTests	file:
 _factory	tests/SecureAuthMinimalApi.Tests/LoginRateLimitTests.cs	/^    private readonly WebApplicationFactory<Program> _factory;$/;"	f	class:LoginRateLimitTests	file:

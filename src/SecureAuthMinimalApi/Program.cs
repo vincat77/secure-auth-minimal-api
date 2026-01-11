@@ -120,6 +120,11 @@ builder.Services.AddOptions<RefreshRateLimitOptions>().Configure(options =>
   options.Requests = OptionParsers.ParseIntNoMin(builder.Configuration["Refresh:RateLimitRequests"], 0, "Refresh:RateLimitRequests", logger);
   options.WindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["Refresh:RateLimitWindowMinutes"], 1, "Refresh:RateLimitWindowMinutes", logger);
 });
+builder.Services.AddOptions<ConfirmMfaRateLimitOptions>().Configure(options =>
+{
+  options.Requests = OptionParsers.ParseIntNoMin(builder.Configuration["ConfirmMfa:RateLimitRequests"], 0, "ConfirmMfa:RateLimitRequests", logger);
+  options.WindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["ConfirmMfa:RateLimitWindowMinutes"], 1, "ConfirmMfa:RateLimitWindowMinutes", logger);
+});
 
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();

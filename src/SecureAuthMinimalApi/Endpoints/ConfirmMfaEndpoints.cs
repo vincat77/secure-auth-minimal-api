@@ -23,11 +23,18 @@ public static class ConfirmMfaEndpoints
         var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
         var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
+        var rateLimitOptions = app.Services.GetRequiredService<IOptions<ConfirmMfaRateLimitOptions>>().Value;
 
         app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService,
           IOptions<LoginOptions> loginOptions,
           SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo, ILogger<ConfirmMfaLogger> logger) =>
         {
+            if (IsConfirmMfaRateLimited(ctx, rateLimitOptions))
+            {
+                logger.LogWarning("Confirm-MFA rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
+
             var body = await ctx.Request.ReadFromJsonAsync<ConfirmMfaRequest>();
             if (string.IsNullOrWhiteSpace(body?.ChallengeId) || string.IsNullOrWhiteSpace(body.TotpCode))
             {
@@ -240,4 +247,32 @@ public static class ConfirmMfaEndpoints
         });
     }
 
+    private static bool IsConfirmMfaRateLimited(HttpContext ctx, ConfirmMfaRateLimitOptions options)
+    {
+        if (options.Requests <= 0)
+            return false;
+
+        var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
+        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        return ConfirmMfaRateLimiter.ShouldThrottle(ip, options.Requests, window);
+    }
+
+    private static class ConfirmMfaRateLimiter
+    {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentQueue<DateTime>> Store = new();
+
+        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)
+        {
+            var now = DateTime.UtcNow;
+            var queue = Store.GetOrAdd(key, _ => new System.Collections.Concurrent.ConcurrentQueue<DateTime>());
+            queue.Enqueue(now);
+
+            while (queue.TryPeek(out var ts) && ts < now - window)
+            {
+                queue.TryDequeue(out _);
+            }
+
+            return queue.Count > maxRequests;
+        }
+    }
 }

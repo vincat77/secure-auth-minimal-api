@@ -81,3 +81,15 @@ public sealed class RefreshRateLimitOptions
     /// <summary>Durata della finestra (minuti).</summary>
     public int WindowMinutes { get; set; } = 1;
 }
+
+/// <summary>
+/// Opzioni di rate limit per la conferma MFA (/login/confirm-mfa).
+/// </summary>
+public sealed class ConfirmMfaRateLimitOptions
+{
+    /// <summary>Numero massimo di richieste nella finestra.</summary>
+    public int Requests { get; set; } = 0;
+
+    /// <summary>Durata della finestra (minuti).</summary>
+    public int WindowMinutes { get; set; } = 1;
+}
