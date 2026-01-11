@@ -13,7 +13,6 @@ Imporre MFA dove conta per ASVS L3, con tre policy semplici:
 - `POST /mfa/disable`
 - `POST /mfa/reset`
 - `POST /sessions/revoke-all`
-- `POST /account/delete` (se esiste)
 
 Regola: applicare `RequireRecentMfa(X min)`.
 
