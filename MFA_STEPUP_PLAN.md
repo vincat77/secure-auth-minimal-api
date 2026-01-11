@@ -16,18 +16,10 @@ Imporre MFA dove conta per ASVS L3, con tre policy semplici:
 
 Regola: applicare `RequireRecentMfa(X min)`.
 
-### Endpoint **privilegiati** (se presenti ruoli/admin)
-- `POST /admin/*`
-- `PUT /users/{id}`
-- `POST /users/{id}/lock|unlock`
-- `POST /users/{id}/roles`
-
-Regola: `RequireMfa` anche al login, non solo step-up.
-
 ### Endpoint che richiedono **MFA presente** (una volta per sessione)
 - `POST /mfa/enable`
 - `POST /mfa/verify` (setup)
-- `POST /email/confirm` (opzionale ma consigliato)
+- `GET /introspect` (se usato per verifica sessione)
 
 Regola: `RequireMfa` (non serve recente).
 
@@ -37,6 +29,10 @@ Regola: `RequireMfa` (non serve recente).
 - `POST /logout`
 - `GET /me`
 - `GET /health`
+- `GET /live`
+- `GET /ready`
+- `POST /register`
+- `POST /confirm-email`
 
 ### Mappatura sintetica
 | Endpoint                      | Policy            |
@@ -44,7 +40,6 @@ Regola: `RequireMfa` (non serve recente).
 | cambio password/email         | RequireRecentMfa  |
 | revoke all session            | RequireRecentMfa  |
 | disable/reset mfa             | RequireRecentMfa  |
-| admin/utenti privilegiati     | RequireMfa        |
 | mfa enable/setup              | RequireMfa        |
 | resto auth protetto           | Authenticated     |
 
