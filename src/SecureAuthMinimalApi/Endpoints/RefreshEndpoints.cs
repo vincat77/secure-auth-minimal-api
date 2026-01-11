@@ -22,9 +22,16 @@ public static class RefreshEndpoints
         var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
         var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
+        var rateLimitOptions = app.Services.GetRequiredService<IOptions<RefreshRateLimitOptions>>().Value;
 
         app.MapPost("/refresh", async (HttpContext ctx, JwtTokenService jwt, RefreshTokenRepository refreshRepo, SessionRepository sessions, UserRepository users, ILogger<RefreshLogger> logger) =>
         {
+            if (IsRefreshRateLimited(ctx, rateLimitOptions))
+            {
+                logger.LogWarning("Refresh rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
+
             var cookieName = refreshOptions.CookieName ?? rememberOptions.CookieName ?? "refresh_token";
             var deviceCookieName = deviceOptions.CookieName ?? "device_id";
             if (!ctx.Request.Cookies.TryGetValue(cookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
@@ -168,6 +175,35 @@ public static class RefreshEndpoints
 
             return Results.Ok(new { ok = true, csrfToken, rememberIssued = true, deviceIssued = false, deviceId = newRt.DeviceId, refreshExpiresAtUtc = refreshExpires.ToString("O"), refreshCsrfToken });
         });
+    }
+
+    private static bool IsRefreshRateLimited(HttpContext ctx, RefreshRateLimitOptions options)
+    {
+        if (options.Requests <= 0)
+            return false;
+
+        var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
+        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        return RefreshRateLimiter.ShouldThrottle(ip, options.Requests, window);
+    }
+
+    private static class RefreshRateLimiter
+    {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentQueue<DateTime>> Store = new();
+
+        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)
+        {
+            var now = DateTime.UtcNow;
+            var queue = Store.GetOrAdd(key, _ => new System.Collections.Concurrent.ConcurrentQueue<DateTime>());
+            queue.Enqueue(now);
+
+            while (queue.TryPeek(out var ts) && ts < now - window)
+            {
+                queue.TryDequeue(out _);
+            }
+
+            return queue.Count > maxRequests;
+        }
     }
 
 }

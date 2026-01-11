@@ -69,3 +69,15 @@ public sealed class ConfirmEmailRateLimitOptions
     /// <summary>Durata della finestra (minuti).</summary>
     public int WindowMinutes { get; set; } = 1;
 }
+
+/// <summary>
+/// Opzioni di rate limit per l'endpoint /refresh.
+/// </summary>
+public sealed class RefreshRateLimitOptions
+{
+    /// <summary>Numero massimo di richieste di refresh nella finestra.</summary>
+    public int Requests { get; set; } = 0;
+
+    /// <summary>Durata della finestra (minuti).</summary>
+    public int WindowMinutes { get; set; } = 1;
+}
