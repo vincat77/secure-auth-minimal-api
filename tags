@@ -244,6 +244,7 @@ DisposeAsync	tests/SecureAuthMinimalApi.Tests/RefreshTokenRepositoryTests.cs	/^ 
 Dump	clients/SecureAuthClient.Console/Program.cs	/^static void Dump(object obj)$/;"	m
 DumpCookies	clients/WinFormsClient/MainForm.cs	/^  private void DumpCookies()$/;"	m	class:MainForm	file:
 Email	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? Email { get; init; }$/;"	p	class:User
+EmailChangeContext	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^internal readonly record struct EmailChangeContext($/;"	m
 EmailChangeTests	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^public class EmailChangeTests : IAsyncLifetime$/;"	c
 EmailConfirmExpiresUtc	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmExpiresUtc { get; init; }$/;"	p	class:User
 EmailConfirmToken	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmToken { get; init; }$/;"	p	class:User
@@ -815,7 +816,7 @@ TryDeleteDb	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    privat
 TryGetToken	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static bool TryGetToken(HttpContext ctx, out string token)$/;"	m	class:AuthHelpers
 Unprotect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Unprotect(string cipherText)$/;"	m	class:TotpSecretProtector
 UnsafeMethods	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    private static readonly HashSet<string> UnsafeMethods = new(StringComparer.OrdinalIgnoreCase/;"	f	class:CsrfMiddleware	file:
-UpdateAndSendConfirmationAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult> UpdateAndSendConfirmationAsync($/;"	m	class:ChangeEmailEndpoints	file:
+UpdateAndSendConfirmationAsync	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^    private static async Task<IResult> UpdateAndSendConfirmationAsync(EmailChangeContext context/;"	m	class:ChangeEmailEndpoints	file:
 UpdateCountdown	clients/WinFormsClient/Controls/RefreshCountdownControl.cs	/^    public void UpdateCountdown()$/;"	m	class:RefreshCountdownControl
 UpdateCountdown	clients/WinFormsClient/Controls/SessionCountdownControl.cs	/^    public void UpdateCountdown(TimeSpan elapsedSinceUpdate)$/;"	m	class:SessionCountdownControl
 UpdateDevice	clients/WinFormsClient/Controls/DeviceInfoControl.cs	/^    public void UpdateDevice(string? deviceId, bool? issuedNow = null)$/;"	m	class:DeviceInfoControl

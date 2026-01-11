@@ -32,15 +32,17 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (eligibility is not null)
                 return eligibility;
 
-            return await UpdateAndSendConfirmationAsync(
-                users,
-                emailService,
-                user,
-                emailInput.Raw!,
-                emailInput.Normalized!,
-                env.IsDevelopment(),
-                logger,
-                ctx.RequestAborted);
+            var context = new EmailChangeContext(
+                Users: users,
+                EmailService: emailService,
+                User: user,
+                RawEmail: emailInput.Raw!,
+                NormalizedEmail: emailInput.Normalized!,
+                IsDevelopment: env.IsDevelopment(),
+                Logger: logger,
+                CancellationToken: ctx.RequestAborted);
+
+            return await UpdateAndSendConfirmationAsync(context);
         })
         .RequireSession()
         .RequireCsrf();
@@ -86,30 +88,22 @@ namespace SecureAuthMinimalApi.Endpoints;
         return null;
     }
 
-    private static async Task<IResult> UpdateAndSendConfirmationAsync(
-        UserRepository users,
-        IEmailService emailService,
-        User user,
-        string rawEmail,
-        string normalizedEmail,
-        bool isDevelopment,
-        ILogger logger,
-        CancellationToken ct)
+    private static async Task<IResult> UpdateAndSendConfirmationAsync(EmailChangeContext context)
     {
         var confirmToken = Guid.NewGuid().ToString("N");
         var confirmExp = DateTime.UtcNow.AddHours(24).ToString("O");
-        await users.UpdateEmailAsync(user.Id, rawEmail.Trim(), normalizedEmail, confirmToken, confirmExp, ct);
+        await context.Users.UpdateEmailAsync(context.User.Id, context.RawEmail.Trim(), context.NormalizedEmail, confirmToken, confirmExp, context.CancellationToken);
 
         try
         {
-            await emailService.SendEmailConfirmationAsync(rawEmail.Trim(), confirmToken, confirmExp);
+            await context.EmailService.SendEmailConfirmationAsync(context.RawEmail.Trim(), confirmToken, confirmExp);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Errore invio email conferma per cambio email userId={UserId}", user.Id);
+            context.Logger.LogError(ex, "Errore invio email conferma per cambio email userId={UserId}", context.User.Id);
         }
 
-        if (isDevelopment)
+        if (context.IsDevelopment)
         {
             return Results.Ok(new { ok = true, confirmToken, confirmExpiresUtc = confirmExp });
         }
@@ -119,3 +113,13 @@ namespace SecureAuthMinimalApi.Endpoints;
 }
 
 internal sealed record ChangeEmailRequest(string? NewEmail);
+
+internal readonly record struct EmailChangeContext(
+    UserRepository Users,
+    IEmailService EmailService,
+    User User,
+    string RawEmail,
+    string NormalizedEmail,
+    bool IsDevelopment,
+    ILogger Logger,
+    CancellationToken CancellationToken);
