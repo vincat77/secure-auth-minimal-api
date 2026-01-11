@@ -32,8 +32,9 @@ namespace SecureAuthMinimalApi.Endpoints;
             if (eligibility is not null)
                 return eligibility;
 
-            return await emailService.UpdateAndSendConfirmationAsync(
+            return await UpdateAndSendConfirmationAsync(
                 users,
+                emailService,
                 user,
                 emailInput.Raw!,
                 emailInput.Normalized!,
@@ -86,8 +87,8 @@ namespace SecureAuthMinimalApi.Endpoints;
     }
 
     private static async Task<IResult> UpdateAndSendConfirmationAsync(
-        this IEmailService emailService,
         UserRepository users,
+        IEmailService emailService,
         User user,
         string rawEmail,
         string normalizedEmail,
