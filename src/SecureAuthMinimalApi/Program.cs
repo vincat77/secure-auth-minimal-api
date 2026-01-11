@@ -7,6 +7,7 @@ using SecureAuthMinimalApi.Endpoints;
 using Serilog;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
+using SecureAuthMinimalApi.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
