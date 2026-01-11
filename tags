@@ -319,6 +319,7 @@ GetByIdAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async 
 GetByTokenAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task<RefreshToken?> GetByTokenAsync(string tokenValue, CancellationToken ct)$/;"	m	class:RefreshTokenRepository
 GetByTokenHashAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<PasswordReset?> GetByTokenHashAsync(string tokenHash, CancellationToken ct/;"	m	class:PasswordResetRepository
 GetByUsernameAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)$/;"	m	class:UserRepository
+GetClientIp	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static string GetClientIp(HttpContext ctx)$/;"	m	class:EndpointUtilities
 GetConfiguredUrls	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)$/;"	m	class:StartupValidation	file:
 GetField	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static T GetField<T>(object target, string name)$/;"	m	class:MainFormChangePasswordTests	file:
 GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^await GetHealthAsync(rawHttp);$/;"	m
