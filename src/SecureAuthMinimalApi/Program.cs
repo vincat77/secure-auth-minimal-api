@@ -187,18 +187,18 @@ app.Lifetime.ApplicationStarted.Register(() =>
 });
 
 // Middleware ordine personalizzato
-app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseRequestLoggingWithUnauthorizedHandling();
 
 // Hardening header solo fuori da Development.
 if (!isDevelopment)
 {
     app.UseHsts();
     app.UseHttpsRedirection();
-    app.UseMiddleware<SecurityHeadersMiddleware>();
+    app.UseSecurityHeaders();
 }
 
 // Middleware pausa basato su flag condiviso
-app.UseMiddleware<PauseMiddleware>(new Func<bool>(() => Volatile.Read(ref pauseFlag) == 1));
+app.UsePauseMiddleware(new Func<bool>(() => Volatile.Read(ref pauseFlag) == 1));
 
 // --- ORDINE DEI MIDDLEWARE (OBBLIGATORIO) ---
 // 1) Cookie JWT auth popola HttpContext.Items["session"]

@@ -47,6 +47,7 @@ ApiTests	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public ApiTests(ITes
 ApiTests	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^public class ApiTests : IAsyncLifetime$/;"	c
 Append	clients/WinFormsClient/MainForm.cs	/^  private void Append(string message)$/;"	m	class:MainForm	file:
 AppendOutput	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public void AppendOutput(string message)$/;"	m	class:LogPanelControl
+ApplicationBuilderExtensions	src/SecureAuthMinimalApi/Middleware/ApplicationBuilderExtensions.cs	/^public static class ApplicationBuilderExtensions$/;"	c
 ApplicationName	tests/SecureAuthMinimalApi.Tests/TestHostEnvironment.cs	/^    public string ApplicationName { get; set; } = "Tests";$/;"	p	class:TestEnv
 ApplyChangePasswordEnabled	clients/WinFormsClient/MainForm.cs	/^  private void ApplyChangePasswordEnabled(bool enabled)$/;"	m	class:MainForm	file:
 Assert	clients/SecureAuthClient.Console/Program.cs	/^Assert(changeEmail.Ok, "Change email unconfirmed");$/;"	m
@@ -841,6 +842,9 @@ UpdateTokens	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void 
 UpdateTokens	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    private void UpdateTokens(RefreshResult res)$/;"	m	class:SecureAuthApiClient	file:
 UseCookieJwtAuth	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddleware.cs	/^    public static IApplicationBuilder UseCookieJwtAuth(this IApplicationBuilder app)$/;"	m	class:CookieJwtAuthExtensions
 UseCsrfProtection	src/SecureAuthMinimalApi/Middleware/CsrfMiddleware.cs	/^    public static IApplicationBuilder UseCsrfProtection(this IApplicationBuilder app)$/;"	m	class:CsrfExtensions
+UsePauseMiddleware	src/SecureAuthMinimalApi/Middleware/ApplicationBuilderExtensions.cs	/^    public static IApplicationBuilder UsePauseMiddleware(this IApplicationBuilder app, Func<bool/;"	m	class:ApplicationBuilderExtensions
+UseRequestLoggingWithUnauthorizedHandling	src/SecureAuthMinimalApi/Middleware/ApplicationBuilderExtensions.cs	/^    public static IApplicationBuilder UseRequestLoggingWithUnauthorizedHandling(this IApplicatio/;"	m	class:ApplicationBuilderExtensions
+UseSecurityHeaders	src/SecureAuthMinimalApi/Middleware/ApplicationBuilderExtensions.cs	/^    public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)$/;"	m	class:ApplicationBuilderExtensions
 UseSystemPasswordChar	clients/WinFormsClient/Controls/LabeledTextBoxControl.cs	/^    public bool UseSystemPasswordChar$/;"	p	class:LabeledTextBoxControl
 UsedAtUtc	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^    public string? UsedAtUtc { get; init; }$/;"	p	class:MfaChallenge
 UsedAtUtc	src/SecureAuthMinimalApi/Models/PasswordReset.cs	/^    public string? UsedAtUtc { get; init; }$/;"	p	class:PasswordReset
