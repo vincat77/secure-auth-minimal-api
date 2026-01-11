@@ -9,6 +9,7 @@ using SecureAuthMinimalApi.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
+using static SecureAuthMinimalApi.Utilities.CookieUtils;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -157,25 +158,5 @@ public static class ChangePasswordEndpoints
         .RequireCsrf();
     }
 
-    /// <summary>
-    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, ILogger logger, string context)
-    {
-        var sameSiteString = string.IsNullOrWhiteSpace(value) ? "Strict" : value;
-        var sameSite = SameSiteMode.Strict;
-        if (sameSiteString.Equals("Lax", StringComparison.OrdinalIgnoreCase))
-            sameSite = SameSiteMode.Lax;
-        else if (sameSiteString.Equals("None", StringComparison.OrdinalIgnoreCase))
-            sameSite = SameSiteMode.None;
-        else if (!sameSiteString.Equals("Strict", StringComparison.OrdinalIgnoreCase))
-            logger.LogWarning("{Context}:SameSite non valido ({SameSite}), fallback a Strict", context, sameSiteString);
-
-        if (!isDevelopment && sameSite == SameSiteMode.None && !allowNone)
-        {
-            logger.LogWarning("{Context}:SameSite=None in ambiente non Development non consentito: forzato a Strict (abilita {Context}:AllowSameSiteNone per override esplicito)", context, sameSiteString);
-            sameSite = SameSiteMode.Strict;
-        }
-
-        return sameSite;
-    }
 }
 

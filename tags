@@ -150,6 +150,7 @@ CookieJwtAuthMiddleware	src/SecureAuthMinimalApi/Middleware/CookieJwtAuthMiddlew
 CookieName	src/SecureAuthMinimalApi/Options/DeviceOptions.cs	/^    public string CookieName { get; set; } = "device_id";$/;"	p	class:DeviceOptions
 CookieName	src/SecureAuthMinimalApi/Options/RefreshOptions.cs	/^    public string CookieName { get; set; } = "refresh_token";$/;"	p	class:RefreshOptions
 CookieName	src/SecureAuthMinimalApi/Options/RememberMeOptions.cs	/^    public string CookieName { get; set; } = "refresh_token";$/;"	p	class:RememberMeOptions
+CookieUtils	src/SecureAuthMinimalApi/Utilities/CookieUtils.cs	/^public static class CookieUtils$/;"	c
 Cookies	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public CookieContainer Cookies => _cookies;$/;"	f	class:SecureAuthApiClient
 CountAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task<int> CountAsync(string dbPath, string table)$/;"	m	class:CleanupServiceTests	file:
 CreateAccessToken	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public (string Token, DateTime ExpiresUtc) CreateAccessToken(string sessionId)$/;"	m	class:JwtTokenService	file:
@@ -552,10 +553,7 @@ Open	src/SecureAuthMinimalApi/Data/SessionRepository.cs	/^    private IDbConnect
 Open	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    private IDbConnection Open() => new SqliteConnection(_connectionString);$/;"	m	class:UserRepository	file:
 Outcome	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required string Outcome { get; init; }$/;"	p	class:LoginAudit
 OutputBox	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public TextBox OutputBox => _output;$/;"	f	class:LogPanelControl
-ParseSameSite	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment,/;"	m	class:ChangePasswordEndpoints	file:
-ParseSameSite	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment,/;"	m	class:ConfirmMfaEndpoints	file:
-ParseSameSite	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment,/;"	m	class:LoginEndpoints	file:
-ParseSameSite	src/SecureAuthMinimalApi/Endpoints/RefreshEndpoints.cs	/^    private static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment,/;"	m	class:RefreshEndpoints	file:
+ParseSameSite	src/SecureAuthMinimalApi/Utilities/CookieUtils.cs	/^    public static SameSiteMode ParseSameSite(string? value, bool allowNone, bool isDevelopment, /;"	m	class:CookieUtils
 PasswordHash	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string PasswordHash { get; init; }$/;"	p	class:User
 PasswordHasher	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^public static class PasswordHasher$/;"	c
 PasswordPolicyOptions	src/SecureAuthMinimalApi/Options/PasswordPolicyOptions.cs	/^public sealed class PasswordPolicyOptions$/;"	c
