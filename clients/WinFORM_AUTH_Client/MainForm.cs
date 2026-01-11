@@ -76,10 +76,12 @@ public partial class MainForm : Form
             return;
         }
 
+        // 1) Genera credenziali casuali per un nuovo utente di prova
         var username = $"flow-{Guid.NewGuid():N}".Substring(0, 16);
         var password = "FlowUser123!";
         var email = $"{username}@example.com";
 
+        // 2) Registrazione utente
         Log($"[Flow] Register {username}");
         var reg = await PostJson<RegisterResp>("/register", new { username, password, email });
         var confirmToken = reg?.EmailConfirmToken;
@@ -91,9 +93,11 @@ public partial class MainForm : Form
             return;
         }
 
+        // 3) Conferma email con il token ricevuto
         Log("[Flow] Confirm email");
         await PostJson<object>("/confirm-email", new { token = confirmToken.ToString() });
 
+        // 4) Login password per ottenere CSRF e refresh-CSRF
         Log("[Flow] Login password");
         var login = await _api.LoginAsync(username, password, rememberMe: true);
         if (!login.Ok && login.Error != "mfa_required")
@@ -105,6 +109,7 @@ public partial class MainForm : Form
         string? csrf = login.CsrfToken;
         string? refreshCsrf = login.RefreshCsrfToken;
 
+        // 5) Setup MFA (richiede CSRF) e mostra l’otpauth da scansionare
         Log("[Flow] Setup MFA");
         if (string.IsNullOrWhiteSpace(csrf))
         {
@@ -122,9 +127,10 @@ public partial class MainForm : Form
         txtOtpauth.Text = setup.OtpauthUri ?? "";
         Log($"[Flow] otpauth: {setup.OtpauthUri}");
 
-        // Logout per forzare nuovo login con MFA
+        // 6) Logout per forzare un nuovo login che richieda MFA
         await _api.LogoutAsync();
 
+        // 7) Login che genera la challenge MFA
         Log("[Flow] Login per MFA");
         var loginMfa = await _api.LoginAsync(username, password, rememberMe: true);
         if (loginMfa.Error != "mfa_required" || string.IsNullOrWhiteSpace(loginMfa.ChallengeId))
@@ -133,7 +139,7 @@ public partial class MainForm : Form
             return;
         }
 
-        // Attendere inserimento TOTP
+        // 8) Attende che l’utente inserisca il TOTP; memorizza lo stato se manca
         if (string.IsNullOrWhiteSpace(txtTotp.Text))
         {
             _pendingUsername = username;
@@ -144,6 +150,7 @@ public partial class MainForm : Form
             return;
         }
 
+        // 9) Conferma MFA e verifica accesso con /me
         Log("[Flow] Conferma MFA");
         await ConfirmAndFetchMeAsync(loginMfa.ChallengeId, txtTotp.Text.Trim());
         ClearPending();
