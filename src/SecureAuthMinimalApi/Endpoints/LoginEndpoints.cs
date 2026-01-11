@@ -19,12 +19,7 @@ public static class LoginEndpoints
     /// </summary>
     public static void MapLogin(
         this WebApplication app,
-        bool forceLowerUsername,
-        bool emailConfirmationRequired,
-        int mfaChallengeMinutes,
-        bool mfaRequireUaMatch,
-        bool mfaRequireIpMatch,
-        int mfaMaxAttempts)
+        LoginOptions loginOptions)
     {
         var isDevelopment = app.Environment.IsDevelopment();
         var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
@@ -36,7 +31,7 @@ public static class LoginEndpoints
         app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo, ILogger logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
-            var username = NormalizeUsername(req?.Username, forceLowerUsername);
+            var username = NormalizeUsername(req?.Username, loginOptions.ForceLowerUsername);
             var password = req?.Password ?? "";
             var nonce = req?.Nonce;
             logger.LogInformation("Login avviato username={Username}", username);
@@ -87,13 +82,13 @@ public static class LoginEndpoints
             var bypassUnconfirmed = string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase)
                                     || string.Equals(user.Username, "smoke-unconfirmed", StringComparison.OrdinalIgnoreCase);
 
-            if (emailConfirmationRequired && !user.EmailConfirmed && !bypassUnconfirmed)
+            if (loginOptions.EmailConfirmationRequired && !user.EmailConfirmed && !bypassUnconfirmed)
             {
                 logger.LogWarning("Login bloccato: email non confermata username={Username} userId={UserId}", safeUsername, user.Id);
                 await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);
                 return Results.Json(new { ok = false, error = "email_not_confirmed" }, statusCode: StatusCodes.Status403Forbidden);
             }
-            else if (!emailConfirmationRequired && !user.EmailConfirmed)
+            else if (!loginOptions.EmailConfirmationRequired && !user.EmailConfirmed)
             {
                 logger.LogInformation("Login: email non confermata ma requisito disabilitato username={Username} userId={UserId}", safeUsername, user.Id);
             }
@@ -108,7 +103,7 @@ public static class LoginEndpoints
                     Id = challengeId,
                     UserId = user.Id,
                     CreatedAtUtc = now.ToString("O"),
-                    ExpiresAtUtc = now.AddMinutes(mfaChallengeMinutes).ToString("O"),
+                    ExpiresAtUtc = now.AddMinutes(loginOptions.MfaChallengeMinutes).ToString("O"),
                     UsedAtUtc = null,
                     UserAgent = ctx.Request.Headers["User-Agent"].ToString(),
                     ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),

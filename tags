@@ -250,6 +250,7 @@ EmailChangeInput	src/SecureAuthMinimalApi/Endpoints/ChangeEmailEndpoints.cs	/^in
 EmailChangeTests	tests/SecureAuthMinimalApi.Tests/EmailChangeTests.cs	/^public class EmailChangeTests : IAsyncLifetime$/;"	c
 EmailConfirmExpiresUtc	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmExpiresUtc { get; init; }$/;"	p	class:User
 EmailConfirmToken	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailConfirmToken { get; init; }$/;"	p	class:User
+EmailConfirmationRequired	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public bool EmailConfirmationRequired { get; set; } = true;$/;"	p	class:LoginOptions
 EmailConfirmed	src/SecureAuthMinimalApi/Models/User.cs	/^    public bool EmailConfirmed { get; init; }$/;"	p	class:User
 EmailNormalized	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? EmailNormalized { get; init; }$/;"	p	class:User
 Email_confirmation_required_fallbacks_to_true_on_invalid_config	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Email_confirmation_required_fallbacks_to_true_on_invalid_config()$/;"	m	class:ApiTests
@@ -277,6 +278,7 @@ ExpiresAtUtc	src/SecureAuthMinimalApi/Models/UserSession.cs	/^    public require
 FamilyName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? FamilyName { get; init; }$/;"	p	class:User
 FilterTestHelpers	tests/SecureAuthMinimalApi.Tests/Filters/FilterTestHelpers.cs	/^internal static class FilterTestHelpers$/;"	c
 FixedTimeEquals	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^    public static bool FixedTimeEquals(string a, string b)$/;"	m	class:SecurityUtils
+ForceLowerUsername	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public bool ForceLowerUsername { get; set; }$/;"	p	class:LoginOptions
 FullFlowAsync	clients/WinFormsClient/MainForm.cs	/^  private async Task FullFlowAsync()$/;"	m	class:MainForm	file:
 Full_auth_flow_with_remember_and_mfa	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Full_auth_flow_with_remember_and_mfa()$/;"	m	class:ApiTests
 GenerateCredentials	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private static (string username, string password, string email) GenerateCredentials()$/;"	m	class:MainForm	file:
@@ -427,6 +429,7 @@ LoginAuditRepository	src/SecureAuthMinimalApi/Data/LoginAuditRepository.cs	/^pub
 LoginClicked	clients/WinFormsClient/Controls/ActionButtonsControl.cs	/^    public event EventHandler? LoginClicked;$/;"	E	class:ActionButtonsControl
 LoginEndpoints	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^public static class LoginEndpoints$/;"	c
 LoginForMfaAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginForMfaAsync(string username, string password)$/;"	m	class:MainForm	file:
+LoginOptions	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^public sealed class LoginOptions$/;"	c
 LoginPasswordAsync	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private async Task<LoginResult> LoginPasswordAsync(string username, string password)$/;"	m	class:MainForm	file:
 LoginRequest	src/SecureAuthMinimalApi/Models/LoginRequest.cs	/^public sealed record LoginRequest(string? Username, string? Password, string? TotpCode, bool Rem/;"	m
 LoginResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record LoginResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken, bool/;"	m	class:MainForm	file:
@@ -524,6 +527,7 @@ MeResponse	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private sealed rec
 MeResult	clients/SecureAuthClient/SecureAuthApiClient.cs	/^public sealed record MeResult(bool Ok, string? UserId, string? Username, string? Email, bool Mfa/;"	m
 Me_without_cookie_returns_401	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Me_without_cookie_returns_401()$/;"	m	class:ApiTests
 MfaChallenge	src/SecureAuthMinimalApi/Models/MfaChallenge.cs	/^public sealed class MfaChallenge$/;"	c
+MfaChallengeMinutes	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int MfaChallengeMinutes { get; set; } = 10;$/;"	p	class:LoginOptions
 MfaChallengeRepository	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^    public MfaChallengeRepository(IConfiguration config)$/;"	m	class:MfaChallengeRepository
 MfaChallengeRepository	src/SecureAuthMinimalApi/Data/MfaChallengeRepository.cs	/^public sealed class MfaChallengeRepository$/;"	c
 MfaConfirmResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record MfaConfirmResponse(bool Ok, string? CsrfToken, string? RefreshCsrfToken,/;"	m	class:MainForm	file:
@@ -533,9 +537,12 @@ MfaFilter	src/SecureAuthMinimalApi/Filters/MfaFilter.cs	/^public sealed class Mf
 MfaFilterTests	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^public class MfaFilterTests$/;"	c
 MfaFilter_NoSession_Returns401	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^    public async Task MfaFilter_NoSession_Returns401()$/;"	m	class:MfaFilterTests
 MfaFilter_WithSession_CallsNext	tests/SecureAuthMinimalApi.Tests/Filters/MfaFilterTests.cs	/^    public async Task MfaFilter_WithSession_CallsNext()$/;"	m	class:MfaFilterTests
+MfaMaxAttempts	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public int MfaMaxAttempts { get; set; } = 5;$/;"	p	class:LoginOptions
 MfaPanelControl	clients/WinFormsClient/Controls/MfaPanelControl.Designer.cs	/^partial class MfaPanelControl$/;"	c
 MfaPanelControl	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^    public MfaPanelControl()$/;"	m	class:MfaPanelControl
 MfaPanelControl	clients/WinFormsClient/Controls/MfaPanelControl.cs	/^public partial class MfaPanelControl : UserControl$/;"	c
+MfaRequireIpMatch	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public bool MfaRequireIpMatch { get; set; } = false;$/;"	p	class:LoginOptions
+MfaRequireUaMatch	src/SecureAuthMinimalApi/Options/LoginOptions.cs	/^    public bool MfaRequireUaMatch { get; set; } = true;$/;"	p	class:LoginOptions
 MfaSetupEndpoints	src/SecureAuthMinimalApi/Endpoints/MfaSetupEndpoints.cs	/^public static class MfaSetupEndpoints$/;"	c
 MfaSetupResponse	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);$/;"	m	class:MainForm	file:
 MfaSetupResponse	clients/WinFormsClient/MainForm.cs	/^  private sealed record MfaSetupResponse(bool Ok, string? Secret, string? OtpauthUri);$/;"	m	class:MainForm	file:
@@ -1061,11 +1068,9 @@ app.Lifetime.ApplicationStarted.Register	src/SecureAuthMinimalApi/Program.cs	/^a
 app.MapChangeEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangeEmail();$/;"	m
 app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
 app.MapConfirmEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmEmail();$/;"	m
-app.MapConfirmMfa	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmMfa(mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);$/;"	m
 app.MapHealth	src/SecureAuthMinimalApi/Program.cs	/^app.MapHealth();$/;"	m
 app.MapIntrospect	src/SecureAuthMinimalApi/Program.cs	/^app.MapIntrospect();$/;"	m
 app.MapLive	src/SecureAuthMinimalApi/Program.cs	/^app.MapLive();$/;"	m
-app.MapLogin	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogin(forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMat/;"	m
 app.MapLogout	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogout();$/;"	m
 app.MapLogoutAll	src/SecureAuthMinimalApi/Program.cs	/^app.MapLogoutAll();$/;"	m
 app.MapMe	src/SecureAuthMinimalApi/Program.cs	/^app.MapMe();$/;"	m

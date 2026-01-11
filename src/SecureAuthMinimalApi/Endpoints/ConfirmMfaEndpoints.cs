@@ -18,9 +18,7 @@ public static class ConfirmMfaEndpoints
     /// </summary>
     public static void MapConfirmMfa(
         this WebApplication app,
-        bool mfaRequireUaMatch,
-        bool mfaRequireIpMatch,
-        int mfaMaxAttempts)
+        LoginOptions loginOptions)
     {
         var isDevelopment = app.Environment.IsDevelopment();
         var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
@@ -56,13 +54,13 @@ public static class ConfirmMfaEndpoints
             }
 
             var ua = ctx.Request.Headers["User-Agent"].ToString();
-            if (mfaRequireUaMatch && !string.Equals(ua, challenge.UserAgent, StringComparison.Ordinal))
+            if (loginOptions.MfaRequireUaMatch && !string.Equals(ua, challenge.UserAgent, StringComparison.Ordinal))
             {
                 logger.LogWarning("Confirm MFA: UA mismatch atteso={Expected} actual={Actual}", challenge.UserAgent, ua);
                 return Results.Unauthorized();
             }
 
-            if (mfaRequireIpMatch)
+            if (loginOptions.MfaRequireIpMatch)
             {
                 var reqIp = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? ctx.Connection.RemoteIpAddress?.ToString();
                 if (!string.Equals(reqIp, challenge.ClientIp, StringComparison.Ordinal))
@@ -72,7 +70,7 @@ public static class ConfirmMfaEndpoints
                 }
             }
 
-            if (challenge.AttemptCount >= mfaMaxAttempts)
+            if (challenge.AttemptCount >= loginOptions.MfaMaxAttempts)
             {
                 logger.LogWarning("Confirm MFA: max tentativi raggiunti challengeId={ChallengeId}", challenge.Id);
                 return Results.Unauthorized();

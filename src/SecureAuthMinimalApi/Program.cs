@@ -105,6 +105,15 @@ if (mfaChallengeMinutes <= 0)
 var mfaRequireUaMatch = app.Configuration.GetValue<bool?>("Mfa:RequireUaMatch") ?? true;
 var mfaRequireIpMatch = app.Configuration.GetValue<bool?>("Mfa:RequireIpMatch") ?? false;
 var mfaMaxAttempts = app.Configuration.GetValue<int?>("Mfa:MaxAttemptsPerChallenge") ?? 5;
+var loginOptions = new LoginOptions
+{
+    ForceLowerUsername = forceLowerUsername,
+    EmailConfirmationRequired = emailConfirmationRequired,
+    MfaChallengeMinutes = mfaChallengeMinutes,
+    MfaRequireUaMatch = mfaRequireUaMatch,
+    MfaRequireIpMatch = mfaRequireIpMatch,
+    MfaMaxAttempts = mfaMaxAttempts
+};
 
 var skipDbInit = app.Configuration.GetValue<bool?>("Tests:SkipDbInit") ?? false;
 if (skipDbInit)
@@ -207,8 +216,8 @@ app.MapHealth();
 app.MapLive();
 app.MapReady();
 app.MapRegister(passwordPolicyOptions, forceLowerUsername);
-app.MapLogin(forceLowerUsername, emailConfirmationRequired, mfaChallengeMinutes, mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
-app.MapConfirmMfa(mfaRequireUaMatch, mfaRequireIpMatch, mfaMaxAttempts);
+app.MapLogin(loginOptions);
+app.MapConfirmMfa(loginOptions);
 app.MapMe();
 app.MapChangePassword();
 app.MapChangeEmail();
