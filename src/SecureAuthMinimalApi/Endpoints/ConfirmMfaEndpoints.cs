@@ -4,6 +4,8 @@ using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
+using System.Security.Cryptography;
+using System.Text;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -152,6 +154,7 @@ public static class ConfirmMfaEndpoints
             string? refreshExpiresUtc = null;
             var deviceIssued = false;
             string? deviceId = null;
+            string? refreshCsrfToken = null;
 
             if (body.RememberMe)
             {
@@ -160,6 +163,8 @@ public static class ConfirmMfaEndpoints
                 var rememberSameSite = ParseSameSite(refreshSameSiteValue, refreshOptions.AllowSameSiteNone || rememberOptions.AllowSameSiteNone, isDevelopment, logger, "Refresh");
                 var rememberPath = refreshOptions.Path ?? rememberOptions.Path ?? "/refresh";
                 var refreshToken = Base64Url(RandomBytes(32));
+                refreshCsrfToken = Base64Url(RandomBytes(32));
+                var refreshCsrfHash = HashToken(refreshCsrfToken);
                 var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
                 var refreshRepo = ctx.RequestServices.GetRequiredService<RefreshTokenRepository>();
 
@@ -181,6 +186,7 @@ public static class ConfirmMfaEndpoints
                     SessionId = sessionId,
                     Token = refreshToken,
                     TokenHash = null,
+                    RefreshCsrfHash = refreshCsrfHash,
                     CreatedAtUtc = nowIso,
                     ExpiresAtUtc = refreshExpires.ToString("O"),
                     RevokedAtUtc = null,
@@ -229,7 +235,7 @@ public static class ConfirmMfaEndpoints
                 rememberIssued = true;
             }
 
-            return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken });
+            return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken, refreshCsrfToken });
         });
     }
 
@@ -251,5 +257,13 @@ public static class ConfirmMfaEndpoints
         }
 
         return sameSite;
+    }
+
+    private static string HashToken(string token)
+    {
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(token);
+        var hash = sha.ComputeHash(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

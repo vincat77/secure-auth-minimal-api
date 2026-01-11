@@ -5,6 +5,8 @@ using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SecureAuthMinimalApi.Endpoints;
 
@@ -204,6 +206,7 @@ public static class LoginEndpoints
             var deviceIssued = false;
             string? deviceId = null;
             string? refreshExpiresUtc = null;
+            string? refreshCsrfToken = null;
 
             if (req?.RememberMe == true)
             {
@@ -218,6 +221,8 @@ public static class LoginEndpoints
                 }
 
                 var refreshToken = Base64Url(RandomBytes(32));
+                refreshCsrfToken = Base64Url(RandomBytes(32));
+                var refreshCsrfHash = HashToken(refreshCsrfToken);
                 var refreshExpires = DateTime.UtcNow.AddDays(rememberConfigDays);
                 var rt = new RefreshToken
                 {
@@ -226,6 +231,7 @@ public static class LoginEndpoints
                     SessionId = sessionId,
                     Token = refreshToken,
                     TokenHash = null,
+                    RefreshCsrfHash = refreshCsrfHash,
                     CreatedAtUtc = nowIso,
                     ExpiresAtUtc = refreshExpires.ToString("O"),
                     RevokedAtUtc = null,
@@ -266,7 +272,7 @@ public static class LoginEndpoints
             }
 
             ctx.Response.Headers.CacheControl = "no-store";
-            return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken });
+            return Results.Ok(new { ok = true, csrfToken, rememberIssued, deviceIssued, deviceId, refreshExpiresAtUtc = refreshExpiresUtc, idToken, refreshCsrfToken });
         });
     }
 
@@ -288,5 +294,13 @@ public static class LoginEndpoints
         }
 
         return sameSite;
+    }
+
+    private static string HashToken(string token)
+    {
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(token);
+        var hash = sha.ComputeHash(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

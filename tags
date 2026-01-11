@@ -259,6 +259,8 @@ GetValidationParameters	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^  
 GetValidationParameters	src/SecureAuthMinimalApi/Services/JwtTokenService.cs	/^    public TokenValidationParameters GetValidationParameters()$/;"	m	class:JwtTokenService
 GivenName	src/SecureAuthMinimalApi/Models/User.cs	/^    public string? GivenName { get; init; }$/;"	p	class:User
 Hash	src/SecureAuthMinimalApi/Services/PasswordHasher.cs	/^    public static string Hash(string password)$/;"	m	class:PasswordHasher
+HashToken	src/SecureAuthMinimalApi/Endpoints/ConfirmMfaEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:ConfirmMfaEndpoints	file:
+HashToken	src/SecureAuthMinimalApi/Endpoints/LoginEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:LoginEndpoints	file:
 HashToken	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetEndpoints	file:
 HashToken	tests/SecureAuthMinimalApi.Tests/PasswordResetTests.cs	/^    private static string HashToken(string token)$/;"	m	class:PasswordResetTests	file:
 HeadersDump	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^        public string? HeadersDump { get; private set; }$/;"	p	class:MainFormChangePasswordTests.StubHandler
