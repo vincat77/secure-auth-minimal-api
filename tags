@@ -715,7 +715,8 @@ SecureAuthApiClient	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public
 SecureAuthApiClient	clients/SecureAuthClient/SecureAuthApiClient.cs	/^public sealed class SecureAuthApiClient : IDisposable$/;"	c
 SecureAuthClientOptions	clients/SecureAuthClient/SecureAuthClientOptions.cs	/^public sealed class SecureAuthClientOptions$/;"	c
 SecurityUtils	src/SecureAuthMinimalApi/Utilities/SecurityUtils.cs	/^public static class SecurityUtils$/;"	c
-Seed	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    public static void Seed(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder
+Seed	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    public static void Seed(SqliteConnection conn, bool seedDemo, bool isDevelopment, ILogger lo/;"	m	class:SmokeTestSeeder
+SeedDemoUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedDemoUser(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:
 SeedExpiredRecordsAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRecordsAsync(string dbPath)$/;"	m	class:CleanupServiceTests	file:
 SeedExpiredRefreshTokensAsync	tests/SecureAuthMinimalApi.Tests/CleanupServiceTests.cs	/^    private static async Task SeedExpiredRefreshTokensAsync(string dbPath, int count)$/;"	m	class:CleanupServiceTests	file:
 SeedMfaUser	src/SecureAuthMinimalApi/Data/SmokeTestSeeder.cs	/^    private static void SeedMfaUser(SqliteConnection conn)$/;"	m	class:SmokeTestSeeder	file:

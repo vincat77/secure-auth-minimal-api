@@ -13,8 +13,18 @@ public static class SmokeTestSeeder
     /// <summary>
     /// Crea gli utenti di prova se non già presenti.
     /// </summary>
-    public static void Seed(SqliteConnection conn)
+    public static void Seed(SqliteConnection conn, bool seedDemo, bool isDevelopment, ILogger logger)
     {
+        if (seedDemo && !isDevelopment)
+        {
+            logger.LogWarning("Seed demo abilitato fuori da Development: usare solo in ambienti di test.");
+        }
+
+        if (seedDemo)
+        {
+            SeedDemoUser(conn);
+        }
+
         SeedUnconfirmedUser(conn);
         SeedMfaUser(conn);
         SeedResetUser(conn);
@@ -126,6 +136,35 @@ INSERT INTO users (
             FamilyName = username.Replace("smoke-", "", StringComparison.OrdinalIgnoreCase),
             Email = email,
             EmailConfirmed = emailConfirmed ? 1 : 0
+        });
+    }
+
+    /// <summary>
+    /// Utente demo (demo/demo) opzionale per ambienti di esempio.
+    /// </summary>
+    private static void SeedDemoUser(SqliteConnection conn)
+    {
+        var exists = conn.ExecuteScalar<long>("SELECT COUNT(1) FROM users WHERE username = 'demo';");
+        if (exists > 0)
+            return;
+
+        var demoHash = PasswordHasher.Hash("123456789012");
+        const string seedInsert = @"
+INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, picture_url, is_locked, deleted_at_utc)
+VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, 1, @PictureUrl, 0, NULL);";
+
+        conn.Execute(seedInsert, new
+        {
+            Id = "demo-user",
+            Username = "demo",
+            PasswordHash = demoHash,
+            CreatedAtUtc = DateTime.UtcNow.ToString("O"),
+            Name = "Demo User",
+            GivenName = "Demo",
+            FamilyName = "User",
+            Email = "demo@example.com",
+            EmailNormalized = "demo@example.com",
+            PictureUrl = "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason"
         });
     }
 

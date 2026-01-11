@@ -163,41 +163,9 @@ CREATE TABLE IF NOT EXISTS password_resets (
     conn.Execute(idxPasswordResetUser);
     conn.Execute(idxPasswordResetExpires);
 
-    // Seed demo: default true ma con warning se non in Development.
+    // Seed demo opzionale e utenti smoke test.
     var seedEnabled = config.GetValue<bool?>("Seed:Enabled") ?? true;
-    if (seedEnabled && !env.IsDevelopment())
-    {
-      logger.LogWarning("Seed demo abilitato fuori da Development: usare solo in ambienti di test.");
-    }
-
-    if (seedEnabled)
-    {
-      const string seedCheck = "SELECT COUNT(1) FROM users WHERE username = 'demo';";
-      var exists = conn.ExecuteScalar<long>(seedCheck);
-      if (exists == 0)
-      {
-        var demoHash = PasswordHasher.Hash("123456789012");
-        const string seedInsert = @"
-INSERT INTO users (id, username, password_hash, created_at_utc, totp_secret, name, given_name, family_name, email, email_normalized, email_confirmed, picture_url, is_locked, deleted_at_utc)
-VALUES (@Id, @Username, @PasswordHash, @CreatedAtUtc, NULL, @Name, @GivenName, @FamilyName, @Email, @EmailNormalized, 1, @PictureUrl, 0, NULL);";
-        conn.Execute(seedInsert, new
-        {
-          Id = "demo-user",
-          Username = "demo",
-          PasswordHash = demoHash,
-          CreatedAtUtc = DateTime.UtcNow.ToString("O"),
-          Name = "Demo User",
-          GivenName = "Demo",
-          FamilyName = "User",
-          Email = "demo@example.com",
-          EmailNormalized = "demo@example.com",
-          PictureUrl = "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason"
-        });
-      }
-    }
-
-    // Seed utenti smoke test (es. utente non confermato) se mancano.
-    SmokeTestSeeder.Seed(conn);
+    SmokeTestSeeder.Seed(conn, seedEnabled, env.IsDevelopment(), logger);
   }
 
   private static void EnsureColumn(SqliteConnection conn, string table, string column, string? typeOverride = null)
