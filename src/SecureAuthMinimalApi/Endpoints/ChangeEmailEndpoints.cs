@@ -19,19 +19,23 @@ public static class ChangeEmailEndpoints
 
         app.MapPost("/me/email", async (HttpContext ctx, UserRepository users, IEmailService emailService) =>
         {
+            // 1) Input parsing/normalizzazione email
             var emailInput = await ctx.ReadAndValidateEmailAsync(logger);
             if (emailInput.ErrorResult is not null)
                 return emailInput.ErrorResult;
 
+            // 2) Recupero utente corrente
             var session = ctx.GetRequiredSession();
             var user = await users.GetByIdAsync(session.UserId, ctx.RequestAborted);
             if (user is null)
                 return Results.Unauthorized();
 
+            // 3) Verifica eleggibilità cambio email
             var eligibility = await users.EnsureUserEligibleAsync(user, emailInput.Email!.Value.Normalized, ctx.RequestAborted);
             if (eligibility is not null)
                 return eligibility;
 
+            // 4) Aggiorna email + invia token di conferma
             var context = new EmailChangeContext(
                 Users: users,
                 User: user,
