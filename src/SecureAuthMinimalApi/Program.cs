@@ -7,13 +7,14 @@ using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Endpoints;
 using Serilog;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var hostUrls = builder.Configuration.GetSection("Hosting:Urls").Get<string[]>();
 if (hostUrls?.Length > 0)
 {
-    builder.WebHost.UseUrls(hostUrls);
+  builder.WebHost.UseUrls(hostUrls);
 }
 
 Log.Logger = new LoggerConfiguration()
@@ -44,7 +45,7 @@ builder.Services.AddSingleton<LoginAuditRepository>();
 var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
 if (string.IsNullOrWhiteSpace(dpKeysPath))
 {
-    dpKeysPath = Path.Combine(builder.Environment.ContentRootPath, ".dpkeys");
+  dpKeysPath = Path.Combine(builder.Environment.ContentRootPath, ".dpkeys");
 }
 
 builder.Services.AddDataProtection()
@@ -75,21 +76,21 @@ builder.Services.Configure<MfaOptions>(builder.Configuration.GetSection("Mfa"));
 builder.Services.Configure<LoginThrottleOptions>(builder.Configuration.GetSection("LoginThrottle"));
 builder.Services.Configure<EmailConfirmationOptions>(options =>
 {
-    var raw = builder.Configuration["EmailConfirmation:Required"];
-    if (string.IsNullOrWhiteSpace(raw))
-    {
-        options.Required = true;
-        return;
-    }
+  var raw = builder.Configuration["EmailConfirmation:Required"];
+  if (string.IsNullOrWhiteSpace(raw))
+  {
+    options.Required = true;
+    return;
+  }
 
-    if (!bool.TryParse(raw, out var parsed))
-    {
-        options.Required = true;
-        logger.LogWarning("EmailConfirmation:Required non valido ({Value}), fallback a true", raw);
-        return;
-    }
+  if (!bool.TryParse(raw, out var parsed))
+  {
+    options.Required = true;
+    logger.LogWarning("EmailConfirmation:Required non valido ({Value}), fallback a true", raw);
+    return;
+  }
 
-    options.Required = parsed;
+  options.Required = parsed;
 });
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();
@@ -101,75 +102,52 @@ var app = builder.Build();
 var isDevelopment = app.Environment.IsDevelopment();
 var pauseController = app.Services.GetRequiredService<PauseController>();
 
-var passwordPolicyOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<PasswordPolicyOptions>>().Value;
-var usernamePolicyOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<UsernamePolicyOptions>>().Value;
-var emailConfirmationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailConfirmationOptions>>().Value;
-var mfaOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MfaOptions>>().Value;
-var jwtOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtOptions>>().Value;
-var rememberMeOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RememberMeOptions>>().Value;
-var deviceOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeviceOptions>>().Value;
-var sessionOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<SessionConfigOptions>>().Value;
-var connectionStrings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ConnectionStringsOptions>>().Value;
-var refreshOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RefreshOptions>>().Value;
-var idTokenOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<IdTokenOptions>>().Value;
-var loginThrottleOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<LoginThrottleOptions>>().Value;
+var passwordPolicyOptions = app.Services.GetRequiredService<IOptions<PasswordPolicyOptions>>().Value;
+var usernamePolicyOptions = app.Services.GetRequiredService<IOptions<UsernamePolicyOptions>>().Value;
+var emailConfirmationOptions = app.Services.GetRequiredService<IOptions<EmailConfirmationOptions>>().Value;
+var mfaOptions = app.Services.GetRequiredService<IOptions<MfaOptions>>().Value;
+var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
+var rememberMeOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
+var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
+var sessionOptions = app.Services.GetRequiredService<IOptions<SessionConfigOptions>>().Value;
+var connectionStrings = app.Services.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
+var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
+var idTokenOptions = app.Services.GetRequiredService<IOptions<IdTokenOptions>>().Value;
+var loginThrottleOptions = app.Services.GetRequiredService<IOptions<LoginThrottleOptions>>().Value;
+var cookieOptions = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 if (mfaOptions.ChallengeMinutes <= 0)
 {
-    throw new InvalidOperationException("Mfa:ChallengeMinutes deve essere >= 1");
+  throw new InvalidOperationException("Mfa:ChallengeMinutes deve essere >= 1");
 }
 
 var loginOptions = new LoginOptions
 {
-    ForceLowerUsername = usernamePolicyOptions.Lowercase,
-    EmailConfirmationRequired = emailConfirmationOptions.Required,
-    MfaChallengeMinutes = mfaOptions.ChallengeMinutes,
-    MfaRequireUaMatch = mfaOptions.RequireUaMatch,
-    MfaRequireIpMatch = mfaOptions.RequireIpMatch,
-    MfaMaxAttempts = mfaOptions.MaxAttemptsPerChallenge
+  ForceLowerUsername = usernamePolicyOptions.Lowercase,
+  EmailConfirmationRequired = emailConfirmationOptions.Required,
+  MfaChallengeMinutes = mfaOptions.ChallengeMinutes,
+  MfaRequireUaMatch = mfaOptions.RequireUaMatch,
+  MfaRequireIpMatch = mfaOptions.RequireIpMatch,
+  MfaMaxAttempts = mfaOptions.MaxAttemptsPerChallenge
 };
 
 var skipDbInit = app.Configuration.GetValue<bool?>("Tests:SkipDbInit") ?? false;
 if (skipDbInit)
 {
-    logger.LogWarning("Avvio con Tests:SkipDbInit=true: saltata inizializzazione DB (solo per test)");
+  logger.LogWarning("Avvio con Tests:SkipDbInit=true: saltata inizializzazione DB (solo per test)");
 }
 else
 {
-    DbInitializer.EnsureCreated(app.Configuration, app.Environment, logger);
+  DbInitializer.EnsureCreated(app.Configuration, app.Environment.IsDevelopment(), logger);
 }
 
 // Validazioni config in ambiente non Development.
-StartupValidation.ValidateJwt(jwtOptions, isDevelopment, logger);
-var cookieOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CookieConfigOptions>>().Value;
+StartupValidation.ValidateJwt(app, jwtOptions, logger);
+
 StartupValidation.ValidateCookieSecurity(app, cookieOptions, logger);
 
-var serverUrls = GetConfiguredUrls(app);
-StartupValidation.LogStartupInfo(
-    app,
-    logger,
-    serverUrls,
-    cleanupOptions,
-    passwordPolicyOptions,
-    usernamePolicyOptions,
-    emailConfirmationOptions,
-    mfaOptions,
-    resetOptions,
-    jwtOptions,
-    rememberMeOptions,
-    deviceOptions,
-    sessionOptions,
-    connectionStrings,
-    refreshOptions,
-    idTokenOptions,
-    loginThrottleOptions,
-    skipDbInit,
-    isDevelopment);
+StartupValidation.LogStartupInfo(app, logger);
 
-app.Lifetime.ApplicationStarted.Register(() =>
-{
-    var addresses = app.Urls.Any() ? app.Urls.ToArray() : serverUrls.ToArray();
-    logger.LogInformation("SecureAuthMinimalApi in ascolto su: {Urls}", string.Join(", ", addresses));
-});
+
 
 // Middleware ordine personalizzato
 app.UseRequestLoggingWithUnauthorizedHandling();
@@ -177,9 +155,9 @@ app.UseRequestLoggingWithUnauthorizedHandling();
 // Hardening header solo fuori da Development.
 if (!isDevelopment)
 {
-    app.UseHsts();
-    app.UseHttpsRedirection();
-    app.UseSecurityHeaders();
+  app.UseHsts();
+  app.UseHttpsRedirection();
+  app.UseSecurityHeaders();
 }
 
 // Middleware pausa basato su flag condiviso
@@ -218,37 +196,25 @@ var consoleTask = consoleService.RunAsync(shutdownCts, app);
 
 if (ReferenceEquals(consoleTask, Task.CompletedTask))
 {
-    // In ambienti senza input console (es. test host), lascia girare solo l'app.
-    await appTask;
+  // In ambienti senza input console (es. test host), lascia girare solo l'app.
+  await appTask;
 }
 else
 {
-    await Task.WhenAny(appTask, consoleTask);
-    shutdownCts.Cancel();
+  await Task.WhenAny(appTask, consoleTask);
+  shutdownCts.Cancel();
 
-    try
-    {
-        await Task.WhenAll(appTask, consoleTask);
-    }
-    catch (OperationCanceledException)
-    {
-        // Shutdown richiesto dall'utente o dall'host.
-    }
+  try
+  {
+    await Task.WhenAll(appTask, consoleTask);
+  }
+  catch (OperationCanceledException)
+  {
+    // Shutdown richiesto dall'utente o dall'host.
+  }
 }
 
-static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)
-{
-    if (app.Urls.Any())
-        return app.Urls.ToArray();
 
-    var envUrls = app.Configuration["ASPNETCORE_URLS"];
-    if (!string.IsNullOrWhiteSpace(envUrls))
-    {
-        return envUrls.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    return new[] { "http://localhost:5000", "https://localhost:5001" };
-}
 
 /// <summary>
 /// Classe parziale necessaria per abilitare i test/integrazione di WebApplicationFactory.

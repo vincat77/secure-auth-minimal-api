@@ -15,7 +15,7 @@ public static class DbInitializer
   /// <summary>
   /// Assicura l'esistenza delle tabelle richieste nello schema SQLite.
   /// </summary>
-  public static void EnsureCreated(IConfiguration config, IHostEnvironment env, ILogger logger)
+  public static void EnsureCreated(IConfiguration config, bool isDevelopment, ILogger logger)
   {
     var cs = config.GetConnectionString("Sqlite")
         ?? throw new InvalidOperationException("Missing ConnectionStrings:Sqlite in appsettings.json");
@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
 
     // Seed demo opzionale e utenti smoke test.
     var seedEnabled = config.GetValue<bool?>("Seed:Enabled") ?? true;
-    SmokeTestSeeder.Seed(conn, seedEnabled, env.IsDevelopment(), logger);
+    SmokeTestSeeder.Seed(conn, seedEnabled, isDevelopment, logger);
   }
 
   private static void EnsureColumn(SqliteConnection conn, string table, string column, string? typeOverride = null)

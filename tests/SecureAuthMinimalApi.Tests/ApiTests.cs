@@ -1400,7 +1400,7 @@ public class ApiTests : IAsyncLifetime
         // Act
         // Assert
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-        var ex = Assert.Throws<InvalidOperationException>(() => DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance));
+        var ex = Assert.Throws<InvalidOperationException>(() => DbInitializer.EnsureCreated(config, new TestEnv().IsDevelopment(), NullLogger.Instance));
         Assert.Contains("Missing ConnectionStrings:Sqlite", ex.Message);
     }
 
@@ -1421,8 +1421,8 @@ public class ApiTests : IAsyncLifetime
 
         try
         {
-            DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance);
-            DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance); // seconda chiamata non deve fallire
+            DbInitializer.EnsureCreated(config, new TestEnv().IsDevelopment(), NullLogger.Instance);
+            DbInitializer.EnsureCreated(config, new TestEnv().IsDevelopment(), NullLogger.Instance); // seconda chiamata non deve fallire
 
             using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
             conn.Open();
@@ -1716,7 +1716,7 @@ CREATE TABLE IF NOT EXISTS users (
                 await conn.ExecuteAsync(ddlOld);
             }
 
-            DbInitializer.EnsureCreated(config, new TestEnv(), NullLogger.Instance); // deve aggiungere la colonna mancante
+            DbInitializer.EnsureCreated(config, new TestEnv().IsDevelopment(), NullLogger.Instance); // deve aggiungere la colonna mancante
 
             using var connCheck = new SqliteConnection($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
             connCheck.Open();

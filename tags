@@ -297,7 +297,7 @@ GetByIdAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async 
 GetByTokenAsync	src/SecureAuthMinimalApi/Data/RefreshTokenRepository.cs	/^    public async Task<RefreshToken?> GetByTokenAsync(string tokenValue, CancellationToken ct)$/;"	m	class:RefreshTokenRepository
 GetByTokenHashAsync	src/SecureAuthMinimalApi/Data/PasswordResetRepository.cs	/^    public async Task<PasswordReset?> GetByTokenHashAsync(string tokenHash, CancellationToken ct/;"	m	class:PasswordResetRepository
 GetByUsernameAsync	src/SecureAuthMinimalApi/Data/UserRepository.cs	/^    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)$/;"	m	class:UserRepository
-GetConfiguredUrls	src/SecureAuthMinimalApi/Program.cs	/^static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)$/;"	m
+GetConfiguredUrls	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  static IReadOnlyCollection<string> GetConfiguredUrls(WebApplication app)$/;"	m	class:StartupValidation	file:
 GetField	tests/WinFormsClient.Tests/MainFormChangePasswordTests.cs	/^    private static T GetField<T>(object target, string name)$/;"	m	class:MainFormChangePasswordTests	file:
 GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^await GetHealthAsync(rawHttp);$/;"	m
 GetHealthAsync	clients/SecureAuthClient.Console/Program.cs	/^static async Task GetHealthAsync(HttpClient http)$/;"	m
@@ -422,7 +422,7 @@ LogEvent	clients/WinFormsClient/MainForm.cs	/^  private void LogEvent(string lev
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.Designer.cs	/^partial class LogPanelControl$/;"	c
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^    public LogPanelControl()$/;"	m	class:LogPanelControl
 LogPanelControl	clients/WinFormsClient/Controls/LogPanelControl.cs	/^public partial class LogPanelControl : UserControl$/;"	c
-LogStartupInfo	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^    public static void LogStartupInfo($/;"	m	class:StartupValidation
+LogStartupInfo	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void LogStartupInfo($/;"	m	class:StartupValidation
 LogTestStart	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private void LogTestStart([CallerMemberName] string name = "")$/;"	m	class:ApiTests	file:
 LoginAndGetSessionAsync	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private async Task<(string Cookie, string CsrfToken)> LoginAndGetSessionAsync(string usernam/;"	m	class:ApiTests	file:
 LoginAsync	clients/SecureAuthClient/SecureAuthApiClient.cs	/^    public async Task<LoginResult> LoginAsync(string username, string password, bool rememberMe /;"	m	class:SecureAuthApiClient
@@ -894,9 +894,9 @@ Username	src/SecureAuthMinimalApi/Models/LoginAudit.cs	/^    public required str
 Username	src/SecureAuthMinimalApi/Models/User.cs	/^    public required string Username { get; init; }$/;"	p	class:User
 UsernamePolicyOptions	src/SecureAuthMinimalApi/Options/UsernamePolicyOptions.cs	/^public sealed class UsernamePolicyOptions$/;"	c
 Username_lowercase_policy_allows_case_insensitive_login	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    public async Task Username_lowercase_policy_allows_case_insensitive_login()$/;"	m	class:ApiTests
-ValidateCookieSecurity	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^    public static void ValidateCookieSecurity(WebApplication app, CookieConfigOptions cookieOpti/;"	m	class:StartupValidation
+ValidateCookieSecurity	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void ValidateCookieSecurity(WebApplication app, CookieConfigOptions cookieOption/;"	m	class:StartupValidation
 ValidateIdToken	tests/SecureAuthMinimalApi.Tests/ApiTests.cs	/^    private static JwtSecurityToken ValidateIdToken(string token, TokenValidationParameters tvp)$/;"	m	class:ApiTests	file:
-ValidateJwt	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^    public static void ValidateJwt(JwtOptions jwtOptions, bool isDevelopment, ILogger logger)$/;"	m	class:StartupValidation
+ValidateJwt	src/SecureAuthMinimalApi/Services/StartupValidation.cs	/^  public static void ValidateJwt(JwtOptions jwtOptions, bool isDevelopment, ILogger logger)$/;"	m	class:StartupValidation
 ValidatePassword	src/SecureAuthMinimalApi/Utilities/AuthHelpers.cs	/^    public static List<string> ValidatePassword(string password, int minLength, bool requireUppe/;"	m	class:AuthHelpers
 ValueText	clients/WinFormsClient/Controls/LabeledTextBoxControl.cs	/^    public string ValueText$/;"	p	class:LabeledTextBoxControl
 Verify	src/SecureAuthMinimalApi/Utilities/PasswordHasher.cs	/^    public static bool Verify(string password, string hash)$/;"	m	class:PasswordHasher
@@ -1089,7 +1089,6 @@ _user	clients/WinFormsClient/Controls/StatusInfoControl.Designer.cs	/^    privat
 _userInput	clients/WinFormsClient/MainForm.Designer.cs	/^    private LabeledTextBoxControl _userInput = null!;$/;"	f	class:MainForm	file:
 _username	clients/WinFORM_AUTH_Client/MainForm.cs	/^    private string? _username;$/;"	f	class:MainForm	file:
 _validation	src/SecureAuthMinimalApi/Services/IdTokenService.cs	/^    private readonly TokenValidationParameters _validation;$/;"	f	class:IdTokenService	file:
-app.Lifetime.ApplicationStarted.Register	src/SecureAuthMinimalApi/Program.cs	/^app.Lifetime.ApplicationStarted.Register(() =>$/;"	m
 app.MapChangeEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangeEmail();$/;"	m
 app.MapChangePassword	src/SecureAuthMinimalApi/Program.cs	/^app.MapChangePassword();$/;"	m
 app.MapConfirmEmail	src/SecureAuthMinimalApi/Program.cs	/^app.MapConfirmEmail();$/;"	m
