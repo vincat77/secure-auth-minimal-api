@@ -165,6 +165,13 @@ public sealed class SecureAuthApiClient : IDisposable
         var resp = await _http.SendAsync(req);
         var content = await resp.Content.ReadAsStringAsync();
 
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            // Body vuoto: restituisci un'istanza di default (sia in caso di errore che successo)
+            resp.EnsureSuccessStatusCode();
+            return Activator.CreateInstance<T>();
+        }
+
         // Anche per status non-200 (es. mfa_required 401) proviamo a deserializzare e ritorniamo l'oggetto.
         var parsed = JsonSerializer.Deserialize<T>(content, _jsonOptions);
         if (parsed is not null)
