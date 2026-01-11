@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.IO;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Middleware;
 using SecureAuthMinimalApi.Models;
@@ -7,8 +6,6 @@ using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Endpoints;
 using Serilog;
-using Microsoft.Extensions.Logging;
-using System.Threading;
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);

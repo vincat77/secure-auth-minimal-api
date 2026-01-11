@@ -1,6 +1,3 @@
-using System.Windows.Forms;
-using System.Drawing;
-
 namespace WinFormsClient.Controls;
 
 public partial class SessionCard : UserControl

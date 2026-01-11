@@ -1,5 +1,4 @@
 using SecureAuthMinimalApi.Data;
-using Microsoft.Extensions.Configuration;
 
 namespace SecureAuthMinimalApi.Services;
 

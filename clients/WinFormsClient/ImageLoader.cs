@@ -1,5 +1,3 @@
-using System.Drawing;
-using System.Net.Http;
 using Svg;
 
 namespace WinFormsClient;

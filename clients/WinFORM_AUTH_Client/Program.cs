@@ -1,6 +1,3 @@
-using System;
-using System.Windows.Forms;
-
 namespace WinFORM_AUTH_Client;
 
 internal static class Program

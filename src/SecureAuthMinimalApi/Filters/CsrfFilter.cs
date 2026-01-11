@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-using Microsoft.AspNetCore.Http;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Utilities;
 

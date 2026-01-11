@@ -1,7 +1,5 @@
 using System;
-using System.Drawing;
 using System.Threading.Tasks;
-using WinFormsClient;
 using Xunit;
 
 namespace WinFormsClient.Tests;

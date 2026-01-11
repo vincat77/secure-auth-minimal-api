@@ -1,6 +1,3 @@
-using System;
-using System.Windows.Forms;
-
 namespace WinFormsClient.Controls;
 
 public sealed partial class ActionButtonsControl : UserControl

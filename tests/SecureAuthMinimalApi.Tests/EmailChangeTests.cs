@@ -4,7 +4,6 @@ using Dapper;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using SecureAuthMinimalApi.Models;
 using Xunit;
 
 namespace SecureAuthMinimalApi.Tests;

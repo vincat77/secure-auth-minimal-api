@@ -1,7 +1,5 @@
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using SecureAuthMinimalApi.Data;
-using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Data.Sqlite;

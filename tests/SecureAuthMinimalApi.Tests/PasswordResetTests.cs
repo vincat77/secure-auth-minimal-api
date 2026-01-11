@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SecureAuthMinimalApi.Models;
 using Xunit;
 
 namespace SecureAuthMinimalApi.Tests;

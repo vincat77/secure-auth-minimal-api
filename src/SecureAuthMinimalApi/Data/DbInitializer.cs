@@ -1,7 +1,5 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using SecureAuthMinimalApi.Utilities;
 
 namespace SecureAuthMinimalApi.Data;

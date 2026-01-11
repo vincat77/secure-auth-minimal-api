@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using SecureAuthMinimalApi.Models;
 
 namespace SecureAuthMinimalApi.Filters;

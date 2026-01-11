@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Models;
 

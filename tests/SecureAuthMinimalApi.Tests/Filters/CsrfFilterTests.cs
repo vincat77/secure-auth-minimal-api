@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Models;
-using SecureAuthMinimalApi.Tests.Filters;
 using Xunit;
 
 namespace SecureAuthMinimalApi.Tests.Filters;

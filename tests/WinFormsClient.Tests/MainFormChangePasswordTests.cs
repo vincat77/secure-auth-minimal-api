@@ -5,8 +5,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
-using System.Linq;
-using WinFormsClient;
 using WinFormsClient.Controls;
 using Xunit;
 

@@ -5,7 +5,6 @@ using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 
 namespace SecureAuthMinimalApi.Tests;

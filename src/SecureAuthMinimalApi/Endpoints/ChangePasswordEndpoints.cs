@@ -6,7 +6,6 @@ using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Logging;
 using SecureAuthMinimalApi.Utilities;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using static SecureAuthMinimalApi.Utilities.SecurityUtils;
 using static SecureAuthMinimalApi.Utilities.CookieUtils;
