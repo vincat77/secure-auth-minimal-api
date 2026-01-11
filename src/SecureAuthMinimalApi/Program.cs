@@ -1,4 +1,3 @@
-using System.Text.Json;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Middleware;
 using SecureAuthMinimalApi.Models;
@@ -137,9 +136,9 @@ var loginOptions = new LoginOptions
 app.EnsureDatabaseInitialized(logger);
 
 // Validazioni config in ambiente non Development.
-StartupValidation.ValidateJwt(app, jwtOptions, logger);
-StartupValidation.ValidateCookieSecurity(app, cookieOptions, logger);
-StartupValidation.LogStartupInfo(app, logger);
+app.ValidateJwt(jwtOptions, logger);
+app.ValidateCookieSecurity(cookieOptions, logger);
+app.LogStartupInfo(logger);
 
 // Middleware ordine personalizzato
 app.UseRequestLoggingWithUnauthorizedHandling();

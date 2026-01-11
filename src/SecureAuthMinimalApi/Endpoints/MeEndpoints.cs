@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Utilities;
 using SecureAuthMinimalApi.Logging;
 namespace SecureAuthMinimalApi.Endpoints;

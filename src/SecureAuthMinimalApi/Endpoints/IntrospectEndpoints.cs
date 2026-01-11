@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Services;

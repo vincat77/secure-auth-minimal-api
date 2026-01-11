@@ -1,5 +1,3 @@
-using SecureAuthMinimalApi.Services;
-
 namespace SecureAuthMinimalApi.Services;
 
 /// <summary>

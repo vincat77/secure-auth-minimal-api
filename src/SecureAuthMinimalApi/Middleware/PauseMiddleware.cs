@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Logging;
-using System.Threading;
-
 namespace SecureAuthMinimalApi.Middleware;
 
 /// <summary>

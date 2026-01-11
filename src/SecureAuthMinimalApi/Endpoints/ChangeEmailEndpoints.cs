@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using SecureAuthMinimalApi.Data;
 using SecureAuthMinimalApi.Filters;
 using SecureAuthMinimalApi.Models;
