@@ -55,7 +55,7 @@ public static class RefreshEndpoints
             // CSRF refresh token: header obbligatorio
             if (!ctx.Request.Headers.TryGetValue("X-Refresh-Csrf", out var refreshCsrf) || string.IsNullOrWhiteSpace(refreshCsrf))
                 return Results.StatusCode(StatusCodes.Status403Forbidden);
-            if (string.IsNullOrWhiteSpace(stored.RefreshCsrfHash) || !SecurityUtils.FixedTimeEquals(SecurityUtils.HashToken(refreshCsrf!), stored.RefreshCsrfHash))
+            if (string.IsNullOrWhiteSpace(stored.RefreshCsrfHash) || !FixedTimeEquals(HashToken(refreshCsrf!), stored.RefreshCsrfHash))
                 return Results.StatusCode(StatusCodes.Status403Forbidden);
 
             var user = await users.GetByIdAsync(stored.UserId, ctx.RequestAborted);
@@ -68,7 +68,7 @@ public static class RefreshEndpoints
             var nowIso = DateTime.UtcNow.ToString("O");
             var expIso = expiresUtc.ToString("O");
             var refreshCsrfToken = Base64Url(RandomBytes(32));
-            var refreshCsrfHash = SecurityUtils.HashToken(refreshCsrfToken);
+            var refreshCsrfHash = HashToken(refreshCsrfToken);
 
             var session = new UserSession
             {
