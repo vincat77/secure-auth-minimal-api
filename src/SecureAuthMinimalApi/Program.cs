@@ -136,8 +136,8 @@ var loginOptions = new LoginOptions
 app.EnsureDatabaseInitialized(logger);
 
 // Validazioni config in ambiente non Development.
-app.ValidateJwt(jwtOptions, logger);
-app.ValidateCookieSecurity(cookieOptions, logger);
+app.ValidateJwt(logger);
+app.ValidateCookieSecurity(logger);
 app.LogStartupInfo(logger);
 
 // Middleware ordine personalizzato

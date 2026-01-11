@@ -29,8 +29,9 @@ public static class StartupValidation
   /// <summary>
   /// Valida le impostazioni JWT (secret, issuer, audience).
   /// </summary>
-  public static void ValidateJwt(this WebApplication app, JwtOptions jwtOptions, ILogger logger)
+  public static void ValidateJwt(this WebApplication app, ILogger logger)
   {
+    var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
     if (app.Environment.IsDevelopment())
       return;
 
@@ -63,8 +64,9 @@ public static class StartupValidation
   /// <summary>
   /// Valida le impostazioni cookie di sicurezza.
   /// </summary>
-  public static void ValidateCookieSecurity(this WebApplication app, CookieConfigOptions cookieOptions, ILogger logger)
+  public static void ValidateCookieSecurity(this WebApplication app, ILogger logger)
   {
+    var cookieOptions = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
     if (app.Environment.IsDevelopment())
       return;
 
