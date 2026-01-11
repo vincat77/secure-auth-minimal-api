@@ -167,9 +167,8 @@ public sealed class SecureAuthApiClient : IDisposable
 
         if (string.IsNullOrWhiteSpace(content))
         {
-            // Body vuoto: restituisci un'istanza di default anche se status non-200
-            // il caller valuterà esito tramite campi dell'oggetto.
-            return Activator.CreateInstance<T>();
+            // Body vuoto: restituisci default(T) per evitare errori su record senza ctor.
+            return default!;
         }
 
         // Anche per status non-200 (es. mfa_required 401) proviamo a deserializzare e ritorniamo l'oggetto.
