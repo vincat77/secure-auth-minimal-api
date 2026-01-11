@@ -17,10 +17,8 @@ public static class LoginEndpoints
     /// <summary>
     /// Mappa l'endpoint di login gestendo throttle, MFA e rilascio di sessioni e cookie.
     /// </summary>
-    public static void MapLogin(
-        this WebApplication app,
-        LoginOptions loginOptions)
-    {
+    public static void MapLogin(this WebApplication app)
+  {
         var isDevelopment = app.Environment.IsDevelopment();
         var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
         var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
@@ -28,10 +26,12 @@ public static class LoginEndpoints
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
         var jwtOptions = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
 
-        app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo, ILogger<LoginLogger> logger) =>
+        app.MapPost("/login", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService,
+          IOptions<LoginOptions> loginOptions,
+          SessionRepository sessions, UserRepository users, ILoginThrottle throttle, LoginAuditRepository auditRepo, ILogger<LoginLogger> logger) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<LoginRequest>();
-            var username = NormalizeUsername(req?.Username, loginOptions.ForceLowerUsername);
+            var username = NormalizeUsername(req?.Username, loginOptions.Value.ForceLowerUsername);
             var password = req?.Password ?? "";
             var nonce = req?.Nonce;
             logger.LogInformation("Login avviato username={Username}", username);
@@ -82,13 +82,13 @@ public static class LoginEndpoints
             var bypassUnconfirmed = string.Equals(user.Username, "demo", StringComparison.OrdinalIgnoreCase)
                                     || string.Equals(user.Username, "smoke-unconfirmed", StringComparison.OrdinalIgnoreCase);
 
-            if (loginOptions.EmailConfirmationRequired && !user.EmailConfirmed && !bypassUnconfirmed)
+            if (loginOptions.Value.EmailConfirmationRequired && !user.EmailConfirmed && !bypassUnconfirmed)
             {
                 logger.LogWarning("Login bloccato: email non confermata username={Username} userId={UserId}", safeUsername, user.Id);
                 await AuditAsync(auditRepo, safeUsername, "email_not_confirmed", ctx, null);
                 return Results.Json(new { ok = false, error = "email_not_confirmed" }, statusCode: StatusCodes.Status403Forbidden);
             }
-            else if (!loginOptions.EmailConfirmationRequired && !user.EmailConfirmed)
+            else if (!loginOptions.Value.EmailConfirmationRequired && !user.EmailConfirmed)
             {
                 logger.LogInformation("Login: email non confermata ma requisito disabilitato username={Username} userId={UserId}", safeUsername, user.Id);
             }
@@ -103,7 +103,7 @@ public static class LoginEndpoints
                     Id = challengeId,
                     UserId = user.Id,
                     CreatedAtUtc = now.ToString("O"),
-                    ExpiresAtUtc = now.AddMinutes(loginOptions.MfaChallengeMinutes).ToString("O"),
+                    ExpiresAtUtc = now.AddMinutes(loginOptions.Value.MfaChallengeMinutes).ToString("O"),
                     UsedAtUtc = null,
                     UserAgent = ctx.Request.Headers["User-Agent"].ToString(),
                     ClientIp = ctx.Connection.RemoteIpAddress?.ToString(),

@@ -16,17 +16,17 @@ public static class ConfirmMfaEndpoints
     /// <summary>
     /// Mappa l'endpoint di conferma MFA che valida la challenge e rilascia una nuova sessione.
     /// </summary>
-    public static void MapConfirmMfa(
-        this WebApplication app,
-        LoginOptions loginOptions)
-    {
+    public static void MapConfirmMfa(this WebApplication app)
+  {
         var isDevelopment = app.Environment.IsDevelopment();
         var rememberOptions = app.Services.GetRequiredService<IOptions<RememberMeOptions>>().Value;
         var deviceOptions = app.Services.GetRequiredService<IOptions<DeviceOptions>>().Value;
         var refreshOptions = app.Services.GetRequiredService<IOptions<RefreshOptions>>().Value;
         var cookieConfig = app.Services.GetRequiredService<IOptions<CookieConfigOptions>>().Value;
 
-        app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService, SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo, ILogger<ConfirmMfaLogger> logger) =>
+        app.MapPost("/login/confirm-mfa", async (HttpContext ctx, JwtTokenService jwt, IdTokenService idTokenService,
+          IOptions<LoginOptions> loginOptions,
+          SessionRepository sessions, UserRepository users, MfaChallengeRepository challenges, LoginAuditRepository auditRepo, ILogger<ConfirmMfaLogger> logger) =>
         {
             var body = await ctx.Request.ReadFromJsonAsync<ConfirmMfaRequest>();
             if (string.IsNullOrWhiteSpace(body?.ChallengeId) || string.IsNullOrWhiteSpace(body.TotpCode))
@@ -54,13 +54,13 @@ public static class ConfirmMfaEndpoints
             }
 
             var ua = ctx.Request.Headers["User-Agent"].ToString();
-            if (loginOptions.MfaRequireUaMatch && !string.Equals(ua, challenge.UserAgent, StringComparison.Ordinal))
+            if (loginOptions.Value.MfaRequireUaMatch && !string.Equals(ua, challenge.UserAgent, StringComparison.Ordinal))
             {
                 logger.LogWarning("Confirm MFA: UA mismatch atteso={Expected} actual={Actual}", challenge.UserAgent, ua);
                 return Results.Unauthorized();
             }
 
-            if (loginOptions.MfaRequireIpMatch)
+            if (loginOptions.Value.MfaRequireIpMatch)
             {
                 var reqIp = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? ctx.Connection.RemoteIpAddress?.ToString();
                 if (!string.Equals(reqIp, challenge.ClientIp, StringComparison.Ordinal))
@@ -70,7 +70,7 @@ public static class ConfirmMfaEndpoints
                 }
             }
 
-            if (challenge.AttemptCount >= loginOptions.MfaMaxAttempts)
+            if (challenge.AttemptCount >= loginOptions.Value.MfaMaxAttempts)
             {
                 logger.LogWarning("Confirm MFA: max tentativi raggiunti challengeId={ChallengeId}", challenge.Id);
                 return Results.Unauthorized();

@@ -1,9 +1,10 @@
+using Microsoft.Extensions.Options;
 using SecureAuthMinimalApi.Data;
+using SecureAuthMinimalApi.Logging;
 using SecureAuthMinimalApi.Models;
 using SecureAuthMinimalApi.Options;
 using SecureAuthMinimalApi.Services;
 using SecureAuthMinimalApi.Utilities;
-using SecureAuthMinimalApi.Logging;
 using static SecureAuthMinimalApi.Endpoints.EndpointUtilities;
 
 namespace SecureAuthMinimalApi.Endpoints;
@@ -14,14 +15,16 @@ public static class RegisterEndpoints
     /// Mappa l'endpoint di registrazione utenti applicando la policy password.
     /// </summary>
     public static void MapRegister(
-        this WebApplication app,
-        PasswordPolicyOptions passwordPolicy,
-        UsernamePolicyOptions usernamePolicy)
-    {
-        app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger<RegisterLogger> logger, IEmailService emailService) =>
+        this WebApplication app)
+  {
+        app.MapPost("/register", async (HttpContext ctx, UserRepository users, ILogger<RegisterLogger> logger,
+          IOptions< PasswordPolicyOptions> passwordPolicy,
+          IOptions<UsernamePolicyOptions> usernamePolicy,
+
+          IEmailService emailService) =>
         {
             var req = await ctx.Request.ReadFromJsonAsync<RegisterRequest>();
-            var username = NormalizeUsername(req?.Username, usernamePolicy.Lowercase);
+            var username = NormalizeUsername(req?.Username, usernamePolicy.Value.Lowercase);
             var email = NormalizeEmail(req?.Email);
             var password = req?.Password ?? "";
             var givenNameInput = req?.GivenName?.Trim();
@@ -56,8 +59,9 @@ public static class RegisterEndpoints
             var fullName = string.IsNullOrWhiteSpace(nameInput) ? $"{givenName} {familyName}".Trim() : nameInput;
             var pictureUrl = string.IsNullOrWhiteSpace(pictureUrlInput) ? $"https://example.com/avatar/{safeUsername}.png" : pictureUrlInput;
 
-            var effectiveMin = passwordPolicy.EffectiveMinLength;
-            var policyErrors = AuthHelpers.ValidatePassword(password, effectiveMin, passwordPolicy.RequireUpper, passwordPolicy.RequireLower, passwordPolicy.RequireDigit, passwordPolicy.RequireSymbol);
+            var effectiveMin = passwordPolicy.Value.EffectiveMinLength;
+            var policyErrors = AuthHelpers.ValidatePassword(password, effectiveMin, passwordPolicy.Value.RequireUpper, 
+              passwordPolicy.Value.RequireLower, passwordPolicy.Value.RequireDigit, passwordPolicy.Value.RequireSymbol);
             if (policyErrors.Any())
             {
                 logger.LogWarning("Registrazione fallita: password non conforme username={Username} errors={Errors}", safeUsername, string.Join(",", policyErrors));
