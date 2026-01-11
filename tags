@@ -600,6 +600,7 @@ Program	src/SecureAuthMinimalApi/Program.cs	/^public partial class Program { }$/
 Protect	src/SecureAuthMinimalApi/Services/TotpSecretProtector.cs	/^    public string Protect(string secret) => _protector.Protect(secret);$/;"	m	class:TotpSecretProtector
 RandomBytes	src/SecureAuthMinimalApi/Endpoints/ChangePasswordEndpoints.cs	/^    private static byte[] RandomBytes(int len)$/;"	m	class:ChangePasswordEndpoints	file:
 RandomBytes	src/SecureAuthMinimalApi/Endpoints/EndpointUtilities.cs	/^    public static byte[] RandomBytes(int len)$/;"	m	class:EndpointUtilities
+RandomBytes	src/SecureAuthMinimalApi/Services/SecurityUtils.cs	/^    private static byte[] RandomBytes(int length)$/;"	m	class:SecurityUtils	file:
 RateLimitRequests	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitRequests { get; set; } = 5;$/;"	p	class:PasswordResetConfig
 RateLimitWindowMinutes	src/SecureAuthMinimalApi/Services/PasswordResetConfig.cs	/^    public int RateLimitWindowMinutes { get; set; } = 15;$/;"	p	class:PasswordResetConfig
 RateLimiter	src/SecureAuthMinimalApi/Endpoints/PasswordResetEndpoints.cs	/^    private static class RateLimiter$/;"	c	class:PasswordResetEndpoints

@@ -41,4 +41,17 @@ public static class SecurityUtils
             .Replace('+', '-')
             .Replace('/', '_');
     }
+
+    /// <summary>
+    /// Genera una sequenza di byte crittograficamente sicura della lunghezza richiesta.
+    /// </summary>
+    private static byte[] RandomBytes(int length)
+    {
+        if (length <= 0)
+            throw new ArgumentOutOfRangeException(nameof(length));
+
+        var bytes = new byte[length];
+        RandomNumberGenerator.Fill(bytes);
+        return bytes;
+    }
 }
