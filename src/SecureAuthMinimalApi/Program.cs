@@ -110,6 +110,11 @@ builder.Services.AddOptions<RegisterRateLimitOptions>().Configure(options =>
   options.Requests = OptionParsers.ParseIntNoMin(builder.Configuration["Register:RateLimitRequests"], 0, "Register:RateLimitRequests", logger);
   options.WindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["Register:RateLimitWindowMinutes"], 1, "Register:RateLimitWindowMinutes", logger);
 });
+builder.Services.AddOptions<ConfirmEmailRateLimitOptions>().Configure(options =>
+{
+  options.Requests = OptionParsers.ParseIntNoMin(builder.Configuration["ConfirmEmail:RateLimitRequests"], 0, "ConfirmEmail:RateLimitRequests", logger);
+  options.WindowMinutes = OptionParsers.ParseIntNoMin(builder.Configuration["ConfirmEmail:RateLimitWindowMinutes"], 1, "ConfirmEmail:RateLimitWindowMinutes", logger);
+});
 
 builder.Services.AddHostedService<ExpiredCleanupService>();
 builder.Services.AddLogging();

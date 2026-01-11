@@ -57,3 +57,15 @@ public sealed class RegisterRateLimitOptions
     /// <summary>Finestra di rate limit (minuti).</summary>
     public int WindowMinutes { get; set; } = 1;
 }
+
+/// <summary>
+/// Opzioni di rate limit per l'endpoint /confirm-email.
+/// </summary>
+public sealed class ConfirmEmailRateLimitOptions
+{
+    /// <summary>Numero massimo di richieste di conferma nella finestra.</summary>
+    public int Requests { get; set; } = 0;
+
+    /// <summary>Durata della finestra (minuti).</summary>
+    public int WindowMinutes { get; set; } = 1;
+}

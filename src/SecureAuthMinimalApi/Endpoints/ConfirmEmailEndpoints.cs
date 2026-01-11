@@ -14,8 +14,16 @@ public static class ConfirmEmailEndpoints
     /// </summary>
     public static void MapConfirmEmail(this WebApplication app)
     {
+        var rateLimitOptions = app.Services.GetRequiredService<IOptions<ConfirmEmailRateLimitOptions>>().Value;
+
         app.MapPost("/confirm-email", async (HttpContext ctx, UserRepository users, IOptions<TokenHashingOptions> tokenHashing, ILogger<ConfirmEmailLogger> logger) =>
         {
+            if (IsConfirmRateLimited(ctx, rateLimitOptions))
+            {
+                logger.LogWarning("Conferma email rate-limit superato per IP {Ip}", ctx.Connection.RemoteIpAddress);
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
+
             var req = await ctx.Request.ReadFromJsonAsync<ConfirmEmailRequest>();
             if (string.IsNullOrWhiteSpace(req?.Token))
             {
@@ -63,5 +71,34 @@ public static class ConfirmEmailEndpoints
             logger.LogInformation("Email confermata userId={UserId}", user.Id);
             return Results.Ok(new { ok = true });
         });
+    }
+
+    private static bool IsConfirmRateLimited(HttpContext ctx, ConfirmEmailRateLimitOptions options)
+    {
+        if (options.Requests <= 0)
+            return false;
+
+        var window = options.WindowMinutes <= 0 ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(options.WindowMinutes);
+        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "noip";
+        return ConfirmRateLimiter.ShouldThrottle(ip, options.Requests, window);
+    }
+
+    private static class ConfirmRateLimiter
+    {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentQueue<DateTime>> Store = new();
+
+        public static bool ShouldThrottle(string key, int maxRequests, TimeSpan window)
+        {
+            var now = DateTime.UtcNow;
+            var queue = Store.GetOrAdd(key, _ => new System.Collections.Concurrent.ConcurrentQueue<DateTime>());
+            queue.Enqueue(now);
+
+            while (queue.TryPeek(out var ts) && ts < now - window)
+            {
+                queue.TryDequeue(out _);
+            }
+
+            return queue.Count > maxRequests;
+        }
     }
 }
