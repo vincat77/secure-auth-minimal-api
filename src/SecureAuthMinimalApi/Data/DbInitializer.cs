@@ -165,12 +165,11 @@ CREATE TABLE IF NOT EXISTS password_resets (
     conn.Execute(idxPasswordResetUser);
     conn.Execute(idxPasswordResetExpires);
 
-    // Seed demo: disabilitato di default e consentito solo in Development a meno di opt-in esplicito.
-    var seedEnabled = config.GetValue<bool?>("Seed:Enabled") ?? false;
+    // Seed demo: default true ma con warning se non in Development.
+    var seedEnabled = config.GetValue<bool?>("Seed:Enabled") ?? true;
     if (seedEnabled && !env.IsDevelopment())
     {
-      logger.LogWarning("Seed:Enabled=true ignorato fuori da Development (sicurezza).");
-      seedEnabled = false;
+      logger.LogWarning("Seed demo abilitato fuori da Development: usare solo in ambienti di test.");
     }
 
     if (seedEnabled)
