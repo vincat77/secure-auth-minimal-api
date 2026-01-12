@@ -18,18 +18,24 @@ Esporre gli endpoint di autenticazione WebAuthn senza alterare TOTP.
 - Challenge scade dopo TTL e non è loggata.
 - Sign counter anti-clone obbligatorio (decrement → rifiuto).
 - Non salvare raw assertion.
+- Considerare `allowedCredentials` nella options per filtrare le credenziali dell’utente.
 
 ### Integrazione sessione/JWT
 - Dopo verify: `session.MfaSatisfied=true`, `auth_time` aggiornato; JWT/IdToken con `amr=["pwd","fido2"]` e `auth_time`.
 - Compatibile con policy `RequireMfa`/`RequireRecentMfa`.
 
 ### Test (xUnit) da implementare
-- Flow auth: options → verify con assertion valida → sessione marcata MFA, claim amr/auth_time presenti.
-- SignCount inferiore → rifiutato.
-- Challenge scaduta → 400/410.
-- Log sanitizzati: logger fake senza challenge/credentialId/raw.
+- Positivi:
+  - `WebAuthnAuth_Flow_SetsMfa`: options → verify con assertion valida → sessione marcata MFA, claim amr/auth_time presenti.
+- Negativi:
+  - `WebAuthnAuth_InvalidOrigin_Returns400`: origin errata → 400/403.
+  - `WebAuthnAuth_InvalidRpId_Returns400`: rpId errata → 400/403.
+  - `WebAuthnAuth_SignCountDecrement_Rejected`: signCount inferiore → rifiutato.
+  - `WebAuthnAuth_ExpiredChallenge_Returns410`: challenge scaduta → 400/410.
+  - `WebAuthnAuth_LogsAreSanitized`: logger fake senza challenge/credentialId/raw.
 
 ### Note operative
 - Endpoint protetti da sessione autenticata; options non richiede MFA, verify la soddisfa.
 - Usa storage challenge di Step 1B (tabella `fido_challenges`).
 - Mappare con `app.MapGroup("/webauthn")`.
+- Struttura codice: classe statica `WebAuthnAuthEndpoints` con metodo `MapWebAuthnAuth(this WebApplication app)` nel gruppo `/webauthn`.
