@@ -16,9 +16,13 @@ Mappare WebAuthn nelle policy MFA esistenti (`RequireMfa`, `RequireRecentMfa`) e
 - Nessun downgrade automatico da FIDO2 a TOTP per privilegiati.
 
 ### Test (xUnit) da implementare
-- Endpoint step-up: sessione con WebAuthn `MfaSatisfied=true` → 200; senza → 401/403.
-- Claim `amr` corretto (pwd+fido2) e `auth_time` aggiornato.
+- `StepUp_WithWebAuthn_Allows`: sessione con `MfaSatisfied=true` (FIDO2) su endpoint step-up → 200.
+- `StepUp_WithoutMfa_Blocks`: sessione senza MFA → 401/403 sugli stessi endpoint.
+- `AmrClaims_WebAuthn`: emissione token con FIDO2 → `amr` contiene `pwd,fido2` e `auth_time` valorizzato.
 
 ### Note operative
 - Policy centralizzate (filtri/authorize) e non check ad hoc.
 - Aggiornare `RequireRecentMfa` per accettare FIDO2 se considerata sufficiente.
+- `MfaSatisfied` da leggere dalla sessione (`user_sessions` estesa in 1C) e propagare nel token/claims.
+- Se si vuole “recent” anche per FIDO2, parametrizzare una finestra (es. 10 min); altrimenti documentare che FIDO2 soddisfa `RequireRecentMfa` sempre.
+- Applicazione policy: usare `MapGroup("/webauthn")`/altri endpoint con `.RequireAuthorization("RequireMfa")` o `.RequireAuthorization("RequireRecentMfa")` sugli endpoint step-up.
