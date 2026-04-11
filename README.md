@@ -1,3 +1,5 @@
+# Disclaimer  
+# his repository is a proof of concept for studying authentication-related design choices and trade-offs. It should not be considered an authoritative security implementation or adopted as-is in production.
 # SecureAuthMinimalApi
 
 Progetto di riferimento per autenticazione web sicura in .NET 8: Minimal API con JWT via cookie HttpOnly, sessioni server-side su SQLite e CSRF hardening, pensata per mostrare pattern pratici (login, refresh, MFA) riutilizzabili in app reali.
